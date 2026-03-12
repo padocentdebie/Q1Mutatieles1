@@ -70,12 +70,11 @@ Afspraken vervolg: `;
             listenToRealtimeFeed(studentKlas);
         };
 
-        // Functie om transcriptie te tonen na afloop audio
         window.unlockTranscript = () => {
             const btn = document.getElementById('btnTranscript');
             btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed');
-            btn.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200', 'text-slate-400');
+            btn.classList.add('bg-blue-600', 'text-white', 'hover:bg-blue-700');
             btn.innerText = "Bekijk Transcriptie";
         };
 
@@ -140,8 +139,10 @@ Afspraken vervolg: `;
             <div class="bg-white p-5 rounded-xl shadow-lg border-t-4 border-yellow-500">
                 <h2 class="font-black text-lg uppercase mb-4 text-police italic">Stappenplan</h2>
                 <div class="step-card"><h3 class="font-bold text-xs uppercase">1. Aanhef</h3><p class="text-[10px] text-gray-500 italic">Wie, wat, waar?</p></div>
+                <div class="step-card"><h3 class="font-bold text-xs uppercase">2. Situatie</h3><p class="text-[10px] text-gray-500 italic">Waarnemingen ter plaatse.</p></div>
                 <div class="step-card"><h3 class="font-bold text-xs uppercase text-red-600 font-black">3. Toedracht</h3><p class="text-[10px] text-red-600 font-bold italic">Gebruik verleden tijd!</p></div>
-                <div class="step-card bg-yellow-50 p-2 rounded-r"><h3 class="font-bold text-xs uppercase text-yellow-800">5. Afhandeling</h3><p class="text-[10px] text-yellow-700 font-bold italic text-yellow-800">Verplicht: Instelling, Begeleider & Tel.</p></div>
+                <div class="step-card"><h3 class="font-bold text-xs uppercase">4. Maatregelen</h3><p class="text-[10px] text-gray-500 italic">Handelingen/Bevoegdheden.</p></div>
+                <div class="step-card bg-yellow-50 p-2 rounded-r"><h3 class="font-bold text-xs uppercase text-yellow-800 font-black">5. Afhandeling</h3><p class="text-[10px] text-yellow-700 font-bold italic">Verplicht: Instelling, Begeleider & Tel.</p></div>
 
                 <div class="mt-6 pt-4 border-t border-slate-100">
                     <p class="font-black text-[10px] uppercase text-slate-400 mb-2 italic">Audiofragment:</p>
@@ -153,11 +154,19 @@ Afspraken vervolg: `;
                         Eerst audio afluisteren...
                     </button>
 
-                    <div id="transcriptieBox" class="hidden mt-4 p-3 bg-blue-50 border border-blue-100 rounded text-[10px] text-blue-900 font-mono leading-relaxed h-48 overflow-y-auto">
-                        <strong>Transcriptie:</strong><br><br>
-                        A: "U heeft het over begeleiding. Heeft u een naam van een begeleider voor ons?"<br>
-                        B: "Ik woon bij <strong>stichting De Haven</strong>. Mijn begeleider heet <strong>Sander de Bruin</strong>."<br>
-                        A: "Heeft u ook een telefoonnummer?"<br>
+                    <div id="transcriptieBox" class="hidden mt-4 p-3 bg-blue-50 border border-blue-100 rounded text-[10px] text-blue-900 font-mono leading-relaxed h-64 overflow-y-auto">
+                        <strong>Volledig Audioscript:</strong><br><br>
+                        <em>[Melding OC]</em><br>
+                        OC: "1.81.01 voor de 1.81.01. Verzoek winkeliersvereniging Diamantplein. Vrouw, ±25jr, zwarte jas, dweilstok bij zich. Lijkt verward."<br><br>
+                        <em>[Gesprek ter plaatse]</em><br>
+                        A: "Mevrouw, wat bent u aan het doen bij de winkels?"<br>
+                        B: "Ik zoek de sportzaal... mijn vriend is instructeur."<br>
+                        A: "En die dweilstok?"<br>
+                        B: "Dat is voor het hardlopen en turnen."<br><br>
+                        <strong>[Administratieve gegevens]</strong><br>
+                        A: "Woont u bij een instelling?"<br>
+                        B: "Ik woon bij <strong>Stichting De Haven</strong>. Mijn begeleider heet <strong>Sander de Bruin</strong>."<br>
+                        A: "Heeft u een telefoonnummer?"<br>
                         B: "Het is <strong>06-12345678</strong>. Sander is er vandaag wel."
                     </div>
                 </div>
@@ -168,7 +177,7 @@ Afspraken vervolg: `;
             <div class="bg-white p-5 rounded-xl shadow-lg border-t-4 border-police flex flex-col h-full">
                 <div class="flex justify-between items-center mb-2">
                     <h2 class="font-black text-lg uppercase text-police italic">Mutatie Opstellen</h2>
-                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-[10px] font-black uppercase">Eenheid: <span id="displayKlas"></span></span>
+                    <span class="bg-yellow-100 text-yellow-800 px-3 py-1 rounded text-[10px] font-black uppercase italic">Eenheid: <span id="displayKlas"></span></span>
                 </div>
                 <textarea id="mutatieInput" class="flex-grow w-full p-4 bg-slate-50 border-2 border-slate-200 rounded-xl font-mono text-xs focus:border-blue-500 focus:outline-none leading-relaxed resize-none"></textarea>
                 <button onclick="sendData('Mutatie', 'mutatieInput')" class="mt-4 bg-police text-white py-4 rounded-xl font-black uppercase tracking-widest hover:bg-blue-800 transition-all shadow-md active:scale-95">Versturen naar Feed</button>
@@ -176,7 +185,7 @@ Afspraken vervolg: `;
         </div>
 
         <div class="col-span-12 lg:col-span-3 flex flex-col h-full overflow-hidden">
-            <div class="bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col h-full">
+            <div class="bg-slate-800 p-4 rounded-xl shadow-lg flex flex-col h-full overflow-hidden">
                 <h2 class="text-white font-black text-center text-[10px] uppercase tracking-widest mb-4 border-b border-slate-700 pb-2 italic">Tijdlijn Eenheid</h2>
                 <div id="liveFeed" class="flex-grow overflow-y-auto"></div>
             </div>
