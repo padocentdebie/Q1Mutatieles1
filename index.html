@@ -2,189 +2,238 @@
 <html lang="nl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>BTV Dashboard | Opstellen Mutatie</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
-
-    <script>
-        const firebaseConfig = {
-            apiKey: "AIzaSyBRq1HFmhrpW_EMMZwpURrbTArz-L5iWT4",
-            authDomain: "pvaangifteinleveren-77dbe.firebaseapp.com",
-            databaseURL: "https://pvaangifteinleveren-77dbe-default-rtdb.europe-west1.firebasedatabase.app",
-            projectId: "pvaangifteinleveren-77dbe",
-            storageBucket: "pvaangifteinleveren-77dbe.appspot.com",
-            messagingSenderId: "20239054410",
-            appId: "1:20239054410:web:264b3c759312248d9f18b3"
-        };
-
-        firebase.initializeApp(firebaseConfig);
-        const database = firebase.database();
-
-        let studentNaam = "";
-        let studentKlas = "";
-
-        window.startLes = () => {
-            studentNaam = document.getElementById('uNaam').value.trim();
-            studentKlas = document.getElementById('uKlas').value;
-            
-            if(!studentNaam || !studentKlas) {
-                alert("Vul je naam en eenheid in.");
-                return;
-            }
-            
-            document.getElementById('loginOverlay').classList.add('hidden');
-            document.getElementById('mainContent').classList.remove('hidden');
-            document.getElementById('displayKlas').innerText = studentKlas;
-            
-            const startTekst = `Hoofdincident
-Registratienummer : 2025310080
-Titel : Meld:Leefmilieu - Overlast
-Maatschappelijke klasse : Overlast door verward/overspannen persoon
-Datum/tijd kennisname : vrijdag 12 september 2025 om 14:09 uur
-Pleegdatum/tijd : Tussen vrijdag 12 september 2025 om 14:09 uur en vrijdag 12 september 2025 om 14:39 uur
-Plaats voorval : Diamantplein, Leiden
-Soort locatie : Winkel
-Verbalisanten: Aspirant ${studentNaam}, Eenheid ${studentKlas}
-
-AANHEF:
-...
-
-SITUATIE:
-...
-
-TOEDRACHT:
-...
-
-MAATREGELEN:
-...
-
-AFHANDELING (Administratief):
-Naam instelling: 
-Naam begeleider: 
-Telefoonnummer begeleider: 
-Afspraken vervolg: `;
-            
-            document.getElementById('mutatieInput').value = startTekst;
-            listenToRealtimeFeed(studentKlas);
-        };
-
-        window.unlockTranscript = () => {
-            const btn = document.getElementById('btnTranscript');
-            btn.disabled = false;
-            btn.classList.remove('opacity-50', 'cursor-not-allowed', 'bg-slate-200', 'text-slate-400');
-            btn.classList.add('bg-slate-700', 'text-white', 'hover:bg-slate-800');
-            btn.innerText = "Bekijk Transcriptie";
-        };
-
-        window.toggleTranscript = () => {
-            const el = document.getElementById('transcriptieBox');
-            el.classList.toggle('hidden');
-        };
-
-        window.sendData = (type, elementId) => {
-            const txt = document.getElementById(elementId).value.trim();
-            if(!txt) return;
-            database.ref('btv_2026/' + studentKlas).push({
-                naam: studentNaam,
-                type: type,
-                txt: txt,
-                ts: Date.now()
-            });
-            alert("Mutatie verzonden.");
-        };
-
-        function listenToRealtimeFeed(klas) {
-            database.ref('btv_2026/' + klas).on('value', (snapshot) => {
-                const feed = document.getElementById('liveFeed');
-                feed.innerHTML = "";
-                const data = snapshot.val();
-                if (!data) return;
-                const messages = Object.keys(data).map(key => data[key]).sort((a, b) => b.ts - a.ts);
-                messages.forEach(msg => {
-                    feed.innerHTML += `
-                        <div class="mb-3 p-3 bg-white border border-slate-200 rounded shadow-sm">
-                            <p class="text-[9px] font-bold text-slate-400 uppercase tracking-tight">${msg.naam} • ${new Date(msg.ts).toLocaleTimeString()}</p>
-                            <p class="text-[11px] mt-1 whitespace-pre-wrap leading-tight text-slate-600">${msg.txt.substring(0, 150)}...</p>
-                        </div>`;
-                });
-            });
-        }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Q1 Mutatieles 1 - Operationele Rapportage</title>
     <style>
-        .bg-navy { background-color: #1e293b; }
-        .step-card { border-left: 2px solid #cbd5e1; padding-left: 1rem; margin-bottom: 1rem; }
+        :root {
+            --police-blue: #003082;
+            --police-gold: #ffcc00;
+            --bg-gray: #f4f4f8;
+            --text-dark: #1a1a1a;
+            --white: #ffffff;
+            --border-light: #cbd5e1;
+        }
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: var(--bg-gray);
+            color: var(--text-dark);
+            margin: 0;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+            background: var(--white);
+            padding: 40px;
+            border-top: 10px solid var(--police-blue);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            border-radius: 4px;
+        }
+        h1, h2, h3 { color: var(--police-blue); text-transform: uppercase; letter-spacing: 1px; }
+        .hidden { display: none !important; }
+        
+        /* Login Scherm */
+        .login-box { max-width: 400px; margin: 60px auto; padding: 30px; border: 1px solid var(--border-light); border-radius: 8px; background: #f8fafc; }
+        input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 4px; margin-bottom: 15px; font-size: 15px; }
+        
+        /* Buttons */
+        .btn {
+            background-color: var(--police-blue);
+            color: white;
+            padding: 14px 28px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            text-transform: uppercase;
+            font-weight: bold;
+            width: 100%;
+            transition: background 0.3s;
+        }
+        .btn:hover { background-color: #002360; }
+        .btn-secondary { background-color: #64748b; margin-top: 10px; }
+
+        /* Lesdoelen */
+        .info-block { border-left: 5px solid var(--police-gold); padding: 5px 20px; margin: 20px 0; background: #fffcf0; }
+        .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0; }
+        
+        /* Quiz */
+        .quiz-item { background: #fdfdfd; padding: 20px; border: 1px solid #edf2f7; border-radius: 6px; margin-bottom: 15px; }
+        .feedback { margin-top: 10px; padding: 10px; font-weight: bold; border-radius: 4px; }
+        .correct { color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
+        .incorrect { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
+
+        /* Audio Sectie */
+        .audio-link-box {
+            background: var(--police-blue);
+            color: white;
+            padding: 25px;
+            border-radius: 8px;
+            text-align: center;
+            margin: 20px 0;
+        }
+        .audio-link-box a { color: var(--police-gold); font-weight: bold; text-decoration: none; font-size: 1.1em; }
+        .audio-link-box a:hover { text-decoration: underline; }
+
+        /* Script weergave */
+        .script-box { font-size: 0.9em; background: #f1f5f9; padding: 15px; border-radius: 4px; border: 1px solid #e2e8f0; }
     </style>
 </head>
-<body class="bg-[#f8fafc] min-h-screen text-slate-800">
+<body>
 
-    <div id="loginOverlay" class="fixed inset-0 bg-navy z-50 flex items-center justify-center p-4">
-        <div class="bg-white p-10 rounded-xl shadow-xl w-full max-w-sm text-center border-t-4 border-amber-400">
-            <h1 class="font-bold text-xl text-slate-800 uppercase tracking-widest mb-8">BTV Dashboard</h1>
-            <input type="text" id="uNaam" placeholder="Voornaam" class="w-full border border-slate-200 p-3 rounded mb-4 text-center focus:border-slate-400 outline-none">
-            <select id="uKlas" class="w-full border border-slate-200 p-3 rounded mb-8 text-center focus:border-slate-400 outline-none">
-                <option value="">-- Kies Eenheid --</option>
-                <option>Alpha</option><option>Bravo</option><option>Charlie</option><option>Delta</option>
+<div class="container">
+    
+    <div id="screen-1">
+        <div class="login-box">
+            <h2 style="text-align:center;">Inloggen Mutatieles</h2>
+            <input type="text" id="user-name" placeholder="Voornaam">
+            <select id="user-class">
+                <option value="">Selecteer klas...</option>
+                <option>Alpha</option><option>Bravo</option><option>Charlie</option>
+                <option>Delta</option><option>Echo</option><option>Foxtrot</option>
+                <option>Golf</option><option>Hotel</option><option>Juliet</option>
+                <option>Kilo</option><option>Lima</option><option>Mike</option>
             </select>
-            <button onclick="startLes()" class="w-full bg-slate-800 text-white py-3 rounded font-bold uppercase tracking-widest hover:bg-slate-900 transition-all">Inloggen</button>
+            <button class="btn" onclick="showScreen(2)">Start Les</button>
         </div>
     </div>
 
-    <div id="mainContent" class="hidden max-w-[1600px] mx-auto p-6 grid grid-cols-12 gap-8 h-screen overflow-hidden">
+    <div id="screen-2" class="hidden">
+        <h1>Lesdoelen: De Mutatie</h1>
+        <div class="info-block">
+            <p>Aan het einde van deze les weet je wat een mutatie is en hoe deze professioneel wordt opgebouwd.</p>
+        </div>
+
+        <div class="grid-2">
+            <div>
+                <h3>Opbouw (ASTMA)</h3>
+                <p><strong>A</strong>anhef, <strong>S</strong>ituatie, <strong>T</strong>oedracht, <strong>M</strong>aatregelen, <strong>A</strong>fhandeling</p>
+                <h3>Gouden W's</h3>
+                <p>Wie, wat, waar, wanneer, waarom, hoe, waarmee</p>
+            </div>
+            <div>
+                <h3>Schrijfstijl</h3>
+                <ul>
+                    <li>Telegramstijl (kort en bondig)</li>
+                    <li>Geen lidwoorden/hulpwerkwoorden</li>
+                    <li>Gebruik van afkortingen</li>
+                    <li><strong>Onvoltooid Verleden Tijd (OVT)</strong></li>
+                </ul>
+            </div>
+        </div>
+        <button class="btn" onclick="showScreen(3)">Bekijk Voorbeeld</button>
+    </div>
+
+    <div id="screen-3" class="hidden">
+        <h1>Voorbeeld Mutatie</h1>
+        <div style="text-align:center; padding: 20px; border: 1px solid #eee; margin-bottom: 20px;">
+            <img src="mutatie.jpg" alt="Afbeelding Mutatie" style="max-width: 100%; height: auto;">
+            <p><small>Bestudeer de opbouw en het gebruik van de OVT in dit voorbeeld.</small></p>
+        </div>
+        <button class="btn" onclick="showScreen(4)">Naar Kennischeck</button>
+    </div>
+
+    <div id="screen-4" class="hidden">
+        <h1>Kennischeck</h1>
+        <div id="quiz-container"></div>
+        <button class="btn" onclick="showScreen(5)">Naar Eindopdracht</button>
+    </div>
+
+    <div id="screen-5" class="hidden">
+        <h1>Eindopdracht: Incident Lekkade</h1>
         
-        <div class="col-span-12 lg:col-span-3 flex flex-col space-y-4 overflow-y-auto pr-2">
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
-                <h2 class="font-bold text-sm uppercase mb-6 text-slate-700 tracking-wider">Stappenplan Mutatie</h2>
-                
-                <div class="step-card"><h3 class="font-bold text-xs text-slate-800">1. Aanhef</h3><p class="text-[10px] text-slate-500 italic">Wie, wat, waar?</p></div>
-                <div class="step-card"><h3 class="font-bold text-xs text-slate-800">2. Situatie</h3><p class="text-[10px] text-slate-500 italic">Objectieve waarnemingen.</p></div>
-                <div class="step-card border-l-amber-400"><h3 class="font-bold text-xs text-red-700">3. Toedracht</h3><p class="text-[10px] text-red-600 font-bold uppercase">Gebruik de verleden tijd!</p></div>
-                <div class="step-card"><h3 class="font-bold text-xs text-slate-800">4. Maatregelen</h3><p class="text-[10px] text-slate-500 italic">Handelingen en bevoegdheden.</p></div>
-                <div class="step-card border-l-slate-800 bg-slate-50 p-2 rounded-r"><h3 class="font-bold text-xs text-slate-800">5. Afhandeling</h3><p class="text-[10px] text-slate-600 font-semibold italic">Verwerk de zorggegevens van de instelling.</p></div>
+        <div class="info-block">
+            <strong>Casusdetails:</strong><br>
+            Datum: 28 april 2026 | Tijd: 14:45 uur<br>
+            Locatie: Winkelplein De Lekkade, Houten<br>
+            Betrokkenen: Mevrouw G. van Vliet (74 jaar), Agenten De Vries en Janssen.
+        </div>
 
-                <div class="mt-8 pt-6 border-t border-slate-100">
-                    <p class="font-bold text-[10px] uppercase text-slate-400 mb-3 tracking-widest">Audiofragment:</p>
-                    <audio id="audioMelding" controls onended="unlockTranscript()" class="w-full mb-4">
-                        <source src="Laan 1914 2 (1).mp3" type="audio/mpeg">
-                    </audio>
-                    
-                    <button id="btnTranscript" disabled onclick="toggleTranscript()" class="w-full py-2 px-4 rounded text-[10px] font-bold uppercase tracking-widest bg-slate-200 text-slate-400 opacity-50 cursor-not-allowed transition-all">
-                        Eerst audio afluisteren...
-                    </button>
+        <div class="audio-link-box">
+            <p>Beluister het incident (meerdere stemmen):</p>
+            <a href="https://genny.lovo.ai/share/521d8e87-3d35-4802-b8ba-3e0ac412b484" target="_blank">🔊 OPEN AUDIOFRAGMENT</a>
+        </div>
 
-                    <div id="transcriptieBox" class="hidden mt-4 p-4 bg-slate-50 border border-slate-200 rounded text-[11px] text-slate-600 font-mono leading-relaxed h-64 overflow-y-auto shadow-inner">
-                        <span class="text-slate-800 font-bold">Transcriptie Kernmomenten:</span><br><br>
-                        OC meldt: Verwarde vrouw bij Diamantplein, zwarte jas, dweilstok.<br><br>
-                        <em>[Gegevens voor Afhandeling]</em><br>
-                        A: "Heeft u begeleiding?"<br>
-                        B: "Ik woon bij <strong>Stichting De Haven</strong>. Mijn begeleider is <strong>Sander de Bruin</strong>."<br>
-                        A: "Heeft u een telefoonnummer?"<br>
-                        B: "Ja, het is <strong>06-12345678</strong>."
-                    </div>
+        <div class="grid-2">
+            <div>
+                <h3>Stel de mutatie op</h3>
+                <p><small>Hanteer ASTMA, de Gouden W's en schrijf in de OVT.</small></p>
+                <textarea id="final-mutation" placeholder="Typ hier de mutatie..." style="height: 250px;"></textarea>
+                <button class="btn" onclick="saveFinal()">Mutatie Opslaan</button>
+            </div>
+            <div>
+                <h3>Script ter ondersteuning</h3>
+                <div class="script-box">
+                    <p><strong>Agent:</strong> "Goed middag mevrouw. Het is niet toegestaan hier te fietsen. Wilt u afstappen?"</p>
+                    <p><strong>Vrouw:</strong> "Ik zoek de sportzaak... ik fiets al drie rondjes!"</p>
+                    <p><strong>Agent:</strong> "Die zit aan de overkant. Loop even mee, dan wijzen we de weg."</p>
                 </div>
             </div>
         </div>
-
-        <div class="col-span-12 lg:col-span-6 flex flex-col h-full">
-            <div class="bg-white p-6 rounded-lg shadow-sm border border-slate-200 flex flex-col h-full">
-                <div class="flex justify-between items-center mb-4">
-                    <h2 class="font-bold text-sm uppercase text-slate-700 tracking-wider italic">Opstellen Mutatie</h2>
-                    <span class="text-[10px] font-bold text-slate-400 uppercase">Eenheid: <span id="displayKlas" class="text-slate-600"></span></span>
-                </div>
-                <textarea id="mutatieInput" class="flex-grow w-full p-5 bg-white border border-slate-200 rounded font-mono text-xs focus:border-slate-400 focus:ring-0 outline-none leading-relaxed resize-none text-slate-700"></textarea>
-                <button onclick="sendData('Mutatie', 'mutatieInput')" class="mt-6 bg-slate-800 text-white py-4 rounded font-bold uppercase tracking-widest hover:bg-slate-900 shadow transition-all active:scale-95">Mutatie Publiceren</button>
-            </div>
-        </div>
-
-        <div class="col-span-12 lg:col-span-3 flex flex-col h-full">
-            <div class="bg-[#f1f5f9] p-5 rounded-lg border border-slate-200 flex flex-col h-full overflow-hidden shadow-inner">
-                <h2 class="text-slate-500 font-bold text-center text-[10px] uppercase tracking-[0.2em] mb-6 border-b border-slate-200 pb-3 italic">Live Tijdlijn</h2>
-                <div id="liveFeed" class="flex-grow overflow-y-auto pr-1">
-                    </div>
-            </div>
-        </div>
-
     </div>
+</div>
+
+<script>
+    const questions = [
+        { q: "Wat zijn de doelen van het opstellen van een mutatie?", a: ["briefing", "planning", "beleidsinformatie", "informatie verzamelen"] },
+        { q: "Wat is het voornaamste verschil tussen een mutatie en een Proces Verbaal?", a: ["pv", "bevindingen", "strafvordering"] },
+        { q: "Noem de gouden W's", a: ["wie", "wat", "waar", "wanneer", "waarom", "hoe", "waarmee"] },
+        { q: "Benoem de 5 onderdelen van het ASTMA-model.", a: ["aanleiding", "situatie", "toedracht", "maatregelen", "afsluiting"] },
+        { q: "'Ik heb gewerkt.' In welke tijd staat deze zin?", a: ["voltooid tegenwoordige tijd", "vtt"] },
+        { q: "'Ik werkte.' In welke tijd staat deze zin?", a: ["onvoltooid verleden tijd", "ovt"] },
+        { q: "Vul de afkorting in: naar aanleiding van", a: ["n.a.v."] },
+        { q: "Vul de afkorting in: hulpOfficier van Justitie", a: ["hovj"] },
+        { q: "Wat wordt bedoeld met telegramstijl?", a: ["verkort", "kort"] },
+        { q: "Welke woorden mag je weglaten in telegramstijl?", a: ["hulpwerkwoorden", "lidwoorden"] }
+    ];
+
+    function showScreen(n) {
+        if(n === 2 && !document.getElementById('user-name').value) return alert("Vul je naam in.");
+        document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+        document.getElementById('screen-' + n).classList.remove('hidden');
+        if(n === 4) loadQuiz();
+        window.scrollTo(0,0);
+    }
+
+    function loadQuiz() {
+        const container = document.getElementById('quiz-container');
+        if(container.innerHTML !== "") return;
+        questions.forEach((item, i) => {
+            const div = document.createElement('div');
+            div.className = 'quiz-item';
+            div.innerHTML = `
+                <p><strong>Vraag ${i+1}:</strong> ${item.q}</p>
+                <input type="text" id="q-${i}" placeholder="Antwoord...">
+                <button class="btn btn-secondary" onclick="checkQ(${i})">Controleer</button>
+                <div id="fb-${i}" class="feedback hidden"></div>
+            `;
+            container.appendChild(div);
+        });
+    }
+
+    function checkQ(i) {
+        const val = document.getElementById('q-' + i).value.toLowerCase();
+        const fb = document.getElementById('fb-' + i);
+        const correct = questions[i].a.some(key => val.includes(key.toLowerCase()));
+        
+        fb.classList.remove('hidden');
+        if(correct) {
+            fb.innerText = "Correct.";
+            fb.className = "feedback correct";
+        } else {
+            fb.innerText = "Niet helemaal. Denk aan de lesstof.";
+            fb.className = "feedback incorrect";
+        }
+    }
+
+    function saveFinal() {
+        const text = document.getElementById('final-mutation').value;
+        if(!text) return alert("Schrijf eerst de mutatie.");
+        alert("Mutatie is opgeslagen voor de docent.");
+        // Hier kan later de Firebase 'set' functie komen
+    }
+</script>
+
 </body>
 </html>
