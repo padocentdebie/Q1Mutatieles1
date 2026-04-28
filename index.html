@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Q1 Mutatieles 1 - Livefeed Portaal</title>
+    <title>Q1 Mutatieles 1 - Volledig Portaal</title>
     <style>
         :root {
             --police-blue: #003082;
@@ -13,6 +13,7 @@
             --white: #ffffff;
             --border-light: #cbd5e1;
             --danger: #dc3545;
+            --success: #28a745;
         }
         * { box-sizing: border-box; }
         body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-gray); color: var(--text-dark); margin: 0; padding: 20px; line-height: 1.6; }
@@ -26,22 +27,30 @@
         .btn { background-color: var(--police-blue); color: white; padding: 14px 28px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-weight: bold; width: 100%; transition: background 0.3s; margin-bottom: 10px; }
         .btn:hover { background-color: #002360; }
         .btn-reset { background-color: var(--danger); font-size: 11px; padding: 8px; }
-        .btn-reset:hover { background-color: #a71d2a; }
-        .btn-secondary { background-color: #64748b; margin-top: 10px; width: auto; font-size: 12px; padding: 8px 15px; }
 
         .info-block { border-left: 5px solid var(--police-gold); padding: 5px 20px; margin: 20px 0; background: #fffcf0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0; }
         
+        /* Drag & Drop Styles */
+        .drag-container { display: flex; flex-direction: column; gap: 10px; margin: 20px 0; }
+        .draggable { background: white; border: 2px solid var(--police-blue); padding: 15px; border-radius: 5px; cursor: grab; user-select: none; transition: transform 0.2s; }
+        .draggable.dragging { opacity: 0.5; }
+        .draggable:active { cursor: grabbing; }
+
         /* Quiz & Feed */
         .quiz-item { background: #fdfdfd; padding: 20px; border: 1px solid #edf2f7; border-radius: 6px; margin-bottom: 15px; }
+        .audio-player-container { background: #f1f5f9; padding: 20px; border-radius: 8px; margin: 20px 0; border: 1px solid var(--border-light); }
+        audio { width: 100%; }
+
         .live-feed { margin-top: 40px; border-top: 3px solid var(--police-gold); padding-top: 20px; }
-        .feed-card { background: #fff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-left: 5px solid var(--police-blue); }
+        .feed-container { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 15px; margin-top: 15px; }
+        .feed-card { background: #fff; border: 1px solid #ddd; padding: 15px; border-left: 5px solid var(--police-blue); border-radius: 4px; }
+        .feed-name { font-weight: bold; color: var(--police-blue); display: block; border-bottom: 1px solid #eee; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    
     <div id="screen-1">
         <div class="login-box">
             <h2 style="text-align:center;">Inloggen Mutatieles</h2>
@@ -55,8 +64,7 @@
             </select>
             <button class="btn" onclick="startSession()">Start Les</button>
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
-            <p style="text-align:center; font-size:12px; color:#666;">Docenten-opties:</p>
-            <button class="btn btn-reset" onclick="resetClassData()">Reset alle data van deze klas</button>
+            <button class="btn btn-reset" onclick="resetClassData()">Reset klas-data (Docent)</button>
         </div>
     </div>
 
@@ -73,13 +81,21 @@
                 <p>Gebruik <strong>Telegramstijl</strong> en de <strong>Onvoltooid Verleden Tijd (OVT)</strong>.</p>
             </div>
         </div>
-        <button class="btn" onclick="showScreen(3)">Bekijk Voorbeeld</button>
+        <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
     </div>
 
     <div id="screen-3" class="hidden">
-        <h1>Voorbeeld Mutatie</h1>
-        <img src="mutatie.jpg" alt="Mutatie voorbeeld" style="max-width: 100%; border: 1px solid #eee;">
-        <button class="btn" onclick="showScreen(4)" style="margin-top:20px;">Naar Kennischeck</button>
+        <h1>Sleepopdracht: Orden de Mutatie</h1>
+        <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA):</p>
+        <div id="drag-list" class="drag-container">
+            <div class="draggable" draggable="true" id="M"><strong>M:</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.</div>
+            <div class="draggable" draggable="true" id="S"><strong>S:</strong> Ter plaatse troffen wij mw. De Jong aan. Mw. maakte een verwarde indruk en zocht naar een sportzaak waarvan zij de naam niet kende.</div>
+            <div class="draggable" draggable="true" id="Af"><strong>Af:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.</div>
+            <div class="draggable" draggable="true" id="A"><strong>A:</strong> Melding OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.</div>
+            <div class="draggable" draggable="true" id="T"><strong>T:</strong> Mw. verklaarde dat een vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming.</div>
+        </div>
+        <button class="btn" onclick="checkOrder()">Controleer Volgorde</button>
+        <button class="btn hidden" id="next-to-4" onclick="showScreen(4)">Correct! Naar Kennischeck</button>
     </div>
 
     <div id="screen-4" class="hidden">
@@ -89,18 +105,26 @@
     </div>
 
     <div id="screen-5" class="hidden">
-        <h1>Eindopdracht: Incident Lekkade</h1>
+        <h1>Eindopdracht: Incident Laan 1914</h1>
         <div class="info-block">
-            <strong>Datum:</strong> 28 april 2026 | <strong>Locatie:</strong> Winkelplein De Lekkade, Houten<br>
-            <strong>Betrokkenen:</strong> Mw. G. van Vliet (74jr), Agenten De Vries & Janssen.
+            <strong>Locatie:</strong> Laan 1914, Amersfoort | <strong>Betrokkene:</strong> Mw. S. de Jong (±25jr)
         </div>
-        <p><a href="https://genny.lovo.ai/share/521d8e87-3d35-4802-b8ba-3e0ac412b484" target="_blank" style="color:var(--police-blue); font-weight:bold;">🔊 BELUISTER AUDIOFRAGMENT HIER</a></p>
         
-        <textarea id="final-mutation" placeholder="Schrijf hier de mutatie in OVT..." style="height: 200px;" oninput="pushFinal()"></textarea>
-
-        <div class="live-feed">
-            <h3>Live Klasoverzicht: <span id="current-class-label"></span></h3>
-            <div id="class-feed"></div>
+        <div class="audio-player-container">
+            <audio controls>
+                <source src="Laan 1914 2 (1).mp3" type="audio/mpeg">
+            </audio>
+        </div>
+        
+        <div class="grid-2">
+            <div>
+                <h3>Jouw Mutatie (OVT)</h3>
+                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height: 350px;" oninput="pushFinal()"></textarea>
+            </div>
+            <div class="live-feed" style="margin-top:0; border-top:none;">
+                <h3>Live Feed Klas: <span id="current-class-label"></span></h3>
+                <div id="class-feed" class="feed-container"></div>
+            </div>
         </div>
     </div>
 </div>
@@ -120,31 +144,66 @@
     const db = getDatabase(app);
     let uName = "", uClass = "";
 
+    /* DRAG & DROP LOGIC */
+    const dragList = document.getElementById('drag-list');
+    let draggedItem = null;
+
+    dragList.addEventListener('dragstart', (e) => {
+        draggedItem = e.target;
+        e.target.classList.add('dragging');
+    });
+
+    dragList.addEventListener('dragend', (e) => {
+        e.target.classList.remove('dragging');
+    });
+
+    dragList.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        const afterElement = getDragAfterElement(dragList, e.clientY);
+        if (afterElement == null) {
+            dragList.appendChild(draggedItem);
+        } else {
+            dragList.insertBefore(draggedItem, afterElement);
+        }
+    });
+
+    function getDragAfterElement(container, y) {
+        const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
+        return draggableElements.reduce((closest, child) => {
+            const box = child.getBoundingClientRect();
+            const offset = y - box.top - box.height / 2;
+            if (offset < 0 && offset > closest.offset) {
+                return { offset: offset, element: child };
+            } else {
+                return closest;
+            }
+        }, { offset: Number.NEGATIVE_INFINITY }).element;
+    }
+
+    window.checkOrder = () => {
+        const order = [...dragList.querySelectorAll('.draggable')].map(el => el.id).join('');
+        if (order === "ASTMAf") {
+            document.getElementById('next-to-4').classList.remove('hidden');
+            alert("Helemaal goed! Dit is de logische chronologische volgorde.");
+        } else {
+            alert("Nog niet juist. Denk aan het ASTMA-model: Aanleiding -> Situatie -> Toedracht -> Maatregelen -> Afhandeling.");
+        }
+    };
+
+    /* APP FLOW LOGIC */
     const questions = [
-        { q: "Doelen van een mutatie?", a: ["briefing", "planning", "informatie"] },
-        { q: "Verschil met PV?", a: ["strafvordering", "bevindingen"] },
-        { q: "Onderdelen ASTMA?", a: ["aanleiding", "situatie", "toedracht", "maatregelen", "afsluiting"] },
-        { q: "Hulpwerkwoorden/lidwoorden weglaten?", a: ["ja", "hulpwerkwoorden", "lidwoorden"] }
+        { q: "Waarvoor dient de Aanleiding (A) in ASTMA?", id: "q0" },
+        { q: "Waarom schrijven we in de OVT?", id: "q1" },
+        { q: "Wat is het verschil tussen Toedracht en Situatie?", id: "q2" }
     ];
 
     window.startSession = () => {
         uName = document.getElementById('user-name').value;
         uClass = document.getElementById('user-class').value;
-        if(!uName || !uClass) return alert("Naam en klas verplicht.");
-        
+        if(!uName || !uClass) return alert("Vul naam en klas in.");
         document.getElementById('current-class-label').innerText = uClass;
         setupLiveFeed();
         showScreen(2);
-    };
-
-    window.resetClassData = () => {
-        const selClass = document.getElementById('user-class').value;
-        if(!selClass) return alert("Selecteer eerst een klas die je wilt resetten.");
-        if(confirm(`Weet je zeker dat je ALLE data voor klas ${selClass} wilt wissen? Dit kan niet ongedaan worden gemaakt.`)) {
-            remove(ref(db, `mutatieles/${selClass}`))
-            .then(() => alert(`Data voor klas ${selClass} is succesvol gewist.`))
-            .catch((err) => alert("Fout bij wissen: " + err));
-        }
     };
 
     window.showScreen = (n) => {
@@ -156,25 +215,27 @@
     function loadQuiz() {
         const container = document.getElementById('quiz-container');
         if(container.innerHTML !== "") return;
-        questions.forEach((item, i) => {
+        questions.forEach((item) => {
             const div = document.createElement('div');
             div.className = 'quiz-item';
-            div.innerHTML = `
-                <p><strong>Vraag ${i+1}:</strong> ${item.q}</p>
-                <input type="text" id="q-${i}" placeholder="Uw antwoord..." oninput="pushQuiz(${i})">
-            `;
+            div.innerHTML = `<p><strong>${item.q}</strong></p><input type="text" oninput="pushQuiz('${item.id}', this.value)">`;
             container.appendChild(div);
         });
     }
 
-    window.pushQuiz = (i) => {
-        const val = document.getElementById('q-' + i).value;
-        set(ref(db, `mutatieles/${uClass}/${uName}/vraag_${i}`), val);
+    window.pushQuiz = (id, val) => {
+        set(ref(db, `mutatieles/${uClass}/${uName}/quiz/${id}`), val);
     };
 
     window.pushFinal = () => {
         const text = document.getElementById('final-mutation').value;
         set(ref(db, `mutatieles/${uClass}/${uName}/eindopdracht`), text);
+    };
+
+    window.resetClassData = () => {
+        const selClass = document.getElementById('user-class').value;
+        if(!selClass || !confirm(`Data voor klas ${selClass} wissen?`)) return;
+        remove(ref(db, `mutatieles/${selClass}`));
     };
 
     function setupLiveFeed() {
@@ -183,12 +244,8 @@
             feed.innerHTML = "";
             const data = snap.val();
             for(let user in data) {
-                const mutatie = data[user].eindopdracht || "<i>Aan het typen...</i>";
-                feed.innerHTML += `
-                    <div class="feed-card">
-                        <strong>Collega ${user}:</strong>
-                        <p style="font-size: 13px; color: #444; white-space: pre-wrap;">${mutatie}</p>
-                    </div>`;
+                const text = data[user].eindopdracht || "...";
+                feed.innerHTML += `<div class="feed-card"><span class="feed-name">${user}</span><div style="font-size:12px; white-space:pre-wrap;">${text}</div></div>`;
             }
         });
     }
