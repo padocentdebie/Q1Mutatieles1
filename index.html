@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Q1 Mutatieles 1 - Operationele Rapportage</title>
+    <title>Q1 Mutatieles 1 - Livefeed Portaal</title>
     <style>
         :root {
             --police-blue: #003082;
@@ -12,72 +12,30 @@
             --text-dark: #1a1a1a;
             --white: #ffffff;
             --border-light: #cbd5e1;
+            --danger: #dc3545;
         }
         * { box-sizing: border-box; }
-        body {
-            font-family: 'Segoe UI', sans-serif;
-            background-color: var(--bg-gray);
-            color: var(--text-dark);
-            margin: 0;
-            padding: 20px;
-            line-height: 1.6;
-        }
-        .container {
-            max-width: 1100px;
-            margin: 0 auto;
-            background: var(--white);
-            padding: 40px;
-            border-top: 10px solid var(--police-blue);
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
-            border-radius: 4px;
-        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg-gray); color: var(--text-dark); margin: 0; padding: 20px; line-height: 1.6; }
+        .container { max-width: 1100px; margin: 0 auto; background: var(--white); padding: 40px; border-top: 10px solid var(--police-blue); box-shadow: 0 4px 20px rgba(0,0,0,0.08); border-radius: 4px; }
         h1, h2, h3 { color: var(--police-blue); text-transform: uppercase; letter-spacing: 1px; }
         .hidden { display: none !important; }
         
-        /* Login Scherm */
+        /* UI Elementen */
         .login-box { max-width: 400px; margin: 60px auto; padding: 30px; border: 1px solid var(--border-light); border-radius: 8px; background: #f8fafc; }
         input, select, textarea { width: 100%; padding: 12px; border: 1px solid var(--border-light); border-radius: 4px; margin-bottom: 15px; font-size: 15px; }
-        
-        /* Buttons */
-        .btn {
-            background-color: var(--police-blue);
-            color: white;
-            padding: 14px 28px;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
-            text-transform: uppercase;
-            font-weight: bold;
-            width: 100%;
-            transition: background 0.3s;
-        }
+        .btn { background-color: var(--police-blue); color: white; padding: 14px 28px; border: none; border-radius: 4px; cursor: pointer; text-transform: uppercase; font-weight: bold; width: 100%; transition: background 0.3s; margin-bottom: 10px; }
         .btn:hover { background-color: #002360; }
-        .btn-secondary { background-color: #64748b; margin-top: 10px; }
+        .btn-reset { background-color: var(--danger); font-size: 11px; padding: 8px; }
+        .btn-reset:hover { background-color: #a71d2a; }
+        .btn-secondary { background-color: #64748b; margin-top: 10px; width: auto; font-size: 12px; padding: 8px 15px; }
 
-        /* Lesdoelen */
         .info-block { border-left: 5px solid var(--police-gold); padding: 5px 20px; margin: 20px 0; background: #fffcf0; }
         .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin: 20px 0; }
         
-        /* Quiz */
+        /* Quiz & Feed */
         .quiz-item { background: #fdfdfd; padding: 20px; border: 1px solid #edf2f7; border-radius: 6px; margin-bottom: 15px; }
-        .feedback { margin-top: 10px; padding: 10px; font-weight: bold; border-radius: 4px; }
-        .correct { color: #166534; background: #f0fdf4; border: 1px solid #bbf7d0; }
-        .incorrect { color: #991b1b; background: #fef2f2; border: 1px solid #fecaca; }
-
-        /* Audio Sectie */
-        .audio-link-box {
-            background: var(--police-blue);
-            color: white;
-            padding: 25px;
-            border-radius: 8px;
-            text-align: center;
-            margin: 20px 0;
-        }
-        .audio-link-box a { color: var(--police-gold); font-weight: bold; text-decoration: none; font-size: 1.1em; }
-        .audio-link-box a:hover { text-decoration: underline; }
-
-        /* Script weergave */
-        .script-box { font-size: 0.9em; background: #f1f5f9; padding: 15px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .live-feed { margin-top: 40px; border-top: 3px solid var(--police-gold); padding-top: 20px; }
+        .feed-card { background: #fff; border: 1px solid #ddd; padding: 15px; margin-bottom: 10px; border-left: 5px solid var(--police-blue); }
     </style>
 </head>
 <body>
@@ -95,31 +53,24 @@
                 <option>Golf</option><option>Hotel</option><option>Juliet</option>
                 <option>Kilo</option><option>Lima</option><option>Mike</option>
             </select>
-            <button class="btn" onclick="showScreen(2)">Start Les</button>
+            <button class="btn" onclick="startSession()">Start Les</button>
+            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+            <p style="text-align:center; font-size:12px; color:#666;">Docenten-opties:</p>
+            <button class="btn btn-reset" onclick="resetClassData()">Reset alle data van deze klas</button>
         </div>
     </div>
 
     <div id="screen-2" class="hidden">
-        <h1>Lesdoelen: De Mutatie</h1>
-        <div class="info-block">
-            <p>Aan het einde van deze les weet je wat een mutatie is en hoe deze professioneel wordt opgebouwd.</p>
-        </div>
-
+        <h1>Lesdoelen & Werkwijze</h1>
         <div class="grid-2">
-            <div>
-                <h3>Opbouw (ASTMA)</h3>
-                <p><strong>A</strong>anhef, <strong>S</strong>ituatie, <strong>T</strong>oedracht, <strong>M</strong>aatregelen, <strong>A</strong>fhandeling</p>
-                <h3>Gouden W's</h3>
-                <p>Wie, wat, waar, wanneer, waarom, hoe, waarmee</p>
+            <div class="info-block">
+                <h3>ASTMA & Gouden W's</h3>
+                <p>Focus op: Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling.</p>
+                <p>Bevraag: Wie, wat, waar, wanneer, waarom, hoe, waarmee.</p>
             </div>
             <div>
                 <h3>Schrijfstijl</h3>
-                <ul>
-                    <li>Telegramstijl (kort en bondig)</li>
-                    <li>Geen lidwoorden/hulpwerkwoorden</li>
-                    <li>Gebruik van afkortingen</li>
-                    <li><strong>Onvoltooid Verleden Tijd (OVT)</strong></li>
-                </ul>
+                <p>Gebruik <strong>Telegramstijl</strong> en de <strong>Onvoltooid Verleden Tijd (OVT)</strong>.</p>
             </div>
         </div>
         <button class="btn" onclick="showScreen(3)">Bekijk Voorbeeld</button>
@@ -127,11 +78,8 @@
 
     <div id="screen-3" class="hidden">
         <h1>Voorbeeld Mutatie</h1>
-        <div style="text-align:center; padding: 20px; border: 1px solid #eee; margin-bottom: 20px;">
-            <img src="mutatie.jpg" alt="Afbeelding Mutatie" style="max-width: 100%; height: auto;">
-            <p><small>Bestudeer de opbouw en het gebruik van de OVT in dit voorbeeld.</small></p>
-        </div>
-        <button class="btn" onclick="showScreen(4)">Naar Kennischeck</button>
+        <img src="mutatie.jpg" alt="Mutatie voorbeeld" style="max-width: 100%; border: 1px solid #eee;">
+        <button class="btn" onclick="showScreen(4)" style="margin-top:20px;">Naar Kennischeck</button>
     </div>
 
     <div id="screen-4" class="hidden">
@@ -142,59 +90,68 @@
 
     <div id="screen-5" class="hidden">
         <h1>Eindopdracht: Incident Lekkade</h1>
-        
         <div class="info-block">
-            <strong>Casusdetails:</strong><br>
-            Datum: 28 april 2026 | Tijd: 14:45 uur<br>
-            Locatie: Winkelplein De Lekkade, Houten<br>
-            Betrokkenen: Mevrouw G. van Vliet (74 jaar), Agenten De Vries en Janssen.
+            <strong>Datum:</strong> 28 april 2026 | <strong>Locatie:</strong> Winkelplein De Lekkade, Houten<br>
+            <strong>Betrokkenen:</strong> Mw. G. van Vliet (74jr), Agenten De Vries & Janssen.
         </div>
+        <p><a href="https://genny.lovo.ai/share/521d8e87-3d35-4802-b8ba-3e0ac412b484" target="_blank" style="color:var(--police-blue); font-weight:bold;">🔊 BELUISTER AUDIOFRAGMENT HIER</a></p>
+        
+        <textarea id="final-mutation" placeholder="Schrijf hier de mutatie in OVT..." style="height: 200px;" oninput="pushFinal()"></textarea>
 
-        <div class="audio-link-box">
-            <p>Beluister het incident (meerdere stemmen):</p>
-            <a href="https://genny.lovo.ai/share/521d8e87-3d35-4802-b8ba-3e0ac412b484" target="_blank">🔊 OPEN AUDIOFRAGMENT</a>
-        </div>
-
-        <div class="grid-2">
-            <div>
-                <h3>Stel de mutatie op</h3>
-                <p><small>Hanteer ASTMA, de Gouden W's en schrijf in de OVT.</small></p>
-                <textarea id="final-mutation" placeholder="Typ hier de mutatie..." style="height: 250px;"></textarea>
-                <button class="btn" onclick="saveFinal()">Mutatie Opslaan</button>
-            </div>
-            <div>
-                <h3>Script ter ondersteuning</h3>
-                <div class="script-box">
-                    <p><strong>Agent:</strong> "Goed middag mevrouw. Het is niet toegestaan hier te fietsen. Wilt u afstappen?"</p>
-                    <p><strong>Vrouw:</strong> "Ik zoek de sportzaak... ik fiets al drie rondjes!"</p>
-                    <p><strong>Agent:</strong> "Die zit aan de overkant. Loop even mee, dan wijzen we de weg."</p>
-                </div>
-            </div>
+        <div class="live-feed">
+            <h3>Live Klasoverzicht: <span id="current-class-label"></span></h3>
+            <div id="class-feed"></div>
         </div>
     </div>
 </div>
 
-<script>
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
+        authDomain: "pvaangifteinleveren.firebaseapp.com",
+        databaseURL: "https://pvaangifteinleveren-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "pvaangifteinleveren"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    let uName = "", uClass = "";
+
     const questions = [
-        { q: "Wat zijn de doelen van het opstellen van een mutatie?", a: ["briefing", "planning", "beleidsinformatie", "informatie verzamelen"] },
-        { q: "Wat is het voornaamste verschil tussen een mutatie en een Proces Verbaal?", a: ["pv", "bevindingen", "strafvordering"] },
-        { q: "Noem de gouden W's", a: ["wie", "wat", "waar", "wanneer", "waarom", "hoe", "waarmee"] },
-        { q: "Benoem de 5 onderdelen van het ASTMA-model.", a: ["aanleiding", "situatie", "toedracht", "maatregelen", "afsluiting"] },
-        { q: "'Ik heb gewerkt.' In welke tijd staat deze zin?", a: ["voltooid tegenwoordige tijd", "vtt"] },
-        { q: "'Ik werkte.' In welke tijd staat deze zin?", a: ["onvoltooid verleden tijd", "ovt"] },
-        { q: "Vul de afkorting in: naar aanleiding van", a: ["n.a.v."] },
-        { q: "Vul de afkorting in: hulpOfficier van Justitie", a: ["hovj"] },
-        { q: "Wat wordt bedoeld met telegramstijl?", a: ["verkort", "kort"] },
-        { q: "Welke woorden mag je weglaten in telegramstijl?", a: ["hulpwerkwoorden", "lidwoorden"] }
+        { q: "Doelen van een mutatie?", a: ["briefing", "planning", "informatie"] },
+        { q: "Verschil met PV?", a: ["strafvordering", "bevindingen"] },
+        { q: "Onderdelen ASTMA?", a: ["aanleiding", "situatie", "toedracht", "maatregelen", "afsluiting"] },
+        { q: "Hulpwerkwoorden/lidwoorden weglaten?", a: ["ja", "hulpwerkwoorden", "lidwoorden"] }
     ];
 
-    function showScreen(n) {
-        if(n === 2 && !document.getElementById('user-name').value) return alert("Vul je naam in.");
-        document.querySelectorAll('.container > div').forEach(div => div.classList.add('hidden'));
+    window.startSession = () => {
+        uName = document.getElementById('user-name').value;
+        uClass = document.getElementById('user-class').value;
+        if(!uName || !uClass) return alert("Naam en klas verplicht.");
+        
+        document.getElementById('current-class-label').innerText = uClass;
+        setupLiveFeed();
+        showScreen(2);
+    };
+
+    window.resetClassData = () => {
+        const selClass = document.getElementById('user-class').value;
+        if(!selClass) return alert("Selecteer eerst een klas die je wilt resetten.");
+        if(confirm(`Weet je zeker dat je ALLE data voor klas ${selClass} wilt wissen? Dit kan niet ongedaan worden gemaakt.`)) {
+            remove(ref(db, `mutatieles/${selClass}`))
+            .then(() => alert(`Data voor klas ${selClass} is succesvol gewist.`))
+            .catch((err) => alert("Fout bij wissen: " + err));
+        }
+    };
+
+    window.showScreen = (n) => {
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
         document.getElementById('screen-' + n).classList.remove('hidden');
         if(n === 4) loadQuiz();
-        window.scrollTo(0,0);
-    }
+    };
 
     function loadQuiz() {
         const container = document.getElementById('quiz-container');
@@ -204,36 +161,37 @@
             div.className = 'quiz-item';
             div.innerHTML = `
                 <p><strong>Vraag ${i+1}:</strong> ${item.q}</p>
-                <input type="text" id="q-${i}" placeholder="Antwoord...">
-                <button class="btn btn-secondary" onclick="checkQ(${i})">Controleer</button>
-                <div id="fb-${i}" class="feedback hidden"></div>
+                <input type="text" id="q-${i}" placeholder="Uw antwoord..." oninput="pushQuiz(${i})">
             `;
             container.appendChild(div);
         });
     }
 
-    function checkQ(i) {
-        const val = document.getElementById('q-' + i).value.toLowerCase();
-        const fb = document.getElementById('fb-' + i);
-        const correct = questions[i].a.some(key => val.includes(key.toLowerCase()));
-        
-        fb.classList.remove('hidden');
-        if(correct) {
-            fb.innerText = "Correct.";
-            fb.className = "feedback correct";
-        } else {
-            fb.innerText = "Niet helemaal. Denk aan de lesstof.";
-            fb.className = "feedback incorrect";
-        }
-    }
+    window.pushQuiz = (i) => {
+        const val = document.getElementById('q-' + i).value;
+        set(ref(db, `mutatieles/${uClass}/${uName}/vraag_${i}`), val);
+    };
 
-    function saveFinal() {
+    window.pushFinal = () => {
         const text = document.getElementById('final-mutation').value;
-        if(!text) return alert("Schrijf eerst de mutatie.");
-        alert("Mutatie is opgeslagen voor de docent.");
-        // Hier kan later de Firebase 'set' functie komen
+        set(ref(db, `mutatieles/${uClass}/${uName}/eindopdracht`), text);
+    };
+
+    function setupLiveFeed() {
+        onValue(ref(db, `mutatieles/${uClass}`), (snap) => {
+            const feed = document.getElementById('class-feed');
+            feed.innerHTML = "";
+            const data = snap.val();
+            for(let user in data) {
+                const mutatie = data[user].eindopdracht || "<i>Aan het typen...</i>";
+                feed.innerHTML += `
+                    <div class="feed-card">
+                        <strong>Collega ${user}:</strong>
+                        <p style="font-size: 13px; color: #444; white-space: pre-wrap;">${mutatie}</p>
+                    </div>`;
+            }
+        });
     }
 </script>
-
 </body>
 </html>
