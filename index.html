@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Q1 Mutatieles 1 - Volledig Portaal</title>
     <style>
-        /* (zelfde styling als vorige keer, verkort weergegeven) */
         :root {
             --police-blue: #003082;
             --police-gold: #ffcc00;
@@ -105,6 +104,13 @@
             padding: 8px 20px;
         }
         .btn-test:hover { background-color: #e0a800; }
+        .btn-file-select {
+            background-color: #6c757d;
+            color: white;
+            width: auto;
+            padding: 10px 20px;
+        }
+        .btn-file-select:hover { background-color: #5a6268; }
 
         .info-block {
             border-left: 5px solid var(--police-gold);
@@ -212,7 +218,20 @@
             background: #e6f0ff;
             border-color: var(--police-blue);
         }
-        #drop-zone input[type="file"] { display: none; }
+        #file-input {
+            display: none;
+        }
+        .upload-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .upload-actions .btn {
+            width: auto;
+            margin-bottom: 0;
+        }
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -371,6 +390,20 @@
             opacity: 1;
             border-style: solid;
         }
+        .file-select-label {
+            background: #6c757d;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            font-weight: bold;
+            text-transform: uppercase;
+            transition: background 0.3s;
+        }
+        .file-select-label:hover {
+            background: #5a6268;
+        }
     </style>
 </head>
 <body>
@@ -490,9 +523,13 @@
                 <p><strong>📁 Sleep hier PDF-bestanden heen</strong><br>of klik om te selecteren</p>
                 <input type="file" id="file-input" multiple accept=".pdf" />
             </div>
-            <button id="upload-btn" class="btn btn-upload">Upload geselecteerde bestanden</button>
-            <button id="refresh-file-list" class="btn btn-refresh">🔄 Ververs bestandenlijst</button>
-            <button id="test-upload-btn" class="btn btn-test">🧪 Test Upload (klein bestand)</button>
+
+            <div class="upload-actions">
+                <label for="file-input" class="file-select-label">📁 Bestanden kiezen</label>
+                <button id="upload-btn" class="btn btn-upload">Upload geselecteerde bestanden</button>
+                <button id="refresh-file-list" class="btn btn-refresh">🔄 Ververs bestandenlijst</button>
+                <button id="test-upload-btn" class="btn btn-test">🧪 Test Upload</button>
+            </div>
             <div id="upload-status"></div>
         </div>
 
@@ -586,6 +623,7 @@
     const fileListItems = document.getElementById('file-list-items');
     const pdfViewer = document.getElementById('pdf-viewer');
     const uploadStatus = document.getElementById('upload-status');
+    const fileInput = document.getElementById('file-input');
 
     // ===== Helper: shuffle array =====
     function shuffleArray(arr) {
@@ -873,7 +911,6 @@
             } catch (err) {
                 console.error("Upload mislukt voor", file.name, err);
                 setStatus(`Fout bij ${file.name}: ${err.message}`, "error");
-                // Blijf doorgaan met andere bestanden
             }
         }
 
@@ -881,7 +918,6 @@
         uploadBtn.textContent = 'Upload geselecteerde bestanden';
         if (successCount > 0) {
             setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-            // Forceer refresh
             document.getElementById('refresh-file-list')?.click();
             return true;
         } else {
@@ -890,7 +926,7 @@
         }
     }
 
-    // ===== TEST UPLOAD (klein tekstbestand) =====
+    // ===== TEST UPLOAD =====
     async function testUpload() {
         if (!uClass) {
             alert("Log eerst in met een klas.");
@@ -911,14 +947,20 @@
     // ===== INIT UPLOAD UI =====
     function initFileUpload() {
         const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
         const uploadBtn = document.getElementById('upload-btn');
         const testBtn = document.getElementById('test-upload-btn');
+        const refreshBtn = document.getElementById('refresh-file-list');
 
-        testBtn.addEventListener('click', testUpload);
-
+        // Klik op dropzone opent bestandsdialoog
         dropZone.addEventListener('click', () => fileInput.click());
 
+        // Label "Bestanden kiezen" opent ook de dialoog (via for attribute al geregeld, maar voor de zekerheid)
+        document.querySelector('.file-select-label')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            fileInput.click();
+        });
+
+        // Slepen
         dropZone.addEventListener('dragover', (e) => {
             e.preventDefault();
             dropZone.classList.add('dragover');
@@ -936,14 +978,16 @@
             }
         });
 
+        // Bestanden geselecteerd via input
         fileInput.addEventListener('change', () => {
             selectedFiles = Array.from(fileInput.files);
             updateUploadStatus();
         });
 
+        // Upload knop
         uploadBtn.addEventListener('click', async () => {
             if (selectedFiles.length === 0) {
-                setStatus("Selecteer eerst PDF-bestanden.", "error");
+                setStatus("Selecteer eerst bestanden via 'Bestanden kiezen' of sleep ze hierheen.", "error");
                 return;
             }
             await uploadFiles(selectedFiles);
@@ -951,6 +995,17 @@
             selectedFiles = [];
             fileInput.value = '';
             updateUploadStatus();
+        });
+
+        // Test knop
+        testBtn.addEventListener('click', testUpload);
+
+        // Refresh knop
+        refreshBtn.addEventListener('click', async () => {
+            if (!uClass) return alert("Geen klas geselecteerd.");
+            const filesRef = ref(db, `mutatieles/${uClass}/files`);
+            const snap = await get(filesRef);
+            renderFileList(snap.val());
         });
 
         function updateUploadStatus() {
@@ -961,14 +1016,6 @@
                 status.innerHTML = `📁 Sleep hier PDF-bestanden heen<br>of klik om te selecteren`;
             }
         }
-
-        // Refresh knop
-        document.getElementById('refresh-file-list')?.addEventListener('click', async () => {
-            if (!uClass) return alert("Geen klas geselecteerd.");
-            const filesRef = ref(db, `mutatieles/${uClass}/files`);
-            const snap = await get(filesRef);
-            renderFileList(snap.val());
-        });
     }
 
     function setStatus(msg, type = "info") {
@@ -1127,7 +1174,7 @@
             if (dragList.children.length === 0) {
                 const itemsHTML = {
                     M: '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-                    S: '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
+                    S: '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintalbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
                     Af: '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.',
                     A: '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
                     T: '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg'
