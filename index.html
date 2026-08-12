@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Q1 Mutatieles 1 - Volledig Portaal</title>
     <style>
+        /* (zelfde styling als vorige keer, verkort weergegeven) */
         :root {
             --police-blue: #003082;
             --police-gold: #ffcc00;
@@ -15,9 +16,7 @@
             --danger: #dc3545;
             --success: #28a745;
         }
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
         body {
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-gray);
@@ -40,10 +39,7 @@
             text-transform: uppercase;
             letter-spacing: 1px;
         }
-        .hidden {
-            display: none !important;
-        }
-
+        .hidden { display: none !important; }
         .login-box {
             max-width: 400px;
             margin: 60px auto;
@@ -73,9 +69,7 @@
             transition: background 0.3s;
             margin-bottom: 10px;
         }
-        .btn:hover {
-            background-color: #002360;
-        }
+        .btn:hover { background-color: #002360; }
         .btn-reset {
             background-color: var(--danger);
             font-size: 11px;
@@ -89,29 +83,28 @@
             display: inline-block;
             margin-right: 10px;
         }
-        .btn-secondary {
-            background-color: #6c757d;
-        }
-        .btn-secondary:hover {
-            background-color: #5a6268;
-        }
+        .btn-secondary { background-color: #6c757d; }
+        .btn-secondary:hover { background-color: #5a6268; }
         .btn-upload {
             background-color: #28a745;
             width: auto;
             padding: 10px 25px;
         }
-        .btn-upload:hover {
-            background-color: #218838;
-        }
+        .btn-upload:hover { background-color: #218838; }
         .btn-refresh {
             background-color: #17a2b8;
             width: auto;
             padding: 8px 20px;
             font-size: 13px;
         }
-        .btn-refresh:hover {
-            background-color: #138496;
+        .btn-refresh:hover { background-color: #138496; }
+        .btn-test {
+            background-color: #ffc107;
+            color: #212529;
+            width: auto;
+            padding: 8px 20px;
         }
+        .btn-test:hover { background-color: #e0a800; }
 
         .info-block {
             border-left: 5px solid var(--police-gold);
@@ -125,7 +118,6 @@
             gap: 30px;
             margin: 20px 0;
         }
-
         .drag-container {
             display: flex;
             flex-direction: column;
@@ -141,13 +133,8 @@
             user-select: none;
             transition: transform 0.2s;
         }
-        .draggable.dragging {
-            opacity: 0.5;
-        }
-        .draggable:active {
-            cursor: grabbing;
-        }
-
+        .draggable.dragging { opacity: 0.5; }
+        .draggable:active { cursor: grabbing; }
         .quiz-item {
             background: #fdfdfd;
             padding: 20px;
@@ -162,10 +149,7 @@
             margin: 20px 0;
             border: 1px solid var(--border-light);
         }
-        audio {
-            width: 100%;
-        }
-
+        audio { width: 100%; }
         .live-feed {
             margin-top: 40px;
             border-top: 3px solid var(--police-gold);
@@ -191,7 +175,6 @@
             border-bottom: 1px solid #eee;
             margin-bottom: 5px;
         }
-
         .kb-list {
             list-style: none;
             padding-left: 0;
@@ -200,11 +183,8 @@
             padding: 6px 0;
             border-bottom: 1px solid #eee;
         }
-        .kb-list li strong {
-            color: var(--police-blue);
-        }
+        .kb-list li strong { color: var(--police-blue); }
 
-        /* PDF + upload */
         .pdf-container {
             width: 100%;
             height: 600px;
@@ -232,9 +212,7 @@
             background: #e6f0ff;
             border-color: var(--police-blue);
         }
-        #drop-zone input[type="file"] {
-            display: none;
-        }
+        #drop-zone input[type="file"] { display: none; }
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -253,18 +231,14 @@
             align-items: center;
             gap: 8px;
         }
-        #file-list-items li:hover {
-            background: #e2e8f0;
-        }
+        #file-list-items li:hover { background: #e2e8f0; }
         #file-list-items li .file-delete {
             color: var(--danger);
             font-weight: bold;
             margin-left: 5px;
             cursor: pointer;
         }
-        #file-list-items li .file-delete:hover {
-            opacity: 0.7;
-        }
+        #file-list-items li .file-delete:hover { opacity: 0.7; }
         #upload-status {
             margin-top: 10px;
             padding: 8px 12px;
@@ -280,6 +254,11 @@
         #upload-status.error {
             background: #f8d7da;
             color: #721c24;
+            display: block;
+        }
+        #upload-status.info {
+            background: #cce5ff;
+            color: #004085;
             display: block;
         }
 
@@ -311,11 +290,8 @@
             padding: 6px 0;
             border-bottom: 1px solid #eee;
         }
-        .feedback-msg strong {
-            color: var(--police-blue);
-        }
+        .feedback-msg strong { color: var(--police-blue); }
 
-        /* Digibord */
         #board-container {
             position: relative;
             width: 100%;
@@ -400,7 +376,7 @@
 <body>
 
 <div class="container">
-    <!-- ========== SCREEN 1: INLOGGEN ========== -->
+    <!-- SCREEN 1: INLOGGEN -->
     <div id="screen-1">
         <div class="login-box">
             <h2 style="text-align:center;">Inloggen Mutatieles</h2>
@@ -418,7 +394,7 @@
         </div>
     </div>
 
-    <!-- ========== SCREEN 2: LESDOELEN ========== -->
+    <!-- SCREEN 2: LESDOELEN -->
     <div id="screen-2" class="hidden">
         <h1>Lesdoelen &amp; Werkwijze</h1>
         <div class="grid-2">
@@ -435,7 +411,7 @@
         <button class="btn" onclick="showScreen(25)">Naar Kennisblok</button>
     </div>
 
-    <!-- ========== SCREEN 25: KENNISBLOK ========== -->
+    <!-- SCREEN 25: KENNISBLOK -->
     <div id="screen-25" class="hidden">
         <h1>Kennisblok: Mutatie opstellen</h1>
         <p>
@@ -480,13 +456,11 @@
         <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
     </div>
 
-    <!-- ========== SCREEN 3: SLEEPOPDRACHT ========== -->
+    <!-- SCREEN 3: SLEEPOPDRACHT -->
     <div id="screen-3" class="hidden">
         <h1>Sleepopdracht: Orden de Mutatie</h1>
         <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA):</p>
-        <div id="drag-list" class="drag-container">
-            <!-- items worden via JavaScript gevuld / geordend -->
-        </div>
+        <div id="drag-list" class="drag-container"></div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
             <button class="btn btn-shuffle" onclick="shuffleOrder()">Schud opnieuw</button>
             <button class="btn" onclick="checkOrder()" style="flex:1;">Controleer Volgorde</button>
@@ -494,14 +468,14 @@
         <button class="btn hidden" id="next-to-4" onclick="showScreen(4)">Correct! Naar Kennischeck</button>
     </div>
 
-    <!-- ========== SCREEN 4: KENNISCHECK ========== -->
+    <!-- SCREEN 4: KENNISCHECK -->
     <div id="screen-4" class="hidden">
         <h1>Kennischeck</h1>
         <div id="quiz-container"></div>
         <button class="btn" onclick="showScreen(5)">Naar PDF &amp; Digibord</button>
     </div>
 
-    <!-- ========== SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD ========== -->
+    <!-- SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD -->
     <div id="screen-5" class="hidden">
         <h1>Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
 
@@ -518,6 +492,7 @@
             </div>
             <button id="upload-btn" class="btn btn-upload">Upload geselecteerde bestanden</button>
             <button id="refresh-file-list" class="btn btn-refresh">🔄 Ververs bestandenlijst</button>
+            <button id="test-upload-btn" class="btn btn-test">🧪 Test Upload (klein bestand)</button>
             <div id="upload-status"></div>
         </div>
 
@@ -551,7 +526,7 @@
         <button class="btn" onclick="showScreen(6)">Naar Eindopdracht</button>
     </div>
 
-    <!-- ========== SCREEN 6: EINDOPDRACHT ========== -->
+    <!-- SCREEN 6: EINDOPDRACHT -->
     <div id="screen-6" class="hidden">
         <h1>Eindopdracht: Incident Laan 1914</h1>
         <div class="info-block">
@@ -621,20 +596,16 @@
         return arr;
     }
 
-    // ===== Helper: update de DOM naar een gegeven volgorde =====
     function updateOrder(orderArray) {
         if (!orderArray || orderArray.length === 0) return;
         const currentIds = Array.from(dragList.children).map(el => el.id);
-        if (currentIds.length === orderArray.length && currentIds.every((id, i) => id === orderArray[i])) {
-            return;
-        }
+        if (currentIds.length === orderArray.length && currentIds.every((id, i) => id === orderArray[i])) return;
         orderArray.forEach(id => {
             const el = document.getElementById(id);
             if (el) dragList.appendChild(el);
         });
     }
 
-    // ===== Firebase listener voor order =====
     function setupOrderListener() {
         if (orderListenerSet) return;
         orderListenerSet = true;
@@ -646,24 +617,18 @@
                 updateOrder(data);
             } else {
                 const shuffled = shuffleArray([...DEFAULT_ORDER]);
-                set(orderRef, shuffled).then(() => {
-                    updateOrder(shuffled);
-                });
+                set(orderRef, shuffled).then(() => updateOrder(shuffled));
             }
         });
     }
 
-    // ===== Huidige volgorde opslaan in Firebase =====
     function saveCurrentOrder() {
         const items = dragList.querySelectorAll('.draggable');
         const order = Array.from(items).map(el => el.id);
         isDragging = true;
-        set(ref(db, `mutatieles/${uClass}/order`), order).then(() => {
-            isDragging = false;
-        });
+        set(ref(db, `mutatieles/${uClass}/order`), order).then(() => { isDragging = false; });
     }
 
-    // ===== Schud de volgorde opnieuw =====
     window.shuffleOrder = () => {
         if (!uClass) return alert("Log eerst in.");
         const shuffled = shuffleArray([...DEFAULT_ORDER]);
@@ -675,7 +640,6 @@
         });
     };
 
-    // ===== Drag & Drop events =====
     function attachDragEvents(el) {
         el.addEventListener('dragstart', (e) => {
             isDragging = true;
@@ -687,10 +651,7 @@
         el.addEventListener('dragend', (e) => {
             el.classList.remove('dragging');
             saveCurrentOrder();
-            setTimeout(() => {
-                isDragging = false;
-                draggedItem = null;
-            }, 50);
+            setTimeout(() => { isDragging = false; draggedItem = null; }, 50);
         });
     }
 
@@ -699,11 +660,8 @@
         e.dataTransfer.dropEffect = 'move';
         if (!draggedItem) return;
         const afterElement = getDragAfterElement(dragList, e.clientY);
-        if (afterElement == null) {
-            dragList.appendChild(draggedItem);
-        } else if (afterElement !== draggedItem) {
-            dragList.insertBefore(draggedItem, afterElement);
-        }
+        if (afterElement == null) dragList.appendChild(draggedItem);
+        else if (afterElement !== draggedItem) dragList.insertBefore(draggedItem, afterElement);
     });
 
     function getDragAfterElement(container, y) {
@@ -711,15 +669,11 @@
         return draggableElements.reduce((closest, child) => {
             const box = child.getBoundingClientRect();
             const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else {
-                return closest;
-            }
+            if (offset < 0 && offset > closest.offset) return { offset, element: child };
+            return closest;
         }, { offset: Number.NEGATIVE_INFINITY }).element;
     }
 
-    // ===== Controleer volgorde =====
     window.checkOrder = () => {
         const order = [...dragList.querySelectorAll('.draggable')].map(el => el.id).join('');
         if (order === "ASTMAf") {
@@ -755,12 +709,11 @@
         set(ref(db, `mutatieles/${uClass}/${uName}/eindopdracht`), text);
     };
 
-    // ===== RESET: verwijder alle klasdata + bestanden =====
+    // ===== RESET =====
     window.resetClassData = async () => {
         const selClass = document.getElementById('user-class').value;
         if (!selClass) return alert("Selecteer eerst een klas.");
-        if (!confirm(`Weet je zeker dat je ALLE data en bestanden voor klas "${selClass}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
-
+        if (!confirm(`Weet je zeker dat je ALLE data en bestanden voor klas "${selClass}" wilt verwijderen?`)) return;
         const filesRef = ref(db, `mutatieles/${selClass}/files`);
         try {
             const snapshot = await get(filesRef);
@@ -775,7 +728,6 @@
                 }
             }
         } catch (e) { console.warn("Error reading files for deletion", e); }
-
         await remove(ref(db, `mutatieles/${selClass}`));
         alert(`Klas "${selClass}" is volledig gereset.`);
         location.reload();
@@ -802,11 +754,7 @@
         const text = input.value.trim();
         if (!text) return alert("Vul een feedbackbericht in.");
         const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
-        push(feedbackRef, {
-            user: uName,
-            message: text,
-            timestamp: Date.now()
-        });
+        push(feedbackRef, { user: uName, message: text, timestamp: Date.now() });
         input.value = '';
     };
 
@@ -830,7 +778,6 @@
     // ===== BESTANDEN UPLOAD / WEERGAVE (live) =====
     let selectedFiles = [];
 
-    // Functie om de bestandenlijst te verversen (handmatig en via listener)
     function renderFileList(files) {
         fileListItems.innerHTML = '';
         if (!files || Object.keys(files).length === 0) {
@@ -877,7 +824,6 @@
         });
     }
 
-    // Live listener voor bestanden
     function setupFileListener() {
         if (fileListenerSet) return;
         fileListenerSet = true;
@@ -888,19 +834,88 @@
         });
     }
 
-    // Handmatige verversknop
-    document.getElementById('refresh-file-list')?.addEventListener('click', async () => {
-        if (!uClass) return alert("Geen klas geselecteerd.");
-        const filesRef = ref(db, `mutatieles/${uClass}/files`);
-        const snap = await get(filesRef);
-        renderFileList(snap.val());
-    });
+    // ===== UPLOAD FUNCTIE =====
+    async function uploadFiles(fileList) {
+        if (!uClass) {
+            setStatus("Klas niet geselecteerd.", "error");
+            return false;
+        }
+        if (!fileList || fileList.length === 0) {
+            setStatus("Geen bestanden geselecteerd.", "error");
+            return false;
+        }
 
-    // Upload functionaliteit
+        const uploadBtn = document.getElementById('upload-btn');
+        uploadBtn.disabled = true;
+        uploadBtn.textContent = 'Uploaden...';
+        setStatus("Bezig met uploaden...", "info");
+
+        let successCount = 0;
+        for (const file of fileList) {
+            try {
+                console.log(`Uploaden van ${file.name} (${file.size} bytes)...`);
+                const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                const fileRef = storageRef(storage, path);
+                const snapshot = await uploadBytes(fileRef, file);
+                console.log("Upload geslaagd, snapshot:", snapshot);
+                const url = await getDownloadURL(snapshot.ref);
+                console.log("Download URL:", url);
+
+                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                await set(newFileRef, {
+                    name: file.name,
+                    url: url,
+                    storagePath: path,
+                    uploadedBy: uName || 'onbekend',
+                    timestamp: Date.now()
+                });
+                successCount++;
+            } catch (err) {
+                console.error("Upload mislukt voor", file.name, err);
+                setStatus(`Fout bij ${file.name}: ${err.message}`, "error");
+                // Blijf doorgaan met andere bestanden
+            }
+        }
+
+        uploadBtn.disabled = false;
+        uploadBtn.textContent = 'Upload geselecteerde bestanden';
+        if (successCount > 0) {
+            setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+            // Forceer refresh
+            document.getElementById('refresh-file-list')?.click();
+            return true;
+        } else {
+            setStatus("Geen bestanden geüpload. Zie foutmeldingen.", "error");
+            return false;
+        }
+    }
+
+    // ===== TEST UPLOAD (klein tekstbestand) =====
+    async function testUpload() {
+        if (!uClass) {
+            alert("Log eerst in met een klas.");
+            return;
+        }
+        const testContent = "Dit is een testbestand van de mutatieles. Tijd: " + new Date().toISOString();
+        const blob = new Blob([testContent], { type: 'text/plain' });
+        const file = new File([blob], "test.txt", { type: 'text/plain' });
+        setStatus("Test upload gestart...", "info");
+        const result = await uploadFiles([file]);
+        if (result) {
+            alert("Test upload geslaagd! Kijk in de lijst of het bestand verschijnt.");
+        } else {
+            alert("Test upload mislukt. Bekijk de console voor foutmeldingen.");
+        }
+    }
+
+    // ===== INIT UPLOAD UI =====
     function initFileUpload() {
         const dropZone = document.getElementById('drop-zone');
         const fileInput = document.getElementById('file-input');
         const uploadBtn = document.getElementById('upload-btn');
+        const testBtn = document.getElementById('test-upload-btn');
+
+        testBtn.addEventListener('click', testUpload);
 
         dropZone.addEventListener('click', () => fileInput.click());
 
@@ -931,54 +946,11 @@
                 setStatus("Selecteer eerst PDF-bestanden.", "error");
                 return;
             }
-            if (!uClass) {
-                setStatus("Klas niet geselecteerd.", "error");
-                return;
-            }
-
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Uploaden...';
-            setStatus("Bezig met uploaden...", "info");
-
-            let successCount = 0;
-            for (const file of selectedFiles) {
-                try {
-                    const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                    const fileRef = storageRef(storage, path);
-                    const snapshot = await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(snapshot.ref);
-
-                    const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                    await set(newFileRef, {
-                        name: file.name,
-                        url: url,
-                        storagePath: path,
-                        uploadedBy: uName || 'onbekend',
-                        timestamp: Date.now()
-                    });
-                    successCount++;
-                } catch (err) {
-                    console.error("Upload mislukt voor", file.name, err);
-                    setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
-                    // Stop niet met de hele lijst, maar ga verder met volgende bestanden
-                }
-            }
-
+            await uploadFiles(selectedFiles);
+            // Reset selectie
             selectedFiles = [];
             fileInput.value = '';
             updateUploadStatus();
-            uploadBtn.disabled = false;
-            uploadBtn.textContent = 'Upload geselecteerde bestanden';
-
-            if (successCount > 0) {
-                setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                // Forceer een refresh van de lijst (de listener zou het al doen, maar voor de zekerheid)
-                document.getElementById('refresh-file-list')?.click();
-            } else if (successCount === 0 && selectedFiles.length === 0) {
-                // Geen poging gedaan
-            } else {
-                setStatus("Geen bestanden geüpload. Zie foutmeldingen.", "error");
-            }
         });
 
         function updateUploadStatus() {
@@ -990,22 +962,23 @@
             }
         }
 
-        function setStatus(msg, type = "info") {
-            uploadStatus.textContent = msg;
-            uploadStatus.className = type;
-            if (type === "info") {
-                uploadStatus.style.display = "block";
-                uploadStatus.style.background = "#cce5ff";
-                uploadStatus.style.color = "#004085";
-            } else {
-                uploadStatus.style.display = "block";
-            }
-            // Verberg na 8 seconden
-            clearTimeout(uploadStatus._timeout);
-            uploadStatus._timeout = setTimeout(() => {
-                uploadStatus.style.display = "none";
-            }, 8000);
-        }
+        // Refresh knop
+        document.getElementById('refresh-file-list')?.addEventListener('click', async () => {
+            if (!uClass) return alert("Geen klas geselecteerd.");
+            const filesRef = ref(db, `mutatieles/${uClass}/files`);
+            const snap = await get(filesRef);
+            renderFileList(snap.val());
+        });
+    }
+
+    function setStatus(msg, type = "info") {
+        uploadStatus.textContent = msg;
+        uploadStatus.className = type;
+        uploadStatus.style.display = "block";
+        clearTimeout(uploadStatus._timeout);
+        uploadStatus._timeout = setTimeout(() => {
+            uploadStatus.style.display = "none";
+        }, 8000);
     }
 
     // ===== DIGIBORD =====
@@ -1172,21 +1145,16 @@
             setupOrderListener();
         }
 
-        if (n === 4) {
-            loadQuiz();
-        }
+        if (n === 4) loadQuiz();
 
         if (n === 5) {
-            if (!fileListenerSet) {
-                initFileUpload();
-            }
+            if (!fileListenerSet) initFileUpload();
             initDigibord();
             if (!pdfViewer.src) pdfViewer.src = '';
             document.getElementById('refresh-file-list')?.click();
         }
     };
 
-    // Start op screen 1
     showScreen(1);
     console.log('App geladen!');
 </script>
