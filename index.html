@@ -95,6 +95,23 @@
         .btn-secondary:hover {
             background-color: #5a6268;
         }
+        .btn-upload {
+            background-color: #28a745;
+            width: auto;
+            padding: 10px 25px;
+        }
+        .btn-upload:hover {
+            background-color: #218838;
+        }
+        .btn-refresh {
+            background-color: #17a2b8;
+            width: auto;
+            padding: 8px 20px;
+            font-size: 13px;
+        }
+        .btn-refresh:hover {
+            background-color: #138496;
+        }
 
         .info-block {
             border-left: 5px solid var(--police-gold);
@@ -175,7 +192,6 @@
             margin-bottom: 5px;
         }
 
-        /* kennisblok */
         .kb-list {
             list-style: none;
             padding-left: 0;
@@ -188,19 +204,68 @@
             color: var(--police-blue);
         }
 
-        /* PDF + feedback + digibord (screen 5) */
+        /* PDF + upload */
         .pdf-container {
             width: 100%;
             height: 600px;
             border: 1px solid #ccc;
             overflow: auto;
             margin-bottom: 20px;
+            background: #fafafa;
         }
         .pdf-container iframe {
             width: 100%;
             height: 100%;
             border: 0;
         }
+        #drop-zone {
+            border: 3px dashed #ccc;
+            padding: 30px;
+            text-align: center;
+            margin: 10px 0;
+            border-radius: 12px;
+            background: #fafafa;
+            transition: background 0.3s, border-color 0.3s;
+            cursor: pointer;
+        }
+        #drop-zone.dragover {
+            background: #e6f0ff;
+            border-color: var(--police-blue);
+        }
+        #drop-zone input[type="file"] {
+            display: none;
+        }
+        #file-list-items {
+            list-style: none;
+            padding: 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        #file-list-items li {
+            background: #f1f5f9;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #d1d9e6;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        #file-list-items li:hover {
+            background: #e2e8f0;
+        }
+        #file-list-items li .file-delete {
+            color: var(--danger);
+            font-weight: bold;
+            margin-left: 5px;
+            cursor: pointer;
+        }
+        #file-list-items li .file-delete:hover {
+            opacity: 0.7;
+        }
+
         .feedback-area {
             display: flex;
             gap: 10px;
@@ -233,7 +298,7 @@
             color: var(--police-blue);
         }
 
-        /* Digibord (in screen 5) */
+        /* Digibord */
         #board-container {
             position: relative;
             width: 100%;
@@ -332,7 +397,7 @@
             </select>
             <button class="btn" onclick="startSession()">Start Les</button>
             <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;" />
-            <button class="btn btn-reset" onclick="resetClassData()">Reset klas-data (Docent)</button>
+            <button class="btn btn-reset" onclick="resetClassData()">Reset klas-data (Docent) - verwijdert ALLES</button>
         </div>
     </div>
 
@@ -419,13 +484,29 @@
         <button class="btn" onclick="showScreen(5)">Naar PDF &amp; Digibord</button>
     </div>
 
-    <!-- ========== SCREEN 5: PDF + FEEDBACK + DIGIBORD ========== -->
+    <!-- ========== SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD ========== -->
     <div id="screen-5" class="hidden">
-        <h1>Mutatie PDF, Feedback &amp; Digibord</h1>
+        <h1>Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
 
-        <!-- PDF -->
-        <div class="pdf-container">
-            <iframe src="Mutatieles1.pdf" title="Mutatie PDF"></iframe>
+        <!-- PDF Viewer -->
+        <div class="pdf-container" id="pdf-viewer-container">
+            <iframe id="pdf-viewer" src="" title="PDF Viewer"></iframe>
+        </div>
+
+        <!-- Upload zone -->
+        <div id="file-upload-area">
+            <div id="drop-zone">
+                <p><strong>📁 Sleep hier PDF-bestanden heen</strong><br>of klik om te selecteren</p>
+                <input type="file" id="file-input" multiple accept=".pdf" />
+            </div>
+            <button id="upload-btn" class="btn btn-upload">Upload geselecteerde bestanden</button>
+            <button id="refresh-file-list" class="btn btn-refresh">🔄 Ververs bestandenlijst</button>
+        </div>
+
+        <!-- Bestandenlijst -->
+        <div id="file-list">
+            <h4>Geüploade bestanden</h4>
+            <ul id="file-list-items"></ul>
         </div>
 
         <!-- Feedback -->
@@ -452,7 +533,7 @@
         <button class="btn" onclick="showScreen(6)">Naar Eindopdracht</button>
     </div>
 
-    <!-- ========== SCREEN 6: EINDOPDRACHT (voorheen screen 5) ========== -->
+    <!-- ========== SCREEN 6: EINDOPDRACHT ========== -->
     <div id="screen-6" class="hidden">
         <h1>Eindopdracht: Incident Laan 1914</h1>
         <div class="info-block">
@@ -482,7 +563,8 @@
 <script type="module">
     // ===== Firebase =====
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, push, update } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
@@ -493,16 +575,23 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const storage = getStorage(app);
 
     let uName = "",
         uClass = "";
 
-    // ===== Globale variabelen voor sleep =====
+    // ===== Globale variabelen =====
     const DEFAULT_ORDER = ["M", "S", "Af", "A", "T"];
     let orderListenerSet = false;
+    let fileListenerSet = false;
+    let digibordInitialized = false;
+    let isDragging = false;
+    let draggedItem = null;
 
     // ===== DOM-referenties =====
     const dragList = document.getElementById('drag-list');
+    const fileListItems = document.getElementById('file-list-items');
+    const pdfViewer = document.getElementById('pdf-viewer');
 
     // ===== Helper: shuffle array =====
     function shuffleArray(arr) {
@@ -516,6 +605,10 @@
     // ===== Helper: update de DOM naar een gegeven volgorde =====
     function updateOrder(orderArray) {
         if (!orderArray || orderArray.length === 0) return;
+        const currentIds = Array.from(dragList.children).map(el => el.id);
+        if (currentIds.length === orderArray.length && currentIds.every((id, i) => id === orderArray[i])) {
+            return;
+        }
         orderArray.forEach(id => {
             const el = document.getElementById(id);
             if (el) dragList.appendChild(el);
@@ -528,6 +621,7 @@
         orderListenerSet = true;
         const orderRef = ref(db, `mutatieles/${uClass}/order`);
         onValue(orderRef, (snapshot) => {
+            if (isDragging) return;
             const data = snapshot.val();
             if (data && Array.isArray(data) && data.length > 0) {
                 updateOrder(data);
@@ -544,7 +638,10 @@
     function saveCurrentOrder() {
         const items = dragList.querySelectorAll('.draggable');
         const order = Array.from(items).map(el => el.id);
-        set(ref(db, `mutatieles/${uClass}/order`), order);
+        isDragging = true;
+        set(ref(db, `mutatieles/${uClass}/order`), order).then(() => {
+            isDragging = false;
+        });
     }
 
     // ===== Schud de volgorde opnieuw =====
@@ -552,30 +649,44 @@
         if (!uClass) return alert("Log eerst in.");
         const shuffled = shuffleArray([...DEFAULT_ORDER]);
         const orderRef = ref(db, `mutatieles/${uClass}/order`);
+        isDragging = true;
         set(orderRef, shuffled).then(() => {
+            isDragging = false;
             document.getElementById('next-to-4').classList.add('hidden');
         });
     };
 
     // ===== Drag & Drop events =====
-    let draggedItem = null;
-    dragList.addEventListener('dragstart', (e) => {
-        draggedItem = e.target;
-        e.target.classList.add('dragging');
-    });
-    dragList.addEventListener('dragend', (e) => {
-        e.target.classList.remove('dragging');
-        saveCurrentOrder();
-    });
+    function attachDragEvents(el) {
+        el.addEventListener('dragstart', (e) => {
+            isDragging = true;
+            draggedItem = el;
+            el.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', el.id);
+        });
+        el.addEventListener('dragend', (e) => {
+            el.classList.remove('dragging');
+            saveCurrentOrder();
+            setTimeout(() => {
+                isDragging = false;
+                draggedItem = null;
+            }, 50);
+        });
+    }
+
     dragList.addEventListener('dragover', (e) => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        if (!draggedItem) return;
         const afterElement = getDragAfterElement(dragList, e.clientY);
         if (afterElement == null) {
             dragList.appendChild(draggedItem);
-        } else {
+        } else if (afterElement !== draggedItem) {
             dragList.insertBefore(draggedItem, afterElement);
         }
     });
+
     function getDragAfterElement(container, y) {
         const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
         return draggableElements.reduce((closest, child) => {
@@ -597,52 +708,6 @@
             alert("Helemaal goed! Dit is de logische chronologische volgorde.");
         } else {
             alert("Nog niet juist. Denk aan het ASTMA-model: Aanleiding -> Situatie -> Toedracht -> Maatregelen -> Afhandeling.");
-        }
-    };
-
-    // ===== App flow =====
-    window.startSession = () => {
-        uName = document.getElementById('user-name').value.trim();
-        uClass = document.getElementById('user-class').value;
-        if (!uName || !uClass) return alert("Vul naam en klas in.");
-        document.getElementById('current-class-label').innerText = uClass;
-        setupLiveFeed();
-        setupFeedbackFeed();
-        showScreen(2);
-    };
-
-    window.showScreen = function(n) {
-        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        const el = document.getElementById('screen-' + n);
-        if (el) el.classList.remove('hidden');
-
-        if (n === 3) {
-            if (dragList.children.length === 0) {
-                const itemsHTML = {
-                    M: '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-                    S: '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintalbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
-                    Af: '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.',
-                    A: '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-                    T: '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg'
-                };
-                DEFAULT_ORDER.forEach(id => {
-                    const div = document.createElement('div');
-                    div.className = 'draggable';
-                    div.id = id;
-                    div.draggable = true;
-                    div.innerHTML = itemsHTML[id];
-                    dragList.appendChild(div);
-                });
-            }
-            setupOrderListener();
-        }
-
-        if (n === 4) {
-            loadQuiz();
-        }
-
-        if (n === 5) {
-            initDigibord();
         }
     };
 
@@ -671,13 +736,33 @@
         set(ref(db, `mutatieles/${uClass}/${uName}/eindopdracht`), text);
     };
 
-    window.resetClassData = () => {
+    // ===== RESET: verwijder alle klasdata + bestanden =====
+    window.resetClassData = async () => {
         const selClass = document.getElementById('user-class').value;
-        if (!selClass || !confirm(`Data voor klas ${selClass} wissen?`)) return;
-        remove(ref(db, `mutatieles/${selClass}`));
+        if (!selClass) return alert("Selecteer eerst een klas.");
+        if (!confirm(`Weet je zeker dat je ALLE data en bestanden voor klas "${selClass}" wilt verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return;
+
+        const filesRef = ref(db, `mutatieles/${selClass}/files`);
+        try {
+            const snapshot = await get(filesRef);
+            if (snapshot.exists()) {
+                const files = snapshot.val();
+                for (let key in files) {
+                    const fileData = files[key];
+                    if (fileData.storagePath) {
+                        const fileRef = storageRef(storage, fileData.storagePath);
+                        try { await deleteObject(fileRef); } catch (e) { console.warn("Failed to delete file", fileData.name, e); }
+                    }
+                }
+            }
+        } catch (e) { console.warn("Error reading files for deletion", e); }
+
+        await remove(ref(db, `mutatieles/${selClass}`));
+        alert(`Klas "${selClass}" is volledig gereset.`);
+        location.reload();
     };
 
-    // ===== Live Feed voor eindopdracht (screen 6) =====
+    // ===== LIVE FEED =====
     function setupLiveFeed() {
         onValue(ref(db, `mutatieles/${uClass}`), (snap) => {
             const feed = document.getElementById('class-feed');
@@ -685,14 +770,14 @@
             const data = snap.val();
             if (!data) return;
             for (let user in data) {
-                if (user === 'order' || user === 'feedback') continue;
+                if (user === 'order' || user === 'feedback' || user === 'files') continue;
                 const text = data[user].eindopdracht || "...";
                 feed.innerHTML += `<div class="feed-card"><span class="feed-name">${user}</span><div style="font-size:12px; white-space:pre-wrap;">${text}</div></div>`;
             }
         });
     }
 
-    // ===== FEEDBACK (screen 5) =====
+    // ===== FEEDBACK =====
     window.sendFeedback = () => {
         const input = document.getElementById('feedback-input');
         const text = input.value.trim();
@@ -723,8 +808,152 @@
         });
     }
 
-    // ===== DIGIBORD (screen 5) =====
-    let digibordInitialized = false;
+    // ===== BESTANDEN UPLOAD / WEERGAVE (live) =====
+    let selectedFiles = [];
+
+    // Functie om de bestandenlijst te verversen (handmatig en via listener)
+    function renderFileList(files) {
+        fileListItems.innerHTML = '';
+        if (!files || Object.keys(files).length === 0) {
+            fileListItems.innerHTML = '<li>Nog geen bestanden geüpload.</li>';
+            return;
+        }
+        const entries = Object.values(files).sort((a,b) => a.timestamp - b.timestamp);
+        entries.forEach((fileData) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <span>📄 ${fileData.name}</span>
+                <span class="file-delete" data-url="${fileData.url}" data-path="${fileData.storagePath}">✕</span>
+            `;
+            li.addEventListener('click', (e) => {
+                if (e.target.classList.contains('file-delete')) return;
+                pdfViewer.src = fileData.url;
+            });
+            const deleteBtn = li.querySelector('.file-delete');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Bestand "${fileData.name}" verwijderen?`)) return;
+                try {
+                    if (fileData.storagePath) {
+                        const fileRef = storageRef(storage, fileData.storagePath);
+                        await deleteObject(fileRef);
+                    }
+                    const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
+                    if (snapshot.exists()) {
+                        const allFiles = snapshot.val();
+                        for (let key in allFiles) {
+                            const f = allFiles[key];
+                            if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
+                                await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
+                                break;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("Verwijderen mislukt:", err);
+                    alert("Fout bij verwijderen: " + err.message);
+                }
+            });
+            fileListItems.appendChild(li);
+        });
+    }
+
+    // Live listener voor bestanden
+    function setupFileListener() {
+        if (fileListenerSet) return;
+        fileListenerSet = true;
+        const filesRef = ref(db, `mutatieles/${uClass}/files`);
+        onValue(filesRef, (snap) => {
+            const data = snap.val();
+            renderFileList(data);
+        });
+    }
+
+    // Handmatige verversknop
+    document.getElementById('refresh-file-list')?.addEventListener('click', async () => {
+        if (!uClass) return alert("Geen klas geselecteerd.");
+        const filesRef = ref(db, `mutatieles/${uClass}/files`);
+        const snap = await get(filesRef);
+        renderFileList(snap.val());
+    });
+
+    // Upload functionaliteit
+    function initFileUpload() {
+        // Alleen de upload UI koppelen, de listener wordt apart gestart
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+
+        dropZone.addEventListener('click', () => fileInput.click());
+
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                fileInput.files = e.dataTransfer.files;
+                selectedFiles = Array.from(fileInput.files);
+                updateUploadStatus();
+            }
+        });
+
+        fileInput.addEventListener('change', () => {
+            selectedFiles = Array.from(fileInput.files);
+            updateUploadStatus();
+        });
+
+        uploadBtn.addEventListener('click', async () => {
+            if (selectedFiles.length === 0) return alert("Selecteer eerst PDF-bestanden.");
+            if (!uClass) return alert("Klas niet geselecteerd.");
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploaden...';
+
+            for (const file of selectedFiles) {
+                try {
+                    const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                    const fileRef = storageRef(storage, path);
+                    await uploadBytes(fileRef, file);
+                    const url = await getDownloadURL(fileRef);
+
+                    const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                    await set(newFileRef, {
+                        name: file.name,
+                        url: url,
+                        storagePath: path,
+                        uploadedBy: uName || 'onbekend',
+                        timestamp: Date.now()
+                    });
+                } catch (err) {
+                    console.error("Upload mislukt:", err);
+                    alert(`Fout bij uploaden van ${file.name}: ${err.message}`);
+                }
+            }
+
+            selectedFiles = [];
+            fileInput.value = '';
+            updateUploadStatus();
+            uploadBtn.disabled = false;
+            uploadBtn.textContent = 'Upload geselecteerde bestanden';
+        });
+
+        function updateUploadStatus() {
+            const status = document.querySelector('#drop-zone p');
+            if (selectedFiles.length) {
+                status.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload" om te verzenden.`;
+            } else {
+                status.innerHTML = `📁 Sleep hier PDF-bestanden heen<br>of klik om te selecteren`;
+            }
+        }
+    }
+
+    // ===== DIGIBORD =====
     function initDigibord() {
         if (digibordInitialized) return;
         digibordInitialized = true;
@@ -736,7 +965,7 @@
         const classForBoard = uClass;
 
         let objects = {};
-        let isDrawing = false, isDragging = false;
+        let isDrawing = false, isDraggingBoard = false;
         let draggedId = null, currentPathId = null;
         let offsetX = 0, offsetY = 0;
 
@@ -758,7 +987,7 @@
 
         const startAction = (e) => {
             const { x, y } = getPos(e);
-            draggedId = null; isDragging = false;
+            draggedId = null; isDraggingBoard = false;
 
             const entries = Object.entries(objects).reverse();
             for (const [id, obj] of entries) {
@@ -766,7 +995,7 @@
                     ctx.font = "bold 24px Arial";
                     const w = ctx.measureText(obj.text).width;
                     if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
-                        draggedId = id; isDragging = true;
+                        draggedId = id; isDraggingBoard = true;
                         offsetX = x - obj.x; offsetY = y - obj.y;
                         return;
                     }
@@ -779,10 +1008,10 @@
         };
 
         const moveAction = (e) => {
-            if (!isDragging && !isDrawing) return;
+            if (!isDraggingBoard && !isDrawing) return;
             const { x, y, rawX, rawY } = getPos(e);
 
-            if (isDragging && draggedId) {
+            if (isDraggingBoard && draggedId) {
                 update(ref(db, `classes/${classForBoard}/board/${draggedId}`), { x: x - offsetX, y: y - offsetY });
                 const tRect = trashZone.getBoundingClientRect();
                 trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
@@ -800,10 +1029,10 @@
         };
 
         const stopAction = () => {
-            if (isDragging && draggedId && trashZone.classList.contains('active')) {
+            if (isDraggingBoard && draggedId && trashZone.classList.contains('active')) {
                 remove(ref(db, `classes/${classForBoard}/board/${draggedId}`));
             }
-            isDrawing = isDragging = false;
+            isDrawing = isDraggingBoard = false;
             draggedId = currentPathId = null;
             trashZone.classList.remove('active');
         };
@@ -849,6 +1078,64 @@
         });
     }
 
+    // ===== APP FLOW =====
+    window.startSession = () => {
+        uName = document.getElementById('user-name').value.trim();
+        uClass = document.getElementById('user-class').value;
+        if (!uName || !uClass) return alert("Vul naam en klas in.");
+        document.getElementById('current-class-label').innerText = uClass;
+        setupLiveFeed();
+        setupFeedbackFeed();
+        // File listener starten zodra we ingelogd zijn (zodat die alvast luistert)
+        setupFileListener();
+        showScreen(2);
+    };
+
+    window.showScreen = function(n) {
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        const el = document.getElementById('screen-' + n);
+        if (el) el.classList.remove('hidden');
+
+        if (n === 3) {
+            if (dragList.children.length === 0) {
+                const itemsHTML = {
+                    M: '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
+                    S: '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintalbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
+                    Af: '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.',
+                    A: '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+                    T: '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg'
+                };
+                DEFAULT_ORDER.forEach(id => {
+                    const div = document.createElement('div');
+                    div.className = 'draggable';
+                    div.id = id;
+                    div.draggable = true;
+                    div.innerHTML = itemsHTML[id];
+                    attachDragEvents(div);
+                    dragList.appendChild(div);
+                });
+            }
+            setupOrderListener();
+        }
+
+        if (n === 4) {
+            loadQuiz();
+        }
+
+        if (n === 5) {
+            // Upload UI eenmalig koppelen
+            if (!fileListenerSet) {
+                initFileUpload();
+            }
+            initDigibord();
+            if (!pdfViewer.src) pdfViewer.src = '';
+            // Forceer een refresh van de bestandenlijst
+            document.getElementById('refresh-file-list')?.click();
+        }
+    };
+
+    // Start op screen 1
+    showScreen(1);
     console.log('App geladen!');
 </script>
 </body>
