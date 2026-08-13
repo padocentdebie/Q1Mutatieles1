@@ -889,22 +889,44 @@
             div.className = 'draggable';
             div.draggable = true;
             div.innerHTML = text;
-            div.addEventListener('dragstart', () => div.classList.add('dragging'));
-            div.addEventListener('dragend', () => div.classList.remove('dragging'));
+            div.addEventListener('dragstart', () => {
+                div.classList.add('dragging');
+            });
+            div.addEventListener('dragend', () => {
+                div.classList.remove('dragging');
+            });
             list.appendChild(div);
         });
 
-        // Voeg drop-listener toe op de container (éénmalig, of bij elke render?)
-        // We zorgen dat de listener niet dubbel wordt toegevoegd
-        if (list._dropListenerAdded) return;
-        list.addEventListener('drop', (e) => {
-            e.preventDefault();
-            // Na drop de nieuwe volgorde naar Firebase sturen
-            const currentOrder = getCurrentDragOrder();
-            const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-            set(dragOrderRef, currentOrder);
-        });
-        list._dropListenerAdded = true;
+        // Container events (altijd opnieuw toevoegen om dubbeling te voorkomen)
+        // Oude listeners worden verwijderd door replaceChild? Nee, we vervangen de inhoud, maar listeners op container blijven.
+        // We voegen ze toe als ze nog niet bestaan.
+        if (!list._dragListenersAdded) {
+            list.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                const dragging = document.querySelector('.dragging');
+                if (!dragging) return;
+                const siblings = [...list.querySelectorAll('.draggable:not(.dragging)')];
+                const nextSibling = siblings.find(sibling => {
+                    const rect = sibling.getBoundingClientRect();
+                    return e.clientY <= rect.top + rect.height / 2;
+                });
+                if (nextSibling) {
+                    list.insertBefore(dragging, nextSibling);
+                } else {
+                    list.appendChild(dragging);
+                }
+            });
+
+            list.addEventListener('drop', (e) => {
+                e.preventDefault();
+                // Na drop de nieuwe volgorde naar Firebase sturen
+                const currentOrder = getCurrentDragOrder();
+                const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+                set(dragOrderRef, currentOrder);
+            });
+            list._dragListenersAdded = true;
+        }
     }
 
     // Haal de huidige volgorde uit de DOM
