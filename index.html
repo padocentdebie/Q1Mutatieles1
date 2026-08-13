@@ -230,7 +230,7 @@
         #file-input {
             display: none;
         }
-        /* ─── Verbeterde bestandenlijst ─── */
+        /* ─── Verbeterde bestandenlijst (uit Leo AI) ─── */
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -674,7 +674,7 @@
         setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
     }
 
-    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN =====
+    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN (Leo AI versie) =====
     function renderFileList(files) {
         if(!fileListItems) return;
         fileListItems.innerHTML = '';
@@ -686,17 +686,9 @@
         const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
         entries.forEach((fileData) => {
             const li = document.createElement('li');
-            const date = new Date(fileData.timestamp);
-            const dateStr = date.toLocaleDateString('nl-NL', {
-                day: '2-digit', month: '2-digit', year: 'numeric',
-                hour: '2-digit', minute: '2-digit'
-            });
             li.innerHTML = `
-                <div class="file-item">
-                    <span class="file-name">📄 ${fileData.name}</span>
-                    <span class="file-meta">Geüpload door ${fileData.uploadedBy || 'onbekend'} op ${dateStr}</span>
-                    <span class="file-delete" title="Verwijderen">✕</span>
-                </div>
+                <span>📄 ${fileData.name}</span>
+                <span class="file-delete" title="Verwijderen">✕</span>
             `;
             
             li.addEventListener('click', (e) => {
@@ -708,6 +700,7 @@
             deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
+                
                 try {
                     if (fileData.storagePath) {
                         const fileRef = storageRef(storage, fileData.storagePath);
@@ -733,7 +726,7 @@
         });
     }
 
-    // ===== INIT UPLOAD FUNCTIE =====
+    // ===== INIT UPLOAD FUNCTIE (Leo AI versie) =====
     function initFileUpload() {
         if (fileListenerSet) return;
         fileListenerSet = true;
@@ -818,6 +811,7 @@
 
                 if (successCount > 0) {
                     setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                    // De onValue listener zal de lijst automatisch updaten
                 }
             });
         }
@@ -898,9 +892,7 @@
             list.appendChild(div);
         });
 
-        // Container events (altijd opnieuw toevoegen om dubbeling te voorkomen)
-        // Oude listeners worden verwijderd door replaceChild? Nee, we vervangen de inhoud, maar listeners op container blijven.
-        // We voegen ze toe als ze nog niet bestaan.
+        // Container events (eenmalig toegevoegd)
         if (!list._dragListenersAdded) {
             list.addEventListener('dragover', (e) => {
                 e.preventDefault();
