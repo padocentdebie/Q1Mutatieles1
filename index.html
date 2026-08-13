@@ -664,6 +664,67 @@
         setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
     }
 
+    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN (GLOBAAL BESCHIKBAAR) =====
+    function renderFileList(files) {
+        if(!fileListItems) return;
+        fileListItems.innerHTML = '';
+        if (!files || Object.keys(files).length === 0) {
+            fileListItems.innerHTML = '<li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>';
+            return;
+        }
+        
+        const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
+        entries.forEach((fileData) => {
+            const li = document.createElement('li');
+            // Datum en tijd netjes formatteren
+            const date = new Date(fileData.timestamp);
+            const dateStr = date.toLocaleDateString('nl-NL', {
+                day: '2-digit', month: '2-digit', year: 'numeric',
+                hour: '2-digit', minute: '2-digit'
+            });
+            li.innerHTML = `
+                <div class="file-item">
+                    <span class="file-name">📄 ${fileData.name}</span>
+                    <span class="file-meta">Geüpload door ${fileData.uploadedBy || 'onbekend'} op ${dateStr}</span>
+                    <span class="file-delete" title="Verwijderen">✕</span>
+                </div>
+            `;
+            
+            li.addEventListener('click', (e) => {
+                if (e.target.classList.contains('file-delete')) return;
+                openPdf(fileData.url);
+            });
+
+            const deleteBtn = li.querySelector('.file-delete');
+            deleteBtn.addEventListener('click', async (e) => {
+                e.stopPropagation();
+                if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
+                
+                try {
+                    if (fileData.storagePath) {
+                        const fileRef = storageRef(storage, fileData.storagePath);
+                        await deleteObject(fileRef);
+                    }
+                    const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
+                    if (snapshot.exists()) {
+                        const allFiles = snapshot.val();
+                        for (let key in allFiles) {
+                            const f = allFiles[key];
+                            if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
+                                await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
+                                break;
+                            }
+                        }
+                    }
+                } catch (err) {
+                    console.error("Verwijderen mislukt:", err);
+                    alert("Fout bij verwijderen: " + err.message);
+                }
+            });
+            fileListItems.appendChild(li);
+        });
+    }
+
     // ===== INIT UPLOAD FUNCTIE =====
     function initFileUpload() {
         if (fileListenerSet) return;
@@ -754,68 +815,7 @@
             });
         }
 
-        // ─── Verbeterde renderFileList (meer informatie) ───
-        function renderFileList(files) {
-            if(!fileListItems) return;
-            fileListItems.innerHTML = '';
-            if (!files || Object.keys(files).length === 0) {
-                fileListItems.innerHTML = '<li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>';
-                return;
-            }
-            
-            const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
-            entries.forEach((fileData) => {
-                const li = document.createElement('li');
-                // Datum en tijd netjes formatteren
-                const date = new Date(fileData.timestamp);
-                const dateStr = date.toLocaleDateString('nl-NL', {
-                    day: '2-digit', month: '2-digit', year: 'numeric',
-                    hour: '2-digit', minute: '2-digit'
-                });
-                li.innerHTML = `
-                    <div class="file-item">
-                        <span class="file-name">📄 ${fileData.name}</span>
-                        <span class="file-meta">Geüpload door ${fileData.uploadedBy || 'onbekend'} op ${dateStr}</span>
-                        <span class="file-delete" title="Verwijderen">✕</span>
-                    </div>
-                `;
-                
-                li.addEventListener('click', (e) => {
-                    if (e.target.classList.contains('file-delete')) return;
-                    openPdf(fileData.url);
-                });
-
-                const deleteBtn = li.querySelector('.file-delete');
-                deleteBtn.addEventListener('click', async (e) => {
-                    e.stopPropagation();
-                    if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
-                    
-                    try {
-                        if (fileData.storagePath) {
-                            const fileRef = storageRef(storage, fileData.storagePath);
-                            await deleteObject(fileRef);
-                        }
-                        const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
-                        if (snapshot.exists()) {
-                            const allFiles = snapshot.val();
-                            for (let key in allFiles) {
-                                const f = allFiles[key];
-                                if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
-                                    await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
-                                    break;
-                                }
-                            }
-                        }
-                    } catch (err) {
-                        console.error("Verwijderen mislukt:", err);
-                        alert("Fout bij verwijderen: " + err.message);
-                    }
-                });
-                fileListItems.appendChild(li);
-            });
-        }
-
-        // Live updates voor bestanden
+        // Live updates voor bestanden (wordt één keer ingesteld)
         const filesRef = ref(db, `mutatieles/${uClass}/files`);
         onValue(filesRef, (snap) => {
             renderFileList(snap.val());
