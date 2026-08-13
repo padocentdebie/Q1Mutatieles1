@@ -726,7 +726,7 @@
         });
     }
 
-      // ===== INIT UPLOAD FUNCTIE (VERBETERDE VERSIE) =====
+    // ===== INIT UPLOAD FUNCTIE (GECORRIGEERD – dubbele/afgekapte events verwijderd) =====
     function initFileUpload() {
         if (fileListenerSet) return;
         fileListenerSet = true;
@@ -742,20 +742,6 @@
                 fileInput.click();
             });
         }
-
-        if(dropZone && fileInput) {
-            dropZone.addEventListener('click', () => fileInput.click());
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('drag
 
         if(dropZone && fileInput) {
             dropZone.addEventListener('click', () => fileInput.click());
