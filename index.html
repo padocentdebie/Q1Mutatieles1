@@ -591,23 +591,45 @@
         <button class="btn" onclick="showScreen(6)" style="margin-top: 25px;">Naar Eindopdracht</button>
     </div>
 
-    <!-- SCREEN 6: EINDOPDRACHT -->
+    <!-- =============== SCREEN 6: EINDOPDRACHT (AANGEPAST) =============== -->
     <div id="screen-6" class="hidden">
         <h1>Eindopdracht: Incident Laan 1914</h1>
         <div class="info-block">
             <strong>Locatie:</strong> Laan 1914, Amersfoort | <strong>Betrokkene:</strong> Mw. S. de Jong (±25jr)
         </div>
 
+        <!-- BESTAANDE AUDIO (vast bestand) -->
         <div class="audio-player-container">
             <audio controls>
                 <source src="Laan 1914 2 (1).mp3" type="audio/mpeg" />
             </audio>
         </div>
 
+        <!-- === NIEUW: EIGEN AUDIO UPLOAD === -->
+        <div style="margin: 20px 0; border-top: 2px solid #ddd; padding-top: 20px;">
+            <h3>📤 Upload eigen audiobestand</h3>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
+                <input type="file" id="audio-file-input" accept="audio/*" style="width: auto; flex:1;" />
+                <button id="upload-audio-btn" class="btn btn-upload" style="width: auto;">Upload audio</button>
+            </div>
+            <div id="audio-upload-status" style="margin-top: 10px; font-weight: bold; display: none;"></div>
+            <div style="margin-top: 15px;">
+                <audio id="uploaded-audio-player" controls style="width: 100%;"></audio>
+            </div>
+        </div>
+
         <div class="grid-2">
             <div>
-                <h3>Jouw Mutatie (OVT)</h3>
-                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:350px;"></textarea>
+                <h3>Jouw Mutatie (OVT) - wordt gedeeld met klas</h3>
+                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:150px;"></textarea>
+                <!-- === NIEUW: drie extra tekstvelden voor mutaties === -->
+                <h3>Extra mutatie-notities (lokaal)</h3>
+                <label>Mutatie 1:</label>
+                <textarea id="mutation1" placeholder="Notitie mutatie 1..." style="height:80px; margin-bottom:10px;"></textarea>
+                <label>Mutatie 2:</label>
+                <textarea id="mutation2" placeholder="Notitie mutatie 2..." style="height:80px; margin-bottom:10px;"></textarea>
+                <label>Mutatie 3:</label>
+                <textarea id="mutation3" placeholder="Notitie mutatie 3..." style="height:80px;"></textarea>
             </div>
             <div class="live-feed" style="margin-top:0; border-top:none;">
                 <h3>Live Feed Klas: <span id="current-class-label"></span></h3>
@@ -616,6 +638,7 @@
         </div>
         <button class="btn btn-secondary" onclick="showScreen(5)">Terug naar PDF &amp; Digibord</button>
     </div>
+    <!-- =============== EINDE SCREEN 6 =============== -->
 </div>
 
 <script type="module">
@@ -1243,6 +1266,88 @@
         originalStartSession();
         listenClassFeed();
     };
+
+    // ============================================================
+    // === NIEUW: AUDIO UPLOAD & EXTRA MUTATIES (alleen toevoeging) ===
+    // ============================================================
+    let audioInitDone = false;
+
+    function initAudioFeatures() {
+        if (audioInitDone) return;
+        if (!uClass) {
+            setTimeout(initAudioFeatures, 500);
+            return;
+        }
+        audioInitDone = true;
+
+        const audioInput = document.getElementById('audio-file-input');
+        const uploadBtn = document.getElementById('upload-audio-btn');
+        const statusDiv = document.getElementById('audio-upload-status');
+        const audioPlayer = document.getElementById('uploaded-audio-player');
+
+        if (!audioInput || !uploadBtn || !statusDiv || !audioPlayer) {
+            console.warn('Audio elementen niet gevonden');
+            return;
+        }
+
+        // Luister naar huidige audio in database
+        const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
+        onValue(currentAudioRef, (snap) => {
+            const url = snap.val();
+            if (url && typeof url === 'string') {
+                audioPlayer.src = url;
+                audioPlayer.load();
+                statusDiv.textContent = 'Audio geladen van server.';
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#155724';
+            } else {
+                audioPlayer.src = '';
+                statusDiv.textContent = 'Geen geüploade audio gevonden.';
+                statusDiv.style.display = 'block';
+                statusDiv.style.color = '#6c757d';
+            }
+        });
+
+        // Upload functie
+        uploadBtn.addEventListener('click', async () => {
+            const file = audioInput.files[0];
+            if (!file) {
+                alert('Selecteer eerst een audiobestand.');
+                return;
+            }
+            if (!uClass) {
+                alert('Klas niet geselecteerd.');
+                return;
+            }
+
+            uploadBtn.disabled = true;
+            uploadBtn.textContent = 'Uploaden...';
+            statusDiv.textContent = 'Bezig met uploaden...';
+            statusDiv.style.display = 'block';
+            statusDiv.style.color = '#0c5460';
+
+            try {
+                const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
+                const fileRef = storageRef(storage, path);
+                await uploadBytes(fileRef, file);
+                const url = await getDownloadURL(fileRef);
+                await set(currentAudioRef, url);
+                statusDiv.textContent = 'Upload succesvol!';
+                statusDiv.style.color = '#155724';
+                audioInput.value = ''; // reset input
+            } catch (err) {
+                console.error('Audio upload mislukt:', err);
+                statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
+                statusDiv.style.color = '#721c24';
+            } finally {
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload audio';
+            }
+        });
+    }
+
+    // Start de initialisatie (wacht tot uClass beschikbaar is)
+    setTimeout(initAudioFeatures, 100);
 </script>
 </body>
 </html>
