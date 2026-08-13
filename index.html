@@ -495,7 +495,7 @@
         <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
     </div>
 
-    <!-- SCREEN 3: SLEEPOPDRACHT -->
+    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD) -->
     <div id="screen-3" class="hidden">
         <h1>Sleepopdracht: Orden de Mutatie</h1>
         <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA):</p>
@@ -629,12 +629,22 @@
     let uClass = "";
     let selectedFiles = [];
     let fileListenerSet = false;
+    let dragListener = null; // voor onValue listener van dragOrder
 
     // DOM Elements
     const pdfViewer = document.getElementById('pdf-viewer');
     const pdfPlaceholder = document.getElementById('pdf-placeholder');
     const uploadStatus = document.getElementById('upload-status');
     const fileListItems = document.getElementById('file-list-items');
+
+    // ===== SLEEPOPDRACHT – JUISTE TEKSTEN (ASTMA) =====
+    const dragData = [
+        '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+        '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
+        '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg',
+        '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
+        '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
+    ];
 
     // ===== HULP: PDF TOONEN =====
     function openPdf(url) {
@@ -664,7 +674,7 @@
         setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
     }
 
-    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN (GLOBAAL BESCHIKBAAR) =====
+    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN =====
     function renderFileList(files) {
         if(!fileListItems) return;
         fileListItems.innerHTML = '';
@@ -676,7 +686,6 @@
         const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
         entries.forEach((fileData) => {
             const li = document.createElement('li');
-            // Datum en tijd netjes formatteren
             const date = new Date(fileData.timestamp);
             const dateStr = date.toLocaleDateString('nl-NL', {
                 day: '2-digit', month: '2-digit', year: 'numeric',
@@ -699,7 +708,6 @@
             deleteBtn.addEventListener('click', async (e) => {
                 e.stopPropagation();
                 if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
-                
                 try {
                     if (fileData.storagePath) {
                         const fileRef = storageRef(storage, fileData.storagePath);
@@ -810,12 +818,11 @@
 
                 if (successCount > 0) {
                     setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                    // De onValue zal de lijst automatisch updaten
                 }
             });
         }
 
-        // Live updates voor bestanden (wordt één keer ingesteld)
+        // Live updates voor bestanden
         const filesRef = ref(db, `mutatieles/${uClass}/files`);
         onValue(filesRef, (snap) => {
             renderFileList(snap.val());
@@ -871,112 +878,46 @@
         input.value = '';
     });
 
-    // Sessie starten & Scherm navigatie
-    window.startSession = function() {
-        const nameInput = document.getElementById('user-name');
-        const classSelect = document.getElementById('user-class');
-        uName = nameInput.value.trim();
-        uClass = classSelect.value;
-        if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
-        
-        document.getElementById('current-class-label').textContent = uClass;
-        showScreen(2);
-    };
-
-    window.showScreen = function(n) {
-        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        const el = document.getElementById('screen-' + n);
-        if (el) el.classList.remove('hidden');
-
-        if (n === 4) {
-            // Laad de quiz
-            renderQuiz();
-        }
-        if (n === 5) {
-            initFileUpload(); 
-            initDigibord();   
-            if (pdfViewer && !pdfViewer.src) pdfViewer.src = '';
-        }
-    };
-
-    window.resetClassData = function() {
-        const c = document.getElementById('user-class').value;
-        if(!c) return alert("Selecteer eerst een klas om te resetten.");
-        if(confirm(`Weet je zeker dat je ALLE data voor klas ${c} wilt wissen?`)) {
-            remove(ref(db, `mutatieles/${c}`));
-            alert(`Data voor klas ${c} is gewist.`);
-        }
-    };
-
-    // Live sync voor de mutatietekst (Scherm 6)
-    document.getElementById('final-mutation')?.addEventListener('input', (e) => {
-        if(!uClass || !uName) return;
-        set(ref(db, `mutatieles/${uClass}/live/${uName}`), {
-            text: e.target.value,
-            timestamp: Date.now()
-        });
-    });
-
-    // Livefeed van de klas bekijken
-    function listenClassFeed() {
-        if(!uClass) return;
-        onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
-            const feed = document.getElementById('class-feed');
-            if(!feed) return;
-            feed.innerHTML = '';
-            const data = snap.val();
-            if(data) {
-                Object.entries(data).forEach(([student, val]) => {
-                    const card = document.createElement('div');
-                    card.className = 'feed-card';
-                    card.innerHTML = `<span class="feed-name">${student}</span><p>${val.text || ''}</p>`;
-                    feed.appendChild(card);
-                });
-            }
-        });
-    }
-
-    // ===== SLEEPOPDRACHT – JUISTE TEKSTEN =====
-    // De volgorde is A – S – T – M – Af (ASTMA)
-    const dragData = [
-        '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-        '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
-        '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg',
-        '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-        '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
-    ];
-
-    window.shuffleOrder = function() {
+    // ===== SLEEPOPDRACHT SYNCHRONISATIE =====
+    // Render de drag-items op basis van een geordende array
+    function renderDragItems(order) {
         const list = document.getElementById('drag-list');
         if(!list) return;
         list.innerHTML = '';
-        const shuffled = [...dragData].sort(() => Math.random() - 0.5);
-        shuffled.forEach(text => {
+        order.forEach(text => {
             const div = document.createElement('div');
             div.className = 'draggable';
             div.draggable = true;
             div.innerHTML = text;
             div.addEventListener('dragstart', () => div.classList.add('dragging'));
-            div.addEventListener('dragend', () => div.classList.remove('dragging'));
-            list.appendChild(div);
-        });
-    };
-
-    const dragList = document.getElementById('drag-list');
-    if(dragList) {
-        dragList.addEventListener('dragover', e => {
-            e.preventDefault();
-            const dragging = document.querySelector('.dragging');
-            const siblings = [...dragList.querySelectorAll('.draggable:not(.dragging)')];
-            const nextSibling = siblings.find(sibling => {
-                return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+            div.addEventListener('dragend', () => {
+                div.classList.remove('dragging');
+                // Na loslaten de nieuwe volgorde naar Firebase sturen
+                const currentOrder = getCurrentDragOrder();
+                const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+                set(dragOrderRef, currentOrder);
             });
-            dragList.insertBefore(dragging, nextSibling);
+            list.appendChild(div);
         });
     }
 
+    // Haal de huidige volgorde uit de DOM
+    function getCurrentDragOrder() {
+        const items = document.querySelectorAll('#drag-list .draggable');
+        return Array.from(items).map(el => el.innerHTML);
+    }
+
+    // Shuffle functie (werkt op Firebase)
+    window.shuffleOrder = function() {
+        if(!uClass) return;
+        const shuffled = [...dragData].sort(() => Math.random() - 0.5);
+        const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+        set(dragOrderRef, shuffled);
+    };
+
+    // Check de volgorde
     window.checkOrder = function() {
-        const currentItems = [...document.querySelectorAll('.draggable')].map(el => el.innerHTML);
+        const currentItems = [...document.querySelectorAll('#drag-list .draggable')].map(el => el.innerHTML);
         const isCorrect = JSON.stringify(currentItems) === JSON.stringify(dragData);
         if(isCorrect) {
             alert("Uitstekend! De volgorde is correct.");
@@ -985,9 +926,6 @@
             alert("De volgorde is nog niet helemaal juist. Probeer het opnieuw.");
         }
     };
-
-    // Initialiseren van Scherm 3 bij eerste weergave
-    shuffleOrder();
 
     // ===== KENNISCHECK (SCHERM 4) =====
     const quizData = [
@@ -1052,14 +990,12 @@
             container.appendChild(div);
         });
 
-        // Controleer knop
         const checkBtn = document.createElement('button');
         checkBtn.className = 'btn';
         checkBtn.textContent = 'Controleer antwoorden';
         checkBtn.onclick = checkQuiz;
         container.appendChild(checkBtn);
 
-        // Resultaatweergave
         const resultDiv = document.createElement('div');
         resultDiv.id = 'quiz-result';
         resultDiv.style.marginTop = '15px';
@@ -1090,6 +1026,101 @@
                 resultDiv.style.color = 'red';
             }
         }
+    }
+
+    // ===== SESSIE & SCHERMNAVIGATIE =====
+    window.startSession = function() {
+        const nameInput = document.getElementById('user-name');
+        const classSelect = document.getElementById('user-class');
+        uName = nameInput.value.trim();
+        uClass = classSelect.value;
+        if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
+        
+        document.getElementById('current-class-label').textContent = uClass;
+        showScreen(2);
+    };
+
+    window.showScreen = function(n) {
+        // Verwijder eventueel de drag-listener als we van scherm 3 weggaan
+        if (n !== 3 && dragListener) {
+            dragListener();
+            dragListener = null;
+        }
+
+        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
+        const el = document.getElementById('screen-' + n);
+        if (el) el.classList.remove('hidden');
+
+        if (n === 3) {
+            // Synchroniseer de sleepopdracht
+            const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+            // Controleer of er al een volgorde is
+            get(dragOrderRef).then(snapshot => {
+                if (!snapshot.exists()) {
+                    // Als er nog geen volgorde is, maak een shuffle en sla op
+                    const shuffled = [...dragData].sort(() => Math.random() - 0.5);
+                    set(dragOrderRef, shuffled);
+                } else {
+                    // Als er wel een volgorde is, render die direct
+                    renderDragItems(snapshot.val());
+                }
+            }).catch(err => console.error(err));
+
+            // Zet een listener voor toekomstige wijzigingen
+            if (dragListener) dragListener(); // verwijder oude listener indien aanwezig
+            dragListener = onValue(dragOrderRef, (snap) => {
+                const order = snap.val();
+                if (order) {
+                    renderDragItems(order);
+                }
+            });
+        }
+
+        if (n === 4) {
+            renderQuiz();
+        }
+        if (n === 5) {
+            initFileUpload(); 
+            initDigibord();   
+            if (pdfViewer && !pdfViewer.src) pdfViewer.src = '';
+        }
+    };
+
+    window.resetClassData = function() {
+        const c = document.getElementById('user-class').value;
+        if(!c) return alert("Selecteer eerst een klas om te resetten.");
+        if(confirm(`Weet je zeker dat je ALLE data voor klas ${c} wilt wissen?`)) {
+            remove(ref(db, `mutatieles/${c}`));
+            alert(`Data voor klas ${c} is gewist.`);
+        }
+    };
+
+    // Live sync voor de mutatietekst (Scherm 6)
+    document.getElementById('final-mutation')?.addEventListener('input', (e) => {
+        if(!uClass || !uName) return;
+        set(ref(db, `mutatieles/${uClass}/live/${uName}`), {
+            text: e.target.value,
+            timestamp: Date.now()
+        });
+    });
+
+    // Livefeed van de klas bekijken
+    function listenClassFeed() {
+        if(!uClass) return;
+        onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
+            const feed = document.getElementById('class-feed');
+            if(!feed) return;
+            feed.innerHTML = '';
+            const data = snap.val();
+            if(data) {
+                Object.entries(data).forEach(([student, val]) => {
+                    const card = document.createElement('div');
+                    card.className = 'feed-card';
+                    card.innerHTML = `<span class="feed-name">${student}</span><p>${val.text || ''}</p>`;
+                    feed.appendChild(card);
+                });
+            }
+        });
     }
 
     // Start luisteren naar klasinvoer zodra ingelogd
