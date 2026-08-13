@@ -4,6 +4,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Q1 Mutatieles 1 - Volledig Portaal</title>
+    <!-- PDF.js library -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+    </script>
     <style>
         :root {
             --police-blue: #003082;
@@ -191,27 +196,25 @@
         }
         .kb-list li strong { color: var(--police-blue); }
 
-        .pdf-container {
+        /* ─── Tekstviewer (vervangt iframe) ─── */
+        #pdf-text-viewer {
             width: 100%;
             height: 600px;
             border: 1px solid #ccc;
-            overflow: hidden;
-            margin-bottom: 20px;
             background: #fafafa;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            padding: 20px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+            white-space: pre-wrap;
+            line-height: 1.5;
+            color: #1a1a1a;
         }
         .pdf-placeholder { 
             color: #666; 
             font-style: italic; 
             text-align: center; 
-        }
-        .pdf-container iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
+            padding: 40px;
         }
         #drop-zone {
             border: 3px dashed #ccc;
@@ -230,7 +233,7 @@
         #file-input {
             display: none;
         }
-        /* ─── Verbeterde bestandenlijst (uit Leo AI) ─── */
+        /* ─── Verbeterde bestandenlijst ─── */
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -518,13 +521,13 @@
     <div id="screen-5" class="hidden">
         <h1>Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
 
-        <!-- PDF Viewer -->
-        <div class="pdf-container" id="pdf-viewer-container">
+        <!-- PDF Tekstviewer (geen iframe) -->
+        <div id="pdf-viewer-container">
             <div id="pdf-placeholder" class="pdf-placeholder">
                 <h3>📄 Geen PDF geselecteerd</h3>
                 <p>Upload een bestand of klik op een bestand in de lijst hieronder.</p>
             </div>
-            <iframe id="pdf-viewer" class="hidden" src="" title="PDF Viewer"></iframe>
+            <div id="pdf-text-viewer" class="hidden"></div>
         </div>
 
         <!-- Keuzemenu voor vaste PDF's -->
@@ -640,11 +643,11 @@
     let uClass = "";
     let selectedFiles = [];
     let fileListenerSet = false;
-    let dragListener = null; // voor onValue listener van dragOrder
-    let pdfListener = null; // voor onValue listener van currentPdf
+    let dragListener = null;
+    let pdfListener = null;
 
     // DOM Elements
-    const pdfViewer = document.getElementById('pdf-viewer');
+    const pdfViewer = document.getElementById('pdf-text-viewer');
     const pdfPlaceholder = document.getElementById('pdf-placeholder');
     const uploadStatus = document.getElementById('upload-status');
     const fileListItems = document.getElementById('file-list-items');
@@ -659,17 +662,37 @@
         '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
     ];
 
-    // ===== HULP: PDF TOONEN (aangepast voor synchronisatie) =====
-    function openPdf(url, sync = true) {
-        if(pdfViewer && pdfPlaceholder) {
-            pdfViewer.src = url;
+    // ===== HULP: PDF TEKST WEERGEVEN (vervangt iframe) =====
+    async function openPdfText(url, sync = true) {
+        if (!pdfViewer || !pdfPlaceholder) return;
+        if (!url) {
+            pdfViewer.textContent = '';
+            pdfViewer.classList.add('hidden');
+            pdfPlaceholder.classList.remove('hidden');
+            return;
+        }
+        try {
+            // Toon laadmelding
+            pdfViewer.textContent = 'Bezig met laden van de PDF-tekst...';
             pdfViewer.classList.remove('hidden');
             pdfPlaceholder.classList.add('hidden');
-        }
-        // Als sync true is, sla de URL op in Firebase zodat anderen hem ook zien
-        if (sync && uClass) {
-            const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-            set(currentPdfRef, url);
+
+            const pdf = await pdfjsLib.getDocument(url).promise;
+            let fullText = '';
+            for (let i = 1; i <= pdf.numPages; i++) {
+                const page = await pdf.getPage(i);
+                const content = await page.getTextContent();
+                fullText += content.items.map(item => item.str).join(' ') + '\n\n';
+            }
+            pdfViewer.textContent = fullText;
+
+            if (sync && uClass) {
+                const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
+                set(currentPdfRef, url);
+            }
+        } catch (err) {
+            console.error('PDF laadfout:', err);
+            pdfViewer.textContent = 'Fout bij laden van PDF: ' + err.message;
         }
     }
 
@@ -692,7 +715,7 @@
         setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
     }
 
-    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN (Leo AI versie) =====
+    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN =====
     function renderFileList(files) {
         if(!fileListItems) return;
         fileListItems.innerHTML = '';
@@ -711,7 +734,7 @@
             
             li.addEventListener('click', (e) => {
                 if (e.target.classList.contains('file-delete')) return;
-                openPdf(fileData.url, true);
+                openPdfText(fileData.url, true);
             });
 
             const deleteBtn = li.querySelector('.file-delete');
@@ -744,7 +767,7 @@
         });
     }
 
-    // ===== INIT UPLOAD FUNCTIE (GECORRIGEERD – dubbele/afgekapte events verwijderd) =====
+    // ===== INIT UPLOAD FUNCTIE (MET EXTRA FOUTAFHANDELING) =====
     function initFileUpload() {
         if (fileListenerSet) return;
         fileListenerSet = true;
@@ -791,8 +814,14 @@
 
         if(uploadBtn) {
             uploadBtn.addEventListener('click', async () => {
-                if (selectedFiles.length === 0) return alert("Selecteer eerst PDF-bestanden.");
-                if (!uClass) return alert("Klas niet geselecteerd.");
+                if (selectedFiles.length === 0) {
+                    alert("Selecteer eerst PDF-bestanden.");
+                    return;
+                }
+                if (!uClass) {
+                    alert("Klas niet geselecteerd. Log eerst in.");
+                    return;
+                }
 
                 uploadBtn.disabled = true;
                 uploadBtn.textContent = 'Uploaden...';
@@ -816,7 +845,7 @@
                         });
                         successCount++;
                     } catch (err) {
-                        console.error("Upload mislukt:", err);
+                        console.error("Upload mislukt voor ${file.name}:", err);
                         setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
                     }
                 }
@@ -829,7 +858,6 @@
 
                 if (successCount > 0) {
                     setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                    // De onValue listener zal de lijst automatisch updaten
                 }
             });
         }
@@ -891,7 +919,6 @@
     });
 
     // ===== SLEEPOPDRACHT SYNCHRONISATIE =====
-    // Render de drag-items op basis van een geordende array
     function renderDragItems(order) {
         const list = document.getElementById('drag-list');
         if(!list) return;
@@ -910,7 +937,6 @@
             list.appendChild(div);
         });
 
-        // Container events (eenmalig toegevoegd)
         if (!list._dragListenersAdded) {
             list.addEventListener('dragover', (e) => {
                 e.preventDefault();
@@ -930,7 +956,6 @@
 
             list.addEventListener('drop', (e) => {
                 e.preventDefault();
-                // Na drop de nieuwe volgorde naar Firebase sturen
                 const currentOrder = getCurrentDragOrder();
                 const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
                 set(dragOrderRef, currentOrder);
@@ -939,13 +964,11 @@
         }
     }
 
-    // Haal de huidige volgorde uit de DOM
     function getCurrentDragOrder() {
         const items = document.querySelectorAll('#drag-list .draggable');
         return Array.from(items).map(el => el.innerHTML);
     }
 
-    // Shuffle functie (werkt op Firebase)
     window.shuffleOrder = function() {
         if(!uClass) return;
         const shuffled = [...dragData].sort(() => Math.random() - 0.5);
@@ -953,7 +976,6 @@
         set(dragOrderRef, shuffled);
     };
 
-    // Check de volgorde
     window.checkOrder = function() {
         const currentItems = [...document.querySelectorAll('#drag-list .draggable')].map(el => el.innerHTML);
         const isCorrect = JSON.stringify(currentItems) === JSON.stringify(dragData);
@@ -1068,22 +1090,18 @@
 
     // ===== PDF-SYNCHRONISATIE: keuzemenu en luisteraar =====
     function initPdfSync() {
-        // Als de gebruiker een keuze maakt uit het dropdown-menu
         if (pdfSelect) {
             pdfSelect.addEventListener('change', (e) => {
                 const url = e.target.value;
                 if (url) {
-                    // Open de PDF en synchroniseer
-                    openPdf(url, true);
+                    openPdfText(url, true);
                 } else {
-                    // Geen selectie: misschien placeholder tonen?
-                    // We kunnen de viewer leeg maken
+                    // Leeg maken
                     if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.src = '';
+                        pdfViewer.textContent = '';
                         pdfViewer.classList.add('hidden');
                         pdfPlaceholder.classList.remove('hidden');
                     }
-                    // Verwijder de currentPdf uit Firebase zodat anderen ook geen PDF meer zien
                     if (uClass) {
                         const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
                         set(currentPdfRef, null);
@@ -1092,22 +1110,15 @@
             });
         }
 
-        // Luister naar veranderingen van currentPdf in Firebase
         if (uClass) {
-            if (pdfListener) pdfListener(); // verwijder oude listener
+            if (pdfListener) pdfListener();
             const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
             pdfListener = onValue(currentPdfRef, (snap) => {
                 const url = snap.val();
                 if (url && typeof url === 'string') {
-                    // Als de URL verschilt van de huidige, laad hem dan
-                    if (pdfViewer && pdfPlaceholder) {
-                        if (pdfViewer.src !== url) {
-                            pdfViewer.src = url;
-                            pdfViewer.classList.remove('hidden');
-                            pdfPlaceholder.classList.add('hidden');
-                        }
-                    }
-                    // Zet de dropdown overeenkomstig (als het een van de vaste PDF's is)
+                    // Laad de PDF-tekst (zonder opnieuw te synchroniseren om loops te voorkomen)
+                    openPdfText(url, false);
+                    // Zet de dropdown overeenkomstig
                     if (pdfSelect) {
                         const options = pdfSelect.options;
                         let found = false;
@@ -1118,15 +1129,14 @@
                                 break;
                             }
                         }
-                        // Als het een geüploade PDF is, zet de dropdown op de lege optie
                         if (!found) {
                             pdfSelect.selectedIndex = 0;
                         }
                     }
                 } else {
-                    // Geen PDF geselecteerd: toon placeholder
+                    // Geen PDF
                     if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.src = '';
+                        pdfViewer.textContent = '';
                         pdfViewer.classList.add('hidden');
                         pdfPlaceholder.classList.remove('hidden');
                     }
@@ -1151,7 +1161,6 @@
     };
 
     window.showScreen = function(n) {
-        // Verwijder eventueel de drag-listener als we van scherm 3 weggaan
         if (n !== 3 && dragListener) {
             dragListener();
             dragListener = null;
@@ -1162,22 +1171,17 @@
         if (el) el.classList.remove('hidden');
 
         if (n === 3) {
-            // Synchroniseer de sleepopdracht
             const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-            // Controleer of er al een volgorde is
             get(dragOrderRef).then(snapshot => {
                 if (!snapshot.exists()) {
-                    // Als er nog geen volgorde is, maak een shuffle en sla op
                     const shuffled = [...dragData].sort(() => Math.random() - 0.5);
                     set(dragOrderRef, shuffled);
                 } else {
-                    // Als er wel een volgorde is, render die direct
                     renderDragItems(snapshot.val());
                 }
             }).catch(err => console.error(err));
 
-            // Zet een listener voor toekomstige wijzigingen
-            if (dragListener) dragListener(); // verwijder oude listener indien aanwezig
+            if (dragListener) dragListener();
             dragListener = onValue(dragOrderRef, (snap) => {
                 const order = snap.val();
                 if (order) {
@@ -1192,8 +1196,8 @@
         if (n === 5) {
             initFileUpload(); 
             initDigibord();
-            initPdfSync(); // Start PDF-synchronisatie voor keuzemenu en realtime updates
-            if (pdfViewer && !pdfViewer.src) pdfViewer.src = '';
+            initPdfSync();
+            if (pdfViewer && !pdfViewer.textContent) pdfViewer.textContent = '';
         }
     };
 
@@ -1234,7 +1238,6 @@
         });
     }
 
-    // Start luisteren naar klasinvoer zodra ingelogd
     const originalStartSession = window.startSession;
     window.startSession = function() {
         originalStartSession();
