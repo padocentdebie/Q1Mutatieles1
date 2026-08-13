@@ -33,7 +33,7 @@
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
             border-radius: 4px;
         }
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             color: var(--police-blue);
             text-transform: uppercase;
             letter-spacing: 1px;
@@ -69,6 +69,7 @@
             margin-bottom: 10px;
         }
         .btn:hover { background-color: #002360; }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
         .btn-reset {
             background-color: var(--danger);
             font-size: 11px;
@@ -90,6 +91,12 @@
             padding: 10px 25px;
         }
         .btn-upload:hover { background-color: #218838; }
+        .btn-browse { 
+            background-color: #007bff; 
+            width: auto; 
+            padding: 10px 25px; 
+        }
+        .btn-browse:hover { background-color: #0056b3; }
         .btn-refresh {
             background-color: #17a2b8;
             width: auto;
@@ -104,13 +111,6 @@
             padding: 8px 20px;
         }
         .btn-test:hover { background-color: #e0a800; }
-        .btn-file-select {
-            background-color: #6c757d;
-            color: white;
-            width: auto;
-            padding: 10px 20px;
-        }
-        .btn-file-select:hover { background-color: #5a6268; }
 
         .info-block {
             border-left: 5px solid var(--police-gold);
@@ -195,9 +195,18 @@
             width: 100%;
             height: 600px;
             border: 1px solid #ccc;
-            overflow: auto;
+            overflow: hidden;
             margin-bottom: 20px;
             background: #fafafa;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .pdf-placeholder { 
+            color: #666; 
+            font-style: italic; 
+            text-align: center; 
         }
         .pdf-container iframe {
             width: 100%;
@@ -220,17 +229,6 @@
         }
         #file-input {
             display: none;
-        }
-        .upload-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            align-items: center;
-            margin: 10px 0;
-        }
-        .upload-actions .btn {
-            width: auto;
-            margin-bottom: 0;
         }
         #file-list-items {
             list-style: none;
@@ -259,27 +257,16 @@
         }
         #file-list-items li .file-delete:hover { opacity: 0.7; }
         #upload-status {
-            margin-top: 10px;
-            padding: 8px 12px;
-            border-radius: 4px;
+            margin-top: 15px;
+            padding: 12px;
+            border-radius: 6px;
             font-weight: bold;
             display: none;
+            text-align: center;
         }
-        #upload-status.success {
-            background: #d4edda;
-            color: #155724;
-            display: block;
-        }
-        #upload-status.error {
-            background: #f8d7da;
-            color: #721c24;
-            display: block;
-        }
-        #upload-status.info {
-            background: #cce5ff;
-            color: #004085;
-            display: block;
-        }
+        #upload-status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        #upload-status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        #upload-status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
 
         .feedback-area {
             display: flex;
@@ -389,20 +376,6 @@
             background: #ef4444;
             opacity: 1;
             border-style: solid;
-        }
-        .file-select-label {
-            background: #6c757d;
-            color: white;
-            padding: 10px 20px;
-            border-radius: 4px;
-            cursor: pointer;
-            display: inline-block;
-            font-weight: bold;
-            text-transform: uppercase;
-            transition: background 0.3s;
-        }
-        .file-select-label:hover {
-            background: #5a6268;
         }
     </style>
 </head>
@@ -514,36 +487,44 @@
 
         <!-- PDF Viewer -->
         <div class="pdf-container" id="pdf-viewer-container">
-            <iframe id="pdf-viewer" src="" title="PDF Viewer"></iframe>
+            <div id="pdf-placeholder" class="pdf-placeholder">
+                <h3>📄 Geen PDF geselecteerd</h3>
+                <p>Upload een bestand of klik op een bestand in de lijst hieronder.</p>
+            </div>
+            <iframe id="pdf-viewer" class="hidden" src="" title="PDF Viewer"></iframe>
         </div>
 
         <!-- Upload zone -->
         <div id="file-upload-area">
             <div id="drop-zone">
-                <p><strong>📁 Sleep hier PDF-bestanden heen</strong><br>of klik om te selecteren</p>
+                <p style="font-size: 1.2em; margin-bottom: 10px;">📁 Sleep hier PDF-bestanden heen</p>
+                <p style="color: #666; font-size: 0.9em;">of gebruik de knop hieronder</p>
                 <input type="file" id="file-input" multiple accept=".pdf" />
             </div>
-
-            <div class="upload-actions">
-                <label for="file-input" class="file-select-label">📁 Bestanden kiezen</label>
-                <button id="upload-btn" class="btn btn-upload">Upload geselecteerde bestanden</button>
-                <button id="refresh-file-list" class="btn btn-refresh">🔄 Ververs bestandenlijst</button>
-                <button id="test-upload-btn" class="btn btn-test">🧪 Test Upload</button>
+            
+            <!-- Knop bestanden bladeren en uploaden -->
+            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
+                <button id="browse-btn" class="btn btn-browse">📂 Blader naar bestand</button>
+                <button id="upload-btn" class="btn btn-upload" disabled>Upload Geselecteerde</button>
             </div>
+
+            <!-- Statusmelding -->
             <div id="upload-status"></div>
         </div>
 
         <!-- Bestandenlijst -->
-        <div id="file-list">
-            <h4>Geüploade bestanden</h4>
-            <ul id="file-list-items"></ul>
+        <div id="file-list" style="margin-top: 25px;">
+            <h3>Geüploade bestanden</h3>
+            <ul id="file-list-items">
+                <li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>
+            </ul>
         </div>
 
         <!-- Feedback -->
-        <h3>Feedback over deze mutatie</h3>
+        <h3 style="margin-top: 30px;">Feedback over deze mutatie</h3>
         <div class="feedback-area">
             <textarea id="feedback-input" placeholder="Schrijf hier je opmerkingen..."></textarea>
-            <button class="btn" onclick="sendFeedback()" style="width:auto; padding:10px 30px;">Verstuur</button>
+            <button class="btn" id="send-feedback-btn" style="width:auto; padding:10px 30px;">Verstuur</button>
         </div>
         <div id="feedback-feed" class="feedback-feed"></div>
 
@@ -560,7 +541,7 @@
             <button id="clearBtn" class="btn" style="background:var(--danger);">Wis Bord</button>
         </div>
 
-        <button class="btn" onclick="showScreen(6)">Naar Eindopdracht</button>
+        <button class="btn" onclick="showScreen(6)" style="margin-top: 25px;">Naar Eindopdracht</button>
     </div>
 
     <!-- SCREEN 6: EINDOPDRACHT -->
@@ -579,7 +560,7 @@
         <div class="grid-2">
             <div>
                 <h3>Jouw Mutatie (OVT)</h3>
-                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:350px;" oninput="pushFinal()"></textarea>
+                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:350px;"></textarea>
             </div>
             <div class="live-feed" style="margin-top:0; border-top:none;">
                 <h3>Live Feed Klas: <span id="current-class-label"></span></h3>
@@ -591,577 +572,272 @@
 </div>
 
 <script type="module">
-    // ===== Firebase =====
+    // ===== Firebase Configuration & Imports =====
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
     import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
-        authDomain: "pvaangifteinleveren.firebaseapp.com",
-        databaseURL: "https://pvaangifteinleveren-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "pvaangifteinleveren"
+        authDomain: "mutatieles-q1.firebaseapp.com",
+        databaseURL: "https://mutatieles-q1-default-rtdb.europe-west1.firebasedatabase.app",
+        projectId: "mutatieles-q1",
+        storageBucket: "mutatieles-q1.appspot.com",
+        messagingSenderId: "102871328901",
+        appId: "1:102871328901:web:531b26daebef374a2b978c"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const storage = getStorage(app);
 
-    let uName = "",
-        uClass = "";
-
-    // ===== Globale variabelen =====
-    const DEFAULT_ORDER = ["M", "S", "Af", "A", "T"];
-    let orderListenerSet = false;
-    let fileListenerSet = false;
-    let digibordInitialized = false;
-    let isDragging = false;
-    let draggedItem = null;
-
-    // ===== DOM-referenties =====
-    const dragList = document.getElementById('drag-list');
-    const fileListItems = document.getElementById('file-list-items');
-    const pdfViewer = document.getElementById('pdf-viewer');
-    const uploadStatus = document.getElementById('upload-status');
-    const fileInput = document.getElementById('file-input');
-
-    // ===== Helper: shuffle array =====
-    function shuffleArray(arr) {
-        for (let i = arr.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [arr[i], arr[j]] = [arr[j], arr[i]];
-        }
-        return arr;
-    }
-
-    function updateOrder(orderArray) {
-        if (!orderArray || orderArray.length === 0) return;
-        const currentIds = Array.from(dragList.children).map(el => el.id);
-        if (currentIds.length === orderArray.length && currentIds.every((id, i) => id === orderArray[i])) return;
-        orderArray.forEach(id => {
-            const el = document.getElementById(id);
-            if (el) dragList.appendChild(el);
-        });
-    }
-
-    function setupOrderListener() {
-        if (orderListenerSet) return;
-        orderListenerSet = true;
-        const orderRef = ref(db, `mutatieles/${uClass}/order`);
-        onValue(orderRef, (snapshot) => {
-            if (isDragging) return;
-            const data = snapshot.val();
-            if (data && Array.isArray(data) && data.length > 0) {
-                updateOrder(data);
-            } else {
-                const shuffled = shuffleArray([...DEFAULT_ORDER]);
-                set(orderRef, shuffled).then(() => updateOrder(shuffled));
-            }
-        });
-    }
-
-    function saveCurrentOrder() {
-        const items = dragList.querySelectorAll('.draggable');
-        const order = Array.from(items).map(el => el.id);
-        isDragging = true;
-        set(ref(db, `mutatieles/${uClass}/order`), order).then(() => { isDragging = false; });
-    }
-
-    window.shuffleOrder = () => {
-        if (!uClass) return alert("Log eerst in.");
-        const shuffled = shuffleArray([...DEFAULT_ORDER]);
-        const orderRef = ref(db, `mutatieles/${uClass}/order`);
-        isDragging = true;
-        set(orderRef, shuffled).then(() => {
-            isDragging = false;
-            document.getElementById('next-to-4').classList.add('hidden');
-        });
-    };
-
-    function attachDragEvents(el) {
-        el.addEventListener('dragstart', (e) => {
-            isDragging = true;
-            draggedItem = el;
-            el.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', el.id);
-        });
-        el.addEventListener('dragend', (e) => {
-            el.classList.remove('dragging');
-            saveCurrentOrder();
-            setTimeout(() => { isDragging = false; draggedItem = null; }, 50);
-        });
-    }
-
-    dragList.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        if (!draggedItem) return;
-        const afterElement = getDragAfterElement(dragList, e.clientY);
-        if (afterElement == null) dragList.appendChild(draggedItem);
-        else if (afterElement !== draggedItem) dragList.insertBefore(draggedItem, afterElement);
-    });
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.draggable:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) return { offset, element: child };
-            return closest;
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    window.checkOrder = () => {
-        const order = [...dragList.querySelectorAll('.draggable')].map(el => el.id).join('');
-        if (order === "ASTMAf") {
-            document.getElementById('next-to-4').classList.remove('hidden');
-            alert("Helemaal goed! Dit is de logische chronologische volgorde.");
-        } else {
-            alert("Nog niet juist. Denk aan het ASTMA-model: Aanleiding -> Situatie -> Toedracht -> Maatregelen -> Afhandeling.");
-        }
-    };
-
-    // ===== Quiz =====
-    const questions = [
-        { q: "Waarvoor dient de Aanleiding (A) in ASTMA?", id: "q0" },
-        { q: "Waarom schrijven we in de OVT?", id: "q1" },
-        { q: "Wat is het verschil tussen Toedracht en Situatie?", id: "q2" }
-    ];
-    function loadQuiz() {
-        const container = document.getElementById('quiz-container');
-        if (container.innerHTML !== "") return;
-        questions.forEach((item) => {
-            const div = document.createElement('div');
-            div.className = 'quiz-item';
-            div.innerHTML = `<p><strong>${item.q}</strong></p><input type="text" oninput="pushQuiz('${item.id}', this.value)">`;
-            container.appendChild(div);
-        });
-    }
-    window.pushQuiz = (id, val) => {
-        set(ref(db, `mutatieles/${uClass}/${uName}/quiz/${id}`), val);
-    };
-
-    window.pushFinal = () => {
-        const text = document.getElementById('final-mutation').value;
-        set(ref(db, `mutatieles/${uClass}/${uName}/eindopdracht`), text);
-    };
-
-    // ===== RESET =====
-    window.resetClassData = async () => {
-        const selClass = document.getElementById('user-class').value;
-        if (!selClass) return alert("Selecteer eerst een klas.");
-        if (!confirm(`Weet je zeker dat je ALLE data en bestanden voor klas "${selClass}" wilt verwijderen?`)) return;
-        const filesRef = ref(db, `mutatieles/${selClass}/files`);
-        try {
-            const snapshot = await get(filesRef);
-            if (snapshot.exists()) {
-                const files = snapshot.val();
-                for (let key in files) {
-                    const fileData = files[key];
-                    if (fileData.storagePath) {
-                        const fileRef = storageRef(storage, fileData.storagePath);
-                        try { await deleteObject(fileRef); } catch (e) { console.warn("Failed to delete file", fileData.name, e); }
-                    }
-                }
-            }
-        } catch (e) { console.warn("Error reading files for deletion", e); }
-        await remove(ref(db, `mutatieles/${selClass}`));
-        alert(`Klas "${selClass}" is volledig gereset.`);
-        location.reload();
-    };
-
-    // ===== LIVE FEED =====
-    function setupLiveFeed() {
-        onValue(ref(db, `mutatieles/${uClass}`), (snap) => {
-            const feed = document.getElementById('class-feed');
-            feed.innerHTML = "";
-            const data = snap.val();
-            if (!data) return;
-            for (let user in data) {
-                if (user === 'order' || user === 'feedback' || user === 'files') continue;
-                const text = data[user].eindopdracht || "...";
-                feed.innerHTML += `<div class="feed-card"><span class="feed-name">${user}</span><div style="font-size:12px; white-space:pre-wrap;">${text}</div></div>`;
-            }
-        });
-    }
-
-    // ===== FEEDBACK =====
-    window.sendFeedback = () => {
-        const input = document.getElementById('feedback-input');
-        const text = input.value.trim();
-        if (!text) return alert("Vul een feedbackbericht in.");
-        const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
-        push(feedbackRef, { user: uName, message: text, timestamp: Date.now() });
-        input.value = '';
-    };
-
-    function setupFeedbackFeed() {
-        onValue(ref(db, `mutatieles/${uClass}/feedback`), (snap) => {
-            const container = document.getElementById('feedback-feed');
-            container.innerHTML = "";
-            const data = snap.val();
-            if (!data) return;
-            const msgs = Object.values(data).sort((a,b) => a.timestamp - b.timestamp);
-            msgs.forEach(msg => {
-                const div = document.createElement('div');
-                div.className = 'feedback-msg';
-                div.innerHTML = `<strong>${msg.user}:</strong> ${msg.message}`;
-                container.appendChild(div);
-            });
-            container.scrollTop = container.scrollHeight;
-        });
-    }
-
-    // ===== BESTANDEN UPLOAD / WEERGAVE (live) =====
+    // Global state
+    let uName = "";
+    let uClass = "";
     let selectedFiles = [];
+    let fileListenerSet = false;
 
-    function renderFileList(files) {
-        fileListItems.innerHTML = '';
-        if (!files || Object.keys(files).length === 0) {
-            fileListItems.innerHTML = '<li>Nog geen bestanden geüpload.</li>';
-            return;
-        }
-        const entries = Object.values(files).sort((a,b) => a.timestamp - b.timestamp);
-        entries.forEach((fileData) => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>📄 ${fileData.name}</span>
-                <span class="file-delete" data-url="${fileData.url}" data-path="${fileData.storagePath}">✕</span>
-            `;
-            li.addEventListener('click', (e) => {
-                if (e.target.classList.contains('file-delete')) return;
-                pdfViewer.src = fileData.url;
-            });
-            const deleteBtn = li.querySelector('.file-delete');
-            deleteBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (!confirm(`Bestand "${fileData.name}" verwijderen?`)) return;
-                try {
-                    if (fileData.storagePath) {
-                        const fileRef = storageRef(storage, fileData.storagePath);
-                        await deleteObject(fileRef);
-                    }
-                    const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
-                    if (snapshot.exists()) {
-                        const allFiles = snapshot.val();
-                        for (let key in allFiles) {
-                            const f = allFiles[key];
-                            if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
-                                await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
-                                break;
-                            }
-                        }
-                    }
-                } catch (err) {
-                    console.error("Verwijderen mislukt:", err);
-                    alert("Fout bij verwijderen: " + err.message);
-                }
-            });
-            fileListItems.appendChild(li);
-        });
-    }
+    // DOM Elements
+    const pdfViewer = document.getElementById('pdf-viewer');
+    const pdfPlaceholder = document.getElementById('pdf-placeholder');
+    const uploadStatus = document.getElementById('upload-status');
+    const fileListItems = document.getElementById('file-list-items');
 
-    function setupFileListener() {
-        if (fileListenerSet) return;
-        fileListenerSet = true;
-        const filesRef = ref(db, `mutatieles/${uClass}/files`);
-        onValue(filesRef, (snap) => {
-            const data = snap.val();
-            renderFileList(data);
-        });
-    }
-
-    // ===== UPLOAD FUNCTIE =====
-    async function uploadFiles(fileList) {
-        if (!uClass) {
-            setStatus("Klas niet geselecteerd.", "error");
-            return false;
-        }
-        if (!fileList || fileList.length === 0) {
-            setStatus("Geen bestanden geselecteerd.", "error");
-            return false;
-        }
-
-        const uploadBtn = document.getElementById('upload-btn');
-        uploadBtn.disabled = true;
-        uploadBtn.textContent = 'Uploaden...';
-        setStatus("Bezig met uploaden...", "info");
-
-        let successCount = 0;
-        for (const file of fileList) {
-            try {
-                console.log(`Uploaden van ${file.name} (${file.size} bytes)...`);
-                const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                const fileRef = storageRef(storage, path);
-                const snapshot = await uploadBytes(fileRef, file);
-                console.log("Upload geslaagd, snapshot:", snapshot);
-                const url = await getDownloadURL(snapshot.ref);
-                console.log("Download URL:", url);
-
-                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                await set(newFileRef, {
-                    name: file.name,
-                    url: url,
-                    storagePath: path,
-                    uploadedBy: uName || 'onbekend',
-                    timestamp: Date.now()
-                });
-                successCount++;
-            } catch (err) {
-                console.error("Upload mislukt voor", file.name, err);
-                setStatus(`Fout bij ${file.name}: ${err.message}`, "error");
-            }
-        }
-
-        uploadBtn.disabled = false;
-        uploadBtn.textContent = 'Upload geselecteerde bestanden';
-        if (successCount > 0) {
-            setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-            document.getElementById('refresh-file-list')?.click();
-            return true;
-        } else {
-            setStatus("Geen bestanden geüpload. Zie foutmeldingen.", "error");
-            return false;
+    // ===== HULP: PDF TOONEN =====
+    function openPdf(url) {
+        if(pdfViewer && pdfPlaceholder) {
+            pdfViewer.src = url;
+            pdfViewer.classList.remove('hidden');
+            pdfPlaceholder.classList.add('hidden');
         }
     }
 
-    // ===== TEST UPLOAD =====
-    async function testUpload() {
-        if (!uClass) {
-            alert("Log eerst in met een klas.");
-            return;
-        }
-        const testContent = "Dit is een testbestand van de mutatieles. Tijd: " + new Date().toISOString();
-        const blob = new Blob([testContent], { type: 'text/plain' });
-        const file = new File([blob], "test.txt", { type: 'text/plain' });
-        setStatus("Test upload gestart...", "info");
-        const result = await uploadFiles([file]);
-        if (result) {
-            alert("Test upload geslaagd! Kijk in de lijst of het bestand verschijnt.");
-        } else {
-            alert("Test upload mislukt. Bekijk de console voor foutmeldingen.");
-        }
-    }
-
-    // ===== INIT UPLOAD UI =====
-    function initFileUpload() {
-        const dropZone = document.getElementById('drop-zone');
-        const uploadBtn = document.getElementById('upload-btn');
-        const testBtn = document.getElementById('test-upload-btn');
-        const refreshBtn = document.getElementById('refresh-file-list');
-
-        // Klik op dropzone opent bestandsdialoog
-        dropZone.addEventListener('click', () => fileInput.click());
-
-        // Label "Bestanden kiezen" opent ook de dialoog (via for attribute al geregeld, maar voor de zekerheid)
-        document.querySelector('.file-select-label')?.addEventListener('click', (e) => {
-            e.preventDefault();
-            fileInput.click();
-        });
-
-        // Slepen
-        dropZone.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            dropZone.classList.add('dragover');
-        });
-        dropZone.addEventListener('dragleave', () => {
-            dropZone.classList.remove('dragover');
-        });
-        dropZone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropZone.classList.remove('dragover');
-            if (e.dataTransfer.files.length) {
-                fileInput.files = e.dataTransfer.files;
-                selectedFiles = Array.from(fileInput.files);
-                updateUploadStatus();
-            }
-        });
-
-        // Bestanden geselecteerd via input
-        fileInput.addEventListener('change', () => {
-            selectedFiles = Array.from(fileInput.files);
-            updateUploadStatus();
-        });
-
-        // Upload knop
-        uploadBtn.addEventListener('click', async () => {
-            if (selectedFiles.length === 0) {
-                setStatus("Selecteer eerst bestanden via 'Bestanden kiezen' of sleep ze hierheen.", "error");
-                return;
-            }
-            await uploadFiles(selectedFiles);
-            // Reset selectie
-            selectedFiles = [];
-            fileInput.value = '';
-            updateUploadStatus();
-        });
-
-        // Test knop
-        testBtn.addEventListener('click', testUpload);
-
-        // Refresh knop
-        refreshBtn.addEventListener('click', async () => {
-            if (!uClass) return alert("Geen klas geselecteerd.");
-            const filesRef = ref(db, `mutatieles/${uClass}/files`);
-            const snap = await get(filesRef);
-            renderFileList(snap.val());
-        });
-
-        function updateUploadStatus() {
-            const status = document.querySelector('#drop-zone p');
-            if (selectedFiles.length) {
-                status.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload" om te verzenden.`;
-            } else {
-                status.innerHTML = `📁 Sleep hier PDF-bestanden heen<br>of klik om te selecteren`;
-            }
-        }
-    }
-
+    // ===== HULP: STATUS BERICHTEN =====
     function setStatus(msg, type = "info") {
+        if(!uploadStatus) return;
         uploadStatus.textContent = msg;
         uploadStatus.className = type;
         uploadStatus.style.display = "block";
-        clearTimeout(uploadStatus._timeout);
-        uploadStatus._timeout = setTimeout(() => {
-            uploadStatus.style.display = "none";
-        }, 8000);
+        if(type === "success") {
+            uploadStatus.style.background = "#d4edda";
+            uploadStatus.style.color = "#155724";
+        } else if (type === "error") {
+            uploadStatus.style.background = "#f8d7da";
+            uploadStatus.style.color = "#721c24";
+        } else {
+            uploadStatus.style.background = "#d1ecf1";
+            uploadStatus.style.color = "#0c5460";
+        }
+        setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
     }
 
-    // ===== DIGIBORD =====
-    function initDigibord() {
-        if (digibordInitialized) return;
-        digibordInitialized = true;
+    // ===== INIT UPLOAD FUNCTIE =====
+    function initFileUpload() {
+        if (fileListenerSet) return;
+        fileListenerSet = true;
 
-        const canvas = document.getElementById('whiteboard');
-        const ctx = canvas.getContext('2d');
-        const statusLabel = document.getElementById('status');
-        const trashZone = document.getElementById('trash-zone');
-        const classForBoard = uClass;
+        const dropZone = document.getElementById('drop-zone');
+        const fileInput = document.getElementById('file-input');
+        const uploadBtn = document.getElementById('upload-btn');
+        const browseBtn = document.getElementById('browse-btn');
+        const dropZoneText = document.querySelector('#drop-zone p');
 
-        let objects = {};
-        let isDrawing = false, isDraggingBoard = false;
-        let draggedId = null, currentPathId = null;
-        let offsetX = 0, offsetY = 0;
+        if(browseBtn && fileInput) {
+            browseBtn.addEventListener('click', () => {
+                fileInput.click();
+            });
+        }
 
-        onValue(ref(db, ".info/connected"), (snap) => {
-            if (snap.val()) { statusLabel.innerText = "● LIVE"; statusLabel.classList.add('online'); }
-        });
+        if(dropZone && fileInput) {
+            dropZone.addEventListener('click', () => fileInput.click());
 
-        const getPos = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-            return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height),
-                rawX: clientX,
-                rawY: clientY
-            };
-        };
-
-        const startAction = (e) => {
-            const { x, y } = getPos(e);
-            draggedId = null; isDraggingBoard = false;
-
-            const entries = Object.entries(objects).reverse();
-            for (const [id, obj] of entries) {
-                if (obj.type === 'text') {
-                    ctx.font = "bold 24px Arial";
-                    const w = ctx.measureText(obj.text).width;
-                    if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
-                        draggedId = id; isDraggingBoard = true;
-                        offsetX = x - obj.x; offsetY = y - obj.y;
-                        return;
-                    }
-                }
-            }
-            isDrawing = true;
-            const newPathRef = push(ref(db, `classes/${classForBoard}/board`));
-            currentPathId = newPathRef.key;
-            set(newPathRef, { type: 'path', points: [{x, y}] });
-        };
-
-        const moveAction = (e) => {
-            if (!isDraggingBoard && !isDrawing) return;
-            const { x, y, rawX, rawY } = getPos(e);
-
-            if (isDraggingBoard && draggedId) {
-                update(ref(db, `classes/${classForBoard}/board/${draggedId}`), { x: x - offsetX, y: y - offsetY });
-                const tRect = trashZone.getBoundingClientRect();
-                trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
-            } else if (isDrawing && currentPathId) {
-                const path = objects[currentPathId];
-                if (path && path.points) {
-                    const lastP = path.points[path.points.length - 1];
-                    if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
-                        update(ref(db, `classes/${classForBoard}/board/${currentPathId}`), {
-                            points: [...path.points, {x, y}]
-                        });
-                    }
-                }
-            }
-        };
-
-        const stopAction = () => {
-            if (isDraggingBoard && draggedId && trashZone.classList.contains('active')) {
-                remove(ref(db, `classes/${classForBoard}/board/${draggedId}`));
-            }
-            isDrawing = isDraggingBoard = false;
-            draggedId = currentPathId = null;
-            trashZone.classList.remove('active');
-        };
-
-        canvas.addEventListener('mousedown', startAction);
-        window.addEventListener('mousemove', moveAction);
-        window.addEventListener('mouseup', stopAction);
-
-        canvas.addEventListener('touchstart', (e) => { e.preventDefault(); startAction(e); }, { passive: false });
-        window.addEventListener('touchmove', (e) => { e.preventDefault(); moveAction(e); }, { passive: false });
-        window.addEventListener('touchend', stopAction);
-
-        document.getElementById('addBtn').onclick = () => {
-            const val = document.getElementById('wordInput').value.trim();
-            if (val) {
-                push(ref(db, `classes/${classForBoard}/board`), { type: 'text', text: val, x: 150, y: 150 });
-                document.getElementById('wordInput').value = '';
-            }
-        };
-
-        document.getElementById('clearBtn').onclick = () => {
-            if (confirm("Hele bord wissen?")) remove(ref(db, `classes/${classForBoard}/board`));
-        };
-
-        onValue(ref(db, `classes/${classForBoard}/board`), (snap) => {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            objects = snap.val() || {};
-            snap.forEach((child) => {
-                const obj = child.val();
-                const isSel = child.key === draggedId;
-                if (obj.type === 'text') {
-                    ctx.font = "bold 24px Arial";
-                    ctx.fillStyle = isSel ? "#003082" : "#333";
-                    ctx.fillText(obj.text, obj.x, obj.y);
-                    if (isSel) ctx.strokeRect(obj.x - 5, obj.y - 30, ctx.measureText(obj.text).width + 10, 40);
-                } else if (obj.type === 'path' && obj.points) {
-                    ctx.strokeStyle = "#4b5563"; ctx.lineWidth = 3; ctx.lineCap = "round"; ctx.beginPath();
-                    ctx.moveTo(obj.points[0].x, obj.points[0].y);
-                    obj.points.forEach(p => ctx.lineTo(p.x, p.y));
-                    ctx.stroke();
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('dragover');
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.classList.remove('dragover');
+            });
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('dragover');
+                if (e.dataTransfer.files.length) {
+                    fileInput.files = e.dataTransfer.files;
+                    selectedFiles = Array.from(fileInput.files);
+                    updateUploadStatus();
                 }
             });
+        }
+
+        if(fileInput) {
+            fileInput.addEventListener('change', () => {
+                selectedFiles = Array.from(fileInput.files);
+                updateUploadStatus();
+            });
+        }
+
+        if(uploadBtn) {
+            uploadBtn.addEventListener('click', async () => {
+                if (selectedFiles.length === 0) return alert("Selecteer eerst PDF-bestanden.");
+                if (!uClass) return alert("Klas niet geselecteerd.");
+
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Uploaden...';
+                setStatus("Bezig met uploaden...", "info");
+
+                let successCount = 0;
+                for (const file of selectedFiles) {
+                    try {
+                        const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                        const fileRef = storageRef(storage, path);
+                        await uploadBytes(fileRef, file);
+                        const url = await getDownloadURL(fileRef);
+
+                        const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                        await set(newFileRef, {
+                            name: file.name,
+                            url: url,
+                            storagePath: path,
+                            uploadedBy: uName || 'onbekend',
+                            timestamp: Date.now()
+                        });
+                        successCount++;
+                    } catch (err) {
+                        console.error("Upload mislukt:", err);
+                        setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
+                    }
+                }
+
+                selectedFiles = [];
+                if(fileInput) fileInput.value = '';
+                updateUploadStatus();
+                uploadBtn.disabled = false;
+                uploadBtn.textContent = 'Upload Geselecteerde';
+
+                if (successCount > 0) {
+                    setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                    const filesRef = ref(db, `mutatieles/${uClass}/files`);
+                    get(filesRef).then(snap => renderFileList(snap.val()));
+                }
+            });
+        }
+
+        function renderFileList(files) {
+            if(!fileListItems) return;
+            fileListItems.innerHTML = '';
+            if (!files || Object.keys(files).length === 0) {
+                fileListItems.innerHTML = '<li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>';
+                return;
+            }
+            
+            const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
+            entries.forEach((fileData) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span>📄 ${fileData.name}</span>
+                    <span class="file-delete" title="Verwijderen">✕</span>
+                `;
+                
+                li.addEventListener('click', (e) => {
+                    if (e.target.classList.contains('file-delete')) return;
+                    openPdf(fileData.url);
+                });
+
+                const deleteBtn = li.querySelector('.file-delete');
+                deleteBtn.addEventListener('click', async (e) => {
+                    e.stopPropagation();
+                    if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
+                    
+                    try {
+                        if (fileData.storagePath) {
+                            const fileRef = storageRef(storage, fileData.storagePath);
+                            await deleteObject(fileRef);
+                        }
+                        const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
+                        if (snapshot.exists()) {
+                            const allFiles = snapshot.val();
+                            for (let key in allFiles) {
+                                const f = allFiles[key];
+                                if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
+                                    await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
+                                    break;
+                                }
+                            }
+                        }
+                    } catch (err) {
+                        console.error("Verwijderen mislukt:", err);
+                        alert("Fout bij verwijderen: " + err.message);
+                    }
+                });
+                fileListItems.appendChild(li);
+            });
+        }
+
+        // Live updates voor bestanden
+        const filesRef = ref(db, `mutatieles/${uClass}/files`);
+        onValue(filesRef, (snap) => {
+            renderFileList(snap.val());
         });
+
+        // Live feedback synchronisatie
+        const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
+        onValue(feedbackRef, (snap) => {
+            const feed = document.getElementById('feedback-feed');
+            if(!feed) return;
+            feed.innerHTML = '';
+            const data = snap.val();
+            if(data) {
+                Object.values(data).reverse().forEach(item => {
+                    const div = document.createElement('div');
+                    div.className = 'feedback-msg';
+                    div.innerHTML = `<strong>${item.author}:</strong> ${item.text}`;
+                    feed.appendChild(div);
+                });
+            }
+        });
+
+        function updateUploadStatus() {
+            if(!dropZoneText || !uploadBtn) return;
+            if (selectedFiles.length) {
+                dropZoneText.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload" om te verzenden.`;
+                uploadBtn.disabled = false;
+            } else {
+                dropZoneText.innerHTML = `📁 Sleep hier PDF-bestanden heen<br>of gebruik de knop hieronder`;
+                uploadBtn.disabled = true;
+            }
+        }
     }
 
-    // ===== APP FLOW =====
-    window.startSession = () => {
-        uName = document.getElementById('user-name').value.trim();
-        uClass = document.getElementById('user-class').value;
-        if (!uName || !uClass) return alert("Vul naam en klas in.");
-        document.getElementById('current-class-label').innerText = uClass;
-        setupLiveFeed();
-        setupFeedbackFeed();
-        setupFileListener();
+    function initDigibord() {
+        const statusEl = document.getElementById('status');
+        if(statusEl) {
+            statusEl.textContent = 'Status: Online';
+            statusEl.classList.add('online');
+        }
+    }
+
+    // Feedback versturen
+    document.getElementById('send-feedback-btn')?.addEventListener('click', () => {
+        const input = document.getElementById('feedback-input');
+        if(!input || !input.value.trim() || !uClass) return;
+        const newRef = push(ref(db, `mutatieles/${uClass}/feedback`));
+        set(newRef, {
+            author: uName || 'Onbekend',
+            text: input.value.trim(),
+            timestamp: Date.now()
+        });
+        input.value = '';
+    });
+
+    // Sessie starten & Scherm navigatie
+    window.startSession = function() {
+        const nameInput = document.getElementById('user-name');
+        const classSelect = document.getElementById('user-class');
+        uName = nameInput.value.trim();
+        uClass = classSelect.value;
+        if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
+        
+        document.getElementById('current-class-label').textContent = uClass;
         showScreen(2);
     };
 
@@ -1170,40 +846,108 @@
         const el = document.getElementById('screen-' + n);
         if (el) el.classList.remove('hidden');
 
-        if (n === 3) {
-            if (dragList.children.length === 0) {
-                const itemsHTML = {
-                    M: '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-                    S: '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintalbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
-                    Af: '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.',
-                    A: '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-                    T: '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg'
-                };
-                DEFAULT_ORDER.forEach(id => {
-                    const div = document.createElement('div');
-                    div.className = 'draggable';
-                    div.id = id;
-                    div.draggable = true;
-                    div.innerHTML = itemsHTML[id];
-                    attachDragEvents(div);
-                    dragList.appendChild(div);
-                });
-            }
-            setupOrderListener();
-        }
-
-        if (n === 4) loadQuiz();
-
         if (n === 5) {
-            if (!fileListenerSet) initFileUpload();
-            initDigibord();
-            if (!pdfViewer.src) pdfViewer.src = '';
-            document.getElementById('refresh-file-list')?.click();
+            initFileUpload(); 
+            initDigibord();   
+            if (pdfViewer && !pdfViewer.src) pdfViewer.src = '';
         }
     };
 
-    showScreen(1);
-    console.log('App geladen!');
+    window.resetClassData = function() {
+        const c = document.getElementById('user-class').value;
+        if(!c) return alert("Selecteer eerst een klas om te resetten.");
+        if(confirm(`Weet je zeker dat je ALLE data voor klas ${c} wilt wissen?`)) {
+            remove(ref(db, `mutatieles/${c}`));
+            alert(`Data voor klas ${c} is gewist.`);
+        }
+    };
+
+    // Live sync voor de mutatietekst (Scherm 6)
+    document.getElementById('final-mutation')?.addEventListener('input', (e) => {
+        if(!uClass || !uName) return;
+        set(ref(db, `mutatieles/${uClass}/live/${uName}`), {
+            text: e.target.value,
+            timestamp: Date.now()
+        });
+    });
+
+    // Livefeed van de klas bekijken
+    function listenClassFeed() {
+        if(!uClass) return;
+        onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
+            const feed = document.getElementById('class-feed');
+            if(!feed) return;
+            feed.innerHTML = '';
+            const data = snap.val();
+            if(data) {
+                Object.entries(data).forEach(([student, val]) => {
+                    const card = document.createElement('div');
+                    card.className = 'feed-card';
+                    card.innerHTML = `<span class="feed-name">${student}</span><p>${val.text || ''}</p>`;
+                    feed.appendChild(card);
+                });
+            }
+        });
+    }
+
+    // Drag-and-drop logica voor Scherm 3
+    const dragData = [
+        "Aanleiding: RAPP zag tijdens surveillance...",
+        "Situatie: Ter hoogte van rotonde, druk verkeer...",
+        "Toedracht: Mw. De Jong verklaarde dat...",
+        "Maatregelen: RAPP heeft verklaring opgenomen...",
+        "Afhandeling: Zaak overgedragen aan recherche..."
+    ];
+
+    window.shuffleOrder = function() {
+        const list = document.getElementById('drag-list');
+        if(!list) return;
+        list.innerHTML = '';
+        const shuffled = [...dragData].sort(() => Math.random() - 0.5);
+        shuffled.forEach(text => {
+            const div = document.createElement('div');
+            div.className = 'draggable';
+            div.draggable = true;
+            div.textContent = text;
+            div.addEventListener('dragstart', () => div.classList.add('dragging'));
+            div.addEventListener('dragend', () => div.classList.remove('dragging'));
+            list.appendChild(div);
+        });
+    };
+
+    const dragList = document.getElementById('drag-list');
+    if(dragList) {
+        dragList.addEventListener('dragover', e => {
+            e.preventDefault();
+            const dragging = document.querySelector('.dragging');
+            const siblings = [...dragList.querySelectorAll('.draggable:not(.dragging)')];
+            const nextSibling = siblings.find(sibling => {
+                return e.clientY <= sibling.offsetTop + sibling.offsetHeight / 2;
+            });
+            dragList.insertBefore(dragging, nextSibling);
+        });
+    }
+
+    window.checkOrder = function() {
+        const currentItems = [...document.querySelectorAll('.draggable')].map(el => el.textContent);
+        const isCorrect = JSON.stringify(currentItems) === JSON.stringify(dragData);
+        if(isCorrect) {
+            alert("Uitstekend! De volgorde is correct.");
+            document.getElementById('next-to-4').classList.remove('hidden');
+        } else {
+            alert("De volgorde is nog niet helemaal juist. Probeer het opnieuw.");
+        }
+    };
+
+    // Initialiseren van Scherm 3 bij eerste weergave
+    shuffleOrder();
+
+    // Start luisteren naar klasinvoer zodra ingelogd
+    const originalStartSession = window.startSession;
+    window.startSession = function() {
+        originalStartSession();
+        listenClassFeed();
+    };
 </script>
 </body>
 </html>
