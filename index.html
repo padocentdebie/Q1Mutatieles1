@@ -890,15 +890,21 @@
             div.draggable = true;
             div.innerHTML = text;
             div.addEventListener('dragstart', () => div.classList.add('dragging'));
-            div.addEventListener('dragend', () => {
-                div.classList.remove('dragging');
-                // Na loslaten de nieuwe volgorde naar Firebase sturen
-                const currentOrder = getCurrentDragOrder();
-                const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-                set(dragOrderRef, currentOrder);
-            });
+            div.addEventListener('dragend', () => div.classList.remove('dragging'));
             list.appendChild(div);
         });
+
+        // Voeg drop-listener toe op de container (éénmalig, of bij elke render?)
+        // We zorgen dat de listener niet dubbel wordt toegevoegd
+        if (list._dropListenerAdded) return;
+        list.addEventListener('drop', (e) => {
+            e.preventDefault();
+            // Na drop de nieuwe volgorde naar Firebase sturen
+            const currentOrder = getCurrentDragOrder();
+            const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+            set(dragOrderRef, currentOrder);
+        });
+        list._dropListenerAdded = true;
     }
 
     // Haal de huidige volgorde uit de DOM
