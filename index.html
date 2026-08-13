@@ -230,32 +230,65 @@
         #file-input {
             display: none;
         }
+        /* ─── Verbeterde bestandenlijst ─── */
         #file-list-items {
             list-style: none;
             padding: 0;
             display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-        }
-        #file-list-items li {
-            background: #f1f5f9;
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid #d1d9e6;
-            cursor: pointer;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
+            flex-direction: column;
             gap: 8px;
         }
-        #file-list-items li:hover { background: #e2e8f0; }
-        #file-list-items li .file-delete {
+        #file-list-items li {
+            background: #f8fafc;
+            padding: 10px 16px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+        }
+        #file-list-items li:hover {
+            background: #f1f5f9;
+            border-color: var(--police-blue);
+        }
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .file-name {
+            font-weight: 600;
+            font-size: 1.05em;
+            color: var(--text-dark);
+        }
+        .file-meta {
+            font-size: 0.85em;
+            color: #4a5568;
+            background: #edf2f7;
+            padding: 2px 10px;
+            border-radius: 12px;
+            white-space: nowrap;
+        }
+        .file-delete {
             color: var(--danger);
             font-weight: bold;
-            margin-left: 5px;
             cursor: pointer;
+            font-size: 1.2em;
+            margin-left: 8px;
+            padding: 0 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
         }
-        #file-list-items li .file-delete:hover { opacity: 0.7; }
+        .file-delete:hover {
+            background: #fee2e2;
+            opacity: 1;
+        }
+        /* ─── einde verbeteringen ─── */
+
         #upload-status {
             margin-top: 15px;
             padding: 12px;
@@ -512,7 +545,7 @@
             <div id="upload-status"></div>
         </div>
 
-        <!-- Bestandenlijst -->
+        <!-- Bestandenlijst (verbeterd) -->
         <div id="file-list" style="margin-top: 25px;">
             <h3>Geüploade bestanden</h3>
             <ul id="file-list-items">
@@ -716,12 +749,12 @@
 
                 if (successCount > 0) {
                     setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                    const filesRef = ref(db, `mutatieles/${uClass}/files`);
-                    get(filesRef).then(snap => renderFileList(snap.val()));
+                    // De onValue zal de lijst automatisch updaten
                 }
             });
         }
 
+        // ─── Verbeterde renderFileList (meer informatie) ───
         function renderFileList(files) {
             if(!fileListItems) return;
             fileListItems.innerHTML = '';
@@ -733,9 +766,18 @@
             const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
             entries.forEach((fileData) => {
                 const li = document.createElement('li');
+                // Datum en tijd netjes formatteren
+                const date = new Date(fileData.timestamp);
+                const dateStr = date.toLocaleDateString('nl-NL', {
+                    day: '2-digit', month: '2-digit', year: 'numeric',
+                    hour: '2-digit', minute: '2-digit'
+                });
                 li.innerHTML = `
-                    <span>📄 ${fileData.name}</span>
-                    <span class="file-delete" title="Verwijderen">✕</span>
+                    <div class="file-item">
+                        <span class="file-name">📄 ${fileData.name}</span>
+                        <span class="file-meta">Geüpload door ${fileData.uploadedBy || 'onbekend'} op ${dateStr}</span>
+                        <span class="file-delete" title="Verwijderen">✕</span>
+                    </div>
                 `;
                 
                 li.addEventListener('click', (e) => {
@@ -846,6 +888,10 @@
         const el = document.getElementById('screen-' + n);
         if (el) el.classList.remove('hidden');
 
+        if (n === 4) {
+            // Laad de quiz
+            renderQuiz();
+        }
         if (n === 5) {
             initFileUpload(); 
             initDigibord();   
@@ -890,13 +936,14 @@
         });
     }
 
-    // Drag-and-drop logica voor Scherm 3
+    // ===== SLEEPOPDRACHT – JUISTE TEKSTEN =====
+    // De volgorde is A – S – T – M – Af (ASTMA)
     const dragData = [
-        "Aanleiding: RAPP zag tijdens surveillance...",
-        "Situatie: Ter hoogte van rotonde, druk verkeer...",
-        "Toedracht: Mw. De Jong verklaarde dat...",
-        "Maatregelen: RAPP heeft verklaring opgenomen...",
-        "Afhandeling: Zaak overgedragen aan recherche..."
+        '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+        '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
+        '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg',
+        '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
+        '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
     ];
 
     window.shuffleOrder = function() {
@@ -908,7 +955,7 @@
             const div = document.createElement('div');
             div.className = 'draggable';
             div.draggable = true;
-            div.textContent = text;
+            div.innerHTML = text;
             div.addEventListener('dragstart', () => div.classList.add('dragging'));
             div.addEventListener('dragend', () => div.classList.remove('dragging'));
             list.appendChild(div);
@@ -929,7 +976,7 @@
     }
 
     window.checkOrder = function() {
-        const currentItems = [...document.querySelectorAll('.draggable')].map(el => el.textContent);
+        const currentItems = [...document.querySelectorAll('.draggable')].map(el => el.innerHTML);
         const isCorrect = JSON.stringify(currentItems) === JSON.stringify(dragData);
         if(isCorrect) {
             alert("Uitstekend! De volgorde is correct.");
@@ -941,6 +988,109 @@
 
     // Initialiseren van Scherm 3 bij eerste weergave
     shuffleOrder();
+
+    // ===== KENNISCHECK (SCHERM 4) =====
+    const quizData = [
+        {
+            vraag: "Wat is de juiste volgorde van ASTMA?",
+            opties: [
+                "Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling",
+                "Aanleiding, Toedracht, Situatie, Maatregelen, Afhandeling",
+                "Situatie, Aanleiding, Toedracht, Maatregelen, Afhandeling"
+            ],
+            correct: 0
+        },
+        {
+            vraag: "Wat betekent OVT?",
+            opties: [
+                "Onvoltooid Verleden Tijd",
+                "Onvoltooid Toekomende Tijd",
+                "Overleg Verleden Tijd"
+            ],
+            correct: 0
+        },
+        {
+            vraag: "Welke vragen horen bij de Gouden W's?",
+            opties: [
+                "Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
+                "Wie, wat, waar, wanneer, waarom, hoe, waarmee",
+                "Wie, wat, waar, wanneer, waarom, hoe, wat"
+            ],
+            correct: 1
+        },
+        {
+            vraag: "Waar wordt een mutatie NIET voor gebruikt?",
+            opties: [
+                "Voor opsporing",
+                "Voor statistieken",
+                "Voor strafvervolging"
+            ],
+            correct: 2
+        }
+    ];
+
+    function renderQuiz() {
+        const container = document.getElementById('quiz-container');
+        if(!container) return;
+        container.innerHTML = '';
+        quizData.forEach((q, index) => {
+            const div = document.createElement('div');
+            div.className = 'quiz-item';
+            div.innerHTML = `<p><strong>Vraag ${index+1}:</strong> ${q.vraag}</p>`;
+            q.opties.forEach((opt, i) => {
+                const label = document.createElement('label');
+                label.style.display = 'block';
+                label.style.margin = '5px 0';
+                const radio = document.createElement('input');
+                radio.type = 'radio';
+                radio.name = `quiz${index}`;
+                radio.value = i;
+                label.appendChild(radio);
+                label.appendChild(document.createTextNode(' ' + opt));
+                div.appendChild(label);
+            });
+            container.appendChild(div);
+        });
+
+        // Controleer knop
+        const checkBtn = document.createElement('button');
+        checkBtn.className = 'btn';
+        checkBtn.textContent = 'Controleer antwoorden';
+        checkBtn.onclick = checkQuiz;
+        container.appendChild(checkBtn);
+
+        // Resultaatweergave
+        const resultDiv = document.createElement('div');
+        resultDiv.id = 'quiz-result';
+        resultDiv.style.marginTop = '15px';
+        resultDiv.style.fontWeight = 'bold';
+        container.appendChild(resultDiv);
+    }
+
+    function checkQuiz() {
+        let score = 0;
+        quizData.forEach((q, index) => {
+            const radios = document.getElementsByName(`quiz${index}`);
+            let selected = null;
+            for (let r of radios) {
+                if (r.checked) {
+                    selected = parseInt(r.value);
+                    break;
+                }
+            }
+            if (selected === q.correct) score++;
+        });
+        const resultDiv = document.getElementById('quiz-result');
+        if(resultDiv) {
+            if(score === quizData.length) {
+                resultDiv.textContent = '🎉 Gefeliciteerd! Alle antwoorden zijn correct!';
+                resultDiv.style.color = 'green';
+            } else {
+                resultDiv.textContent = `Je hebt ${score} van de ${quizData.length} vragen goed. Probeer opnieuw.`;
+                resultDiv.style.color = 'red';
+            }
+        }
+    }
 
     // Start luisteren naar klasinvoer zodra ingelogd
     const originalStartSession = window.startSession;
