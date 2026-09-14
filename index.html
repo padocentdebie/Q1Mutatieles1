@@ -344,6 +344,7 @@
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.2);
             touch-action: none;
+            overscroll-behavior: contain;
         }
         #board-container canvas, #board-container-2 canvas {
             width: 100%;
@@ -351,6 +352,11 @@
             display: block;
             cursor: crosshair;
             border-radius: 10px;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            -webkit-tap-highlight-color: transparent;
         }
         .digi-toolbar {
             display: flex;
@@ -384,6 +390,7 @@
             background: #eee;
             border: 1px solid #ccc;
             z-index: 10;
+            pointer-events: none;
         }
         #status.online, #status-2.online {
             background: #ebffed;
@@ -406,6 +413,7 @@
             opacity: 0.6;
             transition: 0.2s;
             z-index: 10;
+            pointer-events: none;
         }
         #trash-zone.active, #trash-zone-2.active {
             transform: scale(1.2);
@@ -939,13 +947,24 @@
     }
 
     // ============================================================
-    // === DIGIBORD (multi-user, touch + muis) — herbruikbaar =====
+    // === DIGIBORD — robuust, realtime, cooperatief ===============
     // ============================================================
-    const digibordInited = new Set();
 
-    function initDigibord(suffix) {
-        if (digibordInited.has(suffix)) return;
-        if (!uClass) { setTimeout(() => initDigibord(suffix), 300); return; }
+    // Kleur per gebruiker op basis van naam (hue-hash)
+    function colorForUser(name) {
+        if (!name) return '#1f2937';
+        let hash = 0;
+        for (let i = 0; i < name.length; i++) {
+            hash = (hash * 31 + name.charCodeAt(i)) | 0;
+        }
+        const hue = Math.abs(hash) % 360;
+        return `hsl(${hue}, 70%, 35%)`;
+    }
+
+    function attachDigibord(suffix) {
+        // Voorkom dubbele init
+        if (!window.__digiborden) window.__digiborden = {};
+        if (window.__digiborden[suffix]) return;
 
         const canvas = document.getElementById('whiteboard' + suffix);
         const statusLabel = document.getElementById('status' + suffix);
@@ -953,144 +972,200 @@
         const addBtn = document.getElementById('addBtn' + suffix);
         const clearBtn = document.getElementById('clearBtn' + suffix);
         const wordInput = document.getElementById('wordInput' + suffix);
-        if (!canvas || !statusLabel || !trashZone) return;
 
-        digibordInited.add(suffix);
+        if (!canvas || !statusLabel || !trashZone) {
+            console.warn('[Digibord] Elementen ontbreken voor suffix:', suffix);
+            return;
+        }
+        if (!uClass) {
+            // Nog niet ingelogd: later opnieuw proberen
+            setTimeout(() => attachDigibord(suffix), 300);
+            return;
+        }
+
+        window.__digiborden[suffix] = true;
+
         const ctx = canvas.getContext('2d');
         const boardPath = `mutatieles/${uClass}/board`;
+        const myColor = colorForUser(uName || 'Onbekend');
 
-        // eigen state per bord
+        // Per-bord state
         let objects = {};
-        let draggedId = null;
+        let mode = null;                 // 'draw' | 'drag' | null
         let currentPathId = null;
-        let isDrawing = false;
-        let isDragging = false;
-        let offsetX = 0;
-        let offsetY = 0;
+        let sentPoints = [];             // punten die al naar Firebase zijn
+        let pendingPoints = [];          // punten die nog verstuurd moeten worden
+        let flushTimer = null;
+        let draggedId = null;
+        let dragOffsetX = 0;
+        let dragOffsetY = 0;
+        let activePointerId = null;
 
-        // Live verbindingsstatus
-        onValue(ref(db, ".info/connected"), (snap) => {
-            if (snap.val()) {
-                statusLabel.textContent = "● LIVE";
-                statusLabel.classList.add('online');
-            } else {
-                statusLabel.textContent = "Status: Offline";
-                statusLabel.classList.remove('online');
-            }
-        });
-
-        // Universele positie (muis + touch)
+        // ---------- Helpers ----------
         const getPos = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
-            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
             return {
-                x: (clientX - rect.left) * (canvas.width / rect.width),
-                y: (clientY - rect.top) * (canvas.height / rect.height),
-                rawX: clientX,
-                rawY: clientY
+                x: (e.clientX - rect.left) * scaleX,
+                y: (e.clientY - rect.top) * scaleY,
+                rawX: e.clientX,
+                rawY: e.clientY
             };
         };
 
-        const startAction = (e) => {
-            const { x, y } = getPos(e);
-            draggedId = null;
-            isDragging = false;
-
-            // Check of we een bestaand tekstblok vastpakken
-            const entries = Object.entries(objects).reverse();
+        const hitText = (x, y) => {
+            // Meest recente eerst
+            const entries = Object.entries(objects).sort((a, b) => b[0].localeCompare(a[0]));
             for (const [id, obj] of entries) {
-                if (obj.type === 'text') {
+                if (obj && obj.type === 'text') {
                     ctx.font = "bold 24px Arial";
-                    const w = ctx.measureText(obj.text).width;
-                    if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
-                        draggedId = id;
-                        isDragging = true;
-                        offsetX = x - obj.x;
-                        offsetY = y - obj.y;
-                        return;
+                    const w = ctx.measureText(obj.text || '').width;
+                    if (x > obj.x - 12 && x < obj.x + w + 12 &&
+                        y > obj.y - 32 && y < obj.y + 12) {
+                        return { id, obj };
                     }
                 }
             }
-            // Anders: nieuwe lijn starten
-            isDrawing = true;
-            const newPathRef = push(ref(db, boardPath));
-            currentPathId = newPathRef.key;
-            set(newPathRef, { type: 'path', points: [{ x, y }] });
+            return null;
         };
 
-        const moveAction = (e) => {
-            if (!isDragging && !isDrawing) return;
+        const isOverTrash = (rawX, rawY) => {
+            const r = trashZone.getBoundingClientRect();
+            return rawX >= r.left && rawX <= r.right && rawY >= r.top && rawY <= r.bottom;
+        };
+
+        const flushPoints = () => {
+            flushTimer = null;
+            if (!currentPathId || pendingPoints.length === 0) return;
+            sentPoints = sentPoints.concat(pendingPoints);
+            pendingPoints = [];
+            // Vul de punten-array aan
+            set(ref(db, `${boardPath}/${currentPathId}/points`), sentPoints).catch(err => {
+                console.error('[Digibord] flush fout:', err);
+            });
+        };
+
+        const scheduleFlush = () => {
+            if (flushTimer) return;
+            flushTimer = setTimeout(flushPoints, 40);
+        };
+
+        // ---------- Pointer handlers ----------
+        const onPointerDown = (e) => {
+            if (activePointerId !== null) return;
+            activePointerId = e.pointerId;
+            try { canvas.setPointerCapture(e.pointerId); } catch (_) {}
+
+            const { x, y } = getPos(e);
+
+            // 1) Probeer een tekst te pakken
+            const hit = hitText(x, y);
+            if (hit) {
+                mode = 'drag';
+                draggedId = hit.id;
+                dragOffsetX = x - hit.obj.x;
+                dragOffsetY = y - hit.obj.y;
+                return;
+            }
+
+            // 2) Anders: nieuwe lijn starten
+            mode = 'draw';
+            const newRef = push(ref(db, boardPath));
+            currentPathId = newRef.key;
+            sentPoints = [{ x, y }];
+            pendingPoints = [];
+            set(newRef, {
+                type: 'path',
+                color: myColor,
+                user: uName || '',
+                points: sentPoints
+            }).catch(err => console.error('[Digibord] path aanmaken fout:', err));
+        };
+
+        const onPointerMove = (e) => {
+            if (activePointerId === null || e.pointerId !== activePointerId) return;
             const { x, y, rawX, rawY } = getPos(e);
 
-            if (isDragging && draggedId) {
+            if (mode === 'drag' && draggedId) {
                 update(ref(db, `${boardPath}/${draggedId}`), {
-                    x: x - offsetX,
-                    y: y - offsetY
-                });
-                const tRect = trashZone.getBoundingClientRect();
-                trashZone.classList.toggle('active',
-                    rawX > tRect.left && rawX < tRect.right &&
-                    rawY > tRect.top  && rawY < tRect.bottom
-                );
-            } else if (isDrawing && currentPathId) {
-                const path = objects[currentPathId];
-                if (path && path.points) {
-                    const lastP = path.points[path.points.length - 1];
-                    if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
-                        update(ref(db, `${boardPath}/${currentPathId}`), {
-                            points: [...path.points, { x, y }]
-                        });
-                    }
+                    x: x - dragOffsetX,
+                    y: y - dragOffsetY
+                }).catch(() => {});
+                trashZone.classList.toggle('active', isOverTrash(rawX, rawY));
+            } else if (mode === 'draw' && currentPathId) {
+                const last = sentPoints[sentPoints.length - 1] || pendingPoints[pendingPoints.length - 1];
+                if (!last || Math.hypot(x - last.x, y - last.y) > 2) {
+                    pendingPoints.push({ x, y });
+                    scheduleFlush();
                 }
             }
         };
 
-        const stopAction = () => {
-            if (isDragging && draggedId && trashZone.classList.contains('active')) {
-                remove(ref(db, `${boardPath}/${draggedId}`));
+        const onPointerUp = (e) => {
+            if (activePointerId === null || e.pointerId !== activePointerId) return;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+            activePointerId = null;
+
+            if (mode === 'drag' && draggedId && trashZone.classList.contains('active')) {
+                remove(ref(db, `${boardPath}/${draggedId}`)).catch(() => {});
             }
-            isDrawing = false;
-            isDragging = false;
+
+            if (mode === 'draw') {
+                // Laatste punten direct flushen
+                if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+                flushPoints();
+            }
+
+            mode = null;
             draggedId = null;
             currentPathId = null;
+            sentPoints = [];
+            pendingPoints = [];
             trashZone.classList.remove('active');
         };
 
-        // Muis
-        canvas.addEventListener('mousedown', startAction);
-        window.addEventListener('mousemove', moveAction);
-        window.addEventListener('mouseup', stopAction);
+        const onPointerCancel = (e) => {
+            if (activePointerId === null || e.pointerId !== activePointerId) return;
+            try { canvas.releasePointerCapture(e.pointerId); } catch (_) {}
+            activePointerId = null;
+            if (flushTimer) { clearTimeout(flushTimer); flushTimer = null; }
+            if (mode === 'draw') flushPoints();
+            mode = null;
+            draggedId = null;
+            currentPathId = null;
+            sentPoints = [];
+            pendingPoints = [];
+            trashZone.classList.remove('active');
+        };
 
-        // Touch — blokkeer alleen tijdens tekenen/slepen, anders blijft pagina scrollbaar
-        canvas.addEventListener('touchstart', (e) => {
-            e.preventDefault();
-            startAction(e);
-        }, { passive: false });
+        // Voorkom scrollen/selecteren tijdens pointer op canvas
+        canvas.addEventListener('pointerdown', (e) => { e.preventDefault(); onPointerDown(e); }, { passive: false });
+        canvas.addEventListener('pointermove', (e) => { e.preventDefault(); onPointerMove(e); }, { passive: false });
+        canvas.addEventListener('pointerup',   (e) => { e.preventDefault(); onPointerUp(e);   }, { passive: false });
+        canvas.addEventListener('pointercancel', onPointerCancel);
+        // Extra vangnet: pointerup buiten canvas
+        window.addEventListener('pointerup', onPointerUp);
+        window.addEventListener('pointercancel', onPointerCancel);
 
-        window.addEventListener('touchmove', (e) => {
-            if (!isDrawing && !isDragging) return;
-            e.preventDefault();
-            moveAction(e);
-        }, { passive: false });
+        // Voorkom context-menu met lange press op mobiel
+        canvas.addEventListener('contextmenu', (e) => e.preventDefault());
 
-        window.addEventListener('touchend', stopAction);
-        window.addEventListener('touchcancel', stopAction);
-
-        // Knoppen
+        // ---------- Knoppen ----------
         if (addBtn && !addBtn._digiBound) {
             addBtn._digiBound = true;
             addBtn.addEventListener('click', () => {
-                const val = wordInput.value.trim();
-                if (val) {
-                    push(ref(db, boardPath), {
-                        type: 'text',
-                        text: val,
-                        x: 150,
-                        y: 150
-                    });
-                    wordInput.value = '';
-                }
+                const val = (wordInput.value || '').trim();
+                if (!val) return;
+                push(ref(db, boardPath), {
+                    type: 'text',
+                    text: val,
+                    x: 150,
+                    y: 150,
+                    color: myColor,
+                    user: uName || ''
+                });
+                wordInput.value = '';
             });
         }
 
@@ -1103,43 +1178,63 @@
             });
         }
 
-        // Live renderen van alle klas-objecten
+        // ---------- Live verbindingsstatus ----------
+        onValue(ref(db, ".info/connected"), (snap) => {
+            if (snap.val()) {
+                statusLabel.textContent = "● LIVE";
+                statusLabel.classList.add('online');
+            } else {
+                statusLabel.textContent = "Status: Offline";
+                statusLabel.classList.remove('online');
+            }
+        });
+
+        // ---------- Live renderen ----------
         onValue(ref(db, boardPath), (snap) => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             objects = snap.val() || {};
 
-            snap.forEach((child) => {
-                const obj = child.val();
-                const isSel = child.key === draggedId;
+            // Teken in stabiele volgorde (op key)
+            const entries = Object.entries(objects).sort((a, b) => a[0].localeCompare(b[0]));
+
+            for (const [id, obj] of entries) {
+                if (!obj) continue;
 
                 if (obj.type === 'text') {
                     ctx.font = "bold 24px Arial";
-                    ctx.fillStyle = isSel ? "#003082" : "#333";
-                    ctx.fillText(obj.text, obj.x, obj.y);
-                    if (isSel) {
+                    ctx.fillStyle = obj.color || '#1f2937';
+                    ctx.fillText(obj.text || '', obj.x, obj.y);
+                    if (id === draggedId) {
+                        ctx.strokeStyle = '#003082';
+                        ctx.lineWidth = 1.5;
+                        ctx.setLineDash([4, 3]);
                         ctx.strokeRect(
-                            obj.x - 5,
+                            obj.x - 6,
                             obj.y - 30,
-                            ctx.measureText(obj.text).width + 10,
-                            40
+                            ctx.measureText(obj.text || '').width + 12,
+                            42
                         );
+                        ctx.setLineDash([]);
                     }
-                } else if (obj.type === 'path' && obj.points && obj.points.length) {
-                    ctx.strokeStyle = "#4b5563";
+                } else if (obj.type === 'path' && Array.isArray(obj.points) && obj.points.length) {
+                    ctx.strokeStyle = obj.color || '#4b5563';
                     ctx.lineWidth = 3;
-                    ctx.lineCap = "round";
+                    ctx.lineCap = 'round';
+                    ctx.lineJoin = 'round';
                     ctx.beginPath();
                     ctx.moveTo(obj.points[0].x, obj.points[0].y);
-                    obj.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    for (let i = 1; i < obj.points.length; i++) {
+                        ctx.lineTo(obj.points[i].x, obj.points[i].y);
+                    }
                     ctx.stroke();
                 }
-            });
+            }
         });
     }
 
     function ensureDigiborden() {
-        initDigibord('');    // bord op scherm 5
-        initDigibord('-2');  // bord op scherm 2 (direct na inloggen)
+        attachDigibord('');
+        attachDigibord('-2');
     }
 
     // Feedback versturen
@@ -1409,7 +1504,7 @@
         const el = document.getElementById('screen-' + n);
         if (el) el.classList.remove('hidden');
 
-        // Digiborden meteen initialiseren op scherm 2 en 5
+        // Digiborden initialiseren op scherm 2 en 5
         if (n === 2 || n === 5) {
             ensureDigiborden();
         }
