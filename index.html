@@ -926,12 +926,202 @@
         }
     }
 
+    // ============================================================
+    // === DIGIBORD (multi-user, touch + muis) — per klas =========
+    // ============================================================
+    let digibordInit = false;
+    let digibordObjects = {};
+    let digibordDraggedId = null;
+    let digibordCurrentPathId = null;
+    let digibordIsDrawing = false;
+    let digibordIsDragging = false;
+    let digibordOffsetX = 0;
+    let digibordOffsetY = 0;
+    let digibordListenersAttached = false;
+
     function initDigibord() {
-        const statusEl = document.getElementById('status');
-        if(statusEl) {
-            statusEl.textContent = 'Status: Online';
-            statusEl.classList.add('online');
+        if (digibordInit) return;
+        if (!uClass) { setTimeout(initDigibord, 300); return; }
+
+        const canvas = document.getElementById('whiteboard');
+        const statusLabel = document.getElementById('status');
+        const trashZone = document.getElementById('trash-zone');
+        const addBtn = document.getElementById('addBtn');
+        const clearBtn = document.getElementById('clearBtn');
+        const wordInput = document.getElementById('wordInput');
+        if (!canvas || !statusLabel || !trashZone) return;
+
+        digibordInit = true;
+        const ctx = canvas.getContext('2d');
+        const boardPath = `mutatieles/${uClass}/board`;
+
+        // Live verbindingsstatus
+        onValue(ref(db, ".info/connected"), (snap) => {
+            if (snap.val()) {
+                statusLabel.textContent = "● LIVE";
+                statusLabel.classList.add('online');
+            } else {
+                statusLabel.textContent = "Status: Offline";
+                statusLabel.classList.remove('online');
+            }
+        });
+
+        // Universele positie (muis + touch)
+        const getPos = (e) => {
+            const rect = canvas.getBoundingClientRect();
+            const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+            const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+            return {
+                x: (clientX - rect.left) * (canvas.width / rect.width),
+                y: (clientY - rect.top) * (canvas.height / rect.height),
+                rawX: clientX,
+                rawY: clientY
+            };
+        };
+
+        const startAction = (e) => {
+            const { x, y } = getPos(e);
+            digibordDraggedId = null;
+            digibordIsDragging = false;
+
+            // Check of we een bestaand tekstblok vastpakken
+            const entries = Object.entries(digibordObjects).reverse();
+            for (const [id, obj] of entries) {
+                if (obj.type === 'text') {
+                    ctx.font = "bold 24px Arial";
+                    const w = ctx.measureText(obj.text).width;
+                    if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
+                        digibordDraggedId = id;
+                        digibordIsDragging = true;
+                        digibordOffsetX = x - obj.x;
+                        digibordOffsetY = y - obj.y;
+                        return;
+                    }
+                }
+            }
+            // Anders: nieuwe lijn starten
+            digibordIsDrawing = true;
+            const newPathRef = push(ref(db, boardPath));
+            digibordCurrentPathId = newPathRef.key;
+            set(newPathRef, { type: 'path', points: [{ x, y }] });
+        };
+
+        const moveAction = (e) => {
+            if (!digibordIsDragging && !digibordIsDrawing) return;
+            const { x, y, rawX, rawY } = getPos(e);
+
+            if (digibordIsDragging && digibordDraggedId) {
+                update(ref(db, `${boardPath}/${digibordDraggedId}`), {
+                    x: x - digibordOffsetX,
+                    y: y - digibordOffsetY
+                });
+                const tRect = trashZone.getBoundingClientRect();
+                trashZone.classList.toggle('active',
+                    rawX > tRect.left && rawX < tRect.right &&
+                    rawY > tRect.top  && rawY < tRect.bottom
+                );
+            } else if (digibordIsDrawing && digibordCurrentPathId) {
+                const path = digibordObjects[digibordCurrentPathId];
+                if (path && path.points) {
+                    const lastP = path.points[path.points.length - 1];
+                    if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
+                        update(ref(db, `${boardPath}/${digibordCurrentPathId}`), {
+                            points: [...path.points, { x, y }]
+                        });
+                    }
+                }
+            }
+        };
+
+        const stopAction = () => {
+            if (digibordIsDragging && digibordDraggedId && trashZone.classList.contains('active')) {
+                remove(ref(db, `${boardPath}/${digibordDraggedId}`));
+            }
+            digibordIsDrawing = false;
+            digibordIsDragging = false;
+            digibordDraggedId = null;
+            digibordCurrentPathId = null;
+            trashZone.classList.remove('active');
+        };
+
+        // Muis
+        canvas.addEventListener('mousedown', startAction);
+        window.addEventListener('mousemove', moveAction);
+        window.addEventListener('mouseup', stopAction);
+
+        // Touch — blokkeer alleen tijdens tekenen/slepen, anders blijft pagina scrollbaar
+        canvas.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            startAction(e);
+        }, { passive: false });
+
+        window.addEventListener('touchmove', (e) => {
+            if (!digibordIsDrawing && !digibordIsDragging) return;
+            e.preventDefault();
+            moveAction(e);
+        }, { passive: false });
+
+        window.addEventListener('touchend', stopAction);
+        window.addEventListener('touchcancel', stopAction);
+
+        // Knoppen (alleen 1x koppelen)
+        if (addBtn && !addBtn._digiBound) {
+            addBtn._digiBound = true;
+            addBtn.addEventListener('click', () => {
+                const val = wordInput.value.trim();
+                if (val) {
+                    push(ref(db, boardPath), {
+                        type: 'text',
+                        text: val,
+                        x: 150,
+                        y: 150
+                    });
+                    wordInput.value = '';
+                }
+            });
         }
+
+        if (clearBtn && !clearBtn._digiBound) {
+            clearBtn._digiBound = true;
+            clearBtn.addEventListener('click', () => {
+                if (confirm(`Hele bord van klas ${uClass} wissen?`)) {
+                    remove(ref(db, boardPath));
+                }
+            });
+        }
+
+        // Live renderen van alle klas-objecten
+        onValue(ref(db, boardPath), (snap) => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            digibordObjects = snap.val() || {};
+
+            snap.forEach((child) => {
+                const obj = child.val();
+                const isSel = child.key === digibordDraggedId;
+
+                if (obj.type === 'text') {
+                    ctx.font = "bold 24px Arial";
+                    ctx.fillStyle = isSel ? "#003082" : "#333";
+                    ctx.fillText(obj.text, obj.x, obj.y);
+                    if (isSel) {
+                        ctx.strokeRect(
+                            obj.x - 5,
+                            obj.y - 30,
+                            ctx.measureText(obj.text).width + 10,
+                            40
+                        );
+                    }
+                } else if (obj.type === 'path' && obj.points && obj.points.length) {
+                    ctx.strokeStyle = "#4b5563";
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(obj.points[0].x, obj.points[0].y);
+                    obj.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    ctx.stroke();
+                }
+            });
+        });
     }
 
     // Feedback versturen
