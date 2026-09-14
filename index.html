@@ -334,7 +334,7 @@
         }
         .feedback-msg strong { color: var(--police-blue); }
 
-        #board-container {
+        #board-container, #board-container-2 {
             position: relative;
             width: 100%;
             height: 60vh;
@@ -345,7 +345,7 @@
             box-shadow: 0 8px 25px rgba(0,0,0,0.2);
             touch-action: none;
         }
-        #board-container canvas {
+        #board-container canvas, #board-container-2 canvas {
             width: 100%;
             height: 100%;
             display: block;
@@ -373,7 +373,7 @@
             padding: 10px 20px;
             margin-bottom: 0;
         }
-        #status {
+        #status, #status-2 {
             position: absolute;
             top: 10px;
             right: 15px;
@@ -385,12 +385,12 @@
             border: 1px solid #ccc;
             z-index: 10;
         }
-        #status.online {
+        #status.online, #status-2.online {
             background: #ebffed;
             color: #2e7d32;
             border-color: #2e7d32;
         }
-        #trash-zone {
+        #trash-zone, #trash-zone-2 {
             position: absolute;
             top: 10px;
             left: 15px;
@@ -407,7 +407,7 @@
             transition: 0.2s;
             z-index: 10;
         }
-        #trash-zone.active {
+        #trash-zone.active, #trash-zone-2.active {
             transform: scale(1.2);
             background: #ef4444;
             opacity: 1;
@@ -436,9 +436,21 @@
         </div>
     </div>
 
-    <!-- SCREEN 2: LESDOELEN -->
+    <!-- SCREEN 2: DIGIBORD + LESDOELEN -->
     <div id="screen-2" class="hidden">
-        <h1>Lesdoelen &amp; Werkwijze</h1>
+        <h1>Digibord (Klas: <span id="current-class-label-2"></span>)</h1>
+        <div id="board-container-2">
+            <canvas id="whiteboard-2" width="1200" height="800"></canvas>
+            <div id="status-2">Status: Laden...</div>
+            <div id="trash-zone-2">🗑️</div>
+        </div>
+        <div class="digi-toolbar">
+            <input type="text" id="wordInput-2" placeholder="Woord invoeren...">
+            <button id="addBtn-2" class="btn">Toevoegen</button>
+            <button id="clearBtn-2" class="btn" style="background:var(--danger);">Wis Bord</button>
+        </div>
+
+        <h1 style="margin-top:40px;">Lesdoelen &amp; Werkwijze</h1>
         <div class="grid-2">
             <div class="info-block">
                 <h3>ASTMA &amp; Gouden W's</h3>
@@ -927,33 +939,34 @@
     }
 
     // ============================================================
-    // === DIGIBORD (multi-user, touch + muis) — per klas =========
+    // === DIGIBORD (multi-user, touch + muis) — herbruikbaar =====
     // ============================================================
-    let digibordInit = false;
-    let digibordObjects = {};
-    let digibordDraggedId = null;
-    let digibordCurrentPathId = null;
-    let digibordIsDrawing = false;
-    let digibordIsDragging = false;
-    let digibordOffsetX = 0;
-    let digibordOffsetY = 0;
-    let digibordListenersAttached = false;
+    const digibordInited = new Set();
 
-    function initDigibord() {
-        if (digibordInit) return;
-        if (!uClass) { setTimeout(initDigibord, 300); return; }
+    function initDigibord(suffix) {
+        if (digibordInited.has(suffix)) return;
+        if (!uClass) { setTimeout(() => initDigibord(suffix), 300); return; }
 
-        const canvas = document.getElementById('whiteboard');
-        const statusLabel = document.getElementById('status');
-        const trashZone = document.getElementById('trash-zone');
-        const addBtn = document.getElementById('addBtn');
-        const clearBtn = document.getElementById('clearBtn');
-        const wordInput = document.getElementById('wordInput');
+        const canvas = document.getElementById('whiteboard' + suffix);
+        const statusLabel = document.getElementById('status' + suffix);
+        const trashZone = document.getElementById('trash-zone' + suffix);
+        const addBtn = document.getElementById('addBtn' + suffix);
+        const clearBtn = document.getElementById('clearBtn' + suffix);
+        const wordInput = document.getElementById('wordInput' + suffix);
         if (!canvas || !statusLabel || !trashZone) return;
 
-        digibordInit = true;
+        digibordInited.add(suffix);
         const ctx = canvas.getContext('2d');
         const boardPath = `mutatieles/${uClass}/board`;
+
+        // eigen state per bord
+        let objects = {};
+        let draggedId = null;
+        let currentPathId = null;
+        let isDrawing = false;
+        let isDragging = false;
+        let offsetX = 0;
+        let offsetY = 0;
 
         // Live verbindingsstatus
         onValue(ref(db, ".info/connected"), (snap) => {
@@ -981,51 +994,51 @@
 
         const startAction = (e) => {
             const { x, y } = getPos(e);
-            digibordDraggedId = null;
-            digibordIsDragging = false;
+            draggedId = null;
+            isDragging = false;
 
             // Check of we een bestaand tekstblok vastpakken
-            const entries = Object.entries(digibordObjects).reverse();
+            const entries = Object.entries(objects).reverse();
             for (const [id, obj] of entries) {
                 if (obj.type === 'text') {
                     ctx.font = "bold 24px Arial";
                     const w = ctx.measureText(obj.text).width;
                     if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
-                        digibordDraggedId = id;
-                        digibordIsDragging = true;
-                        digibordOffsetX = x - obj.x;
-                        digibordOffsetY = y - obj.y;
+                        draggedId = id;
+                        isDragging = true;
+                        offsetX = x - obj.x;
+                        offsetY = y - obj.y;
                         return;
                     }
                 }
             }
             // Anders: nieuwe lijn starten
-            digibordIsDrawing = true;
+            isDrawing = true;
             const newPathRef = push(ref(db, boardPath));
-            digibordCurrentPathId = newPathRef.key;
+            currentPathId = newPathRef.key;
             set(newPathRef, { type: 'path', points: [{ x, y }] });
         };
 
         const moveAction = (e) => {
-            if (!digibordIsDragging && !digibordIsDrawing) return;
+            if (!isDragging && !isDrawing) return;
             const { x, y, rawX, rawY } = getPos(e);
 
-            if (digibordIsDragging && digibordDraggedId) {
-                update(ref(db, `${boardPath}/${digibordDraggedId}`), {
-                    x: x - digibordOffsetX,
-                    y: y - digibordOffsetY
+            if (isDragging && draggedId) {
+                update(ref(db, `${boardPath}/${draggedId}`), {
+                    x: x - offsetX,
+                    y: y - offsetY
                 });
                 const tRect = trashZone.getBoundingClientRect();
                 trashZone.classList.toggle('active',
                     rawX > tRect.left && rawX < tRect.right &&
                     rawY > tRect.top  && rawY < tRect.bottom
                 );
-            } else if (digibordIsDrawing && digibordCurrentPathId) {
-                const path = digibordObjects[digibordCurrentPathId];
+            } else if (isDrawing && currentPathId) {
+                const path = objects[currentPathId];
                 if (path && path.points) {
                     const lastP = path.points[path.points.length - 1];
                     if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
-                        update(ref(db, `${boardPath}/${digibordCurrentPathId}`), {
+                        update(ref(db, `${boardPath}/${currentPathId}`), {
                             points: [...path.points, { x, y }]
                         });
                     }
@@ -1034,13 +1047,13 @@
         };
 
         const stopAction = () => {
-            if (digibordIsDragging && digibordDraggedId && trashZone.classList.contains('active')) {
-                remove(ref(db, `${boardPath}/${digibordDraggedId}`));
+            if (isDragging && draggedId && trashZone.classList.contains('active')) {
+                remove(ref(db, `${boardPath}/${draggedId}`));
             }
-            digibordIsDrawing = false;
-            digibordIsDragging = false;
-            digibordDraggedId = null;
-            digibordCurrentPathId = null;
+            isDrawing = false;
+            isDragging = false;
+            draggedId = null;
+            currentPathId = null;
             trashZone.classList.remove('active');
         };
 
@@ -1056,7 +1069,7 @@
         }, { passive: false });
 
         window.addEventListener('touchmove', (e) => {
-            if (!digibordIsDrawing && !digibordIsDragging) return;
+            if (!isDrawing && !isDragging) return;
             e.preventDefault();
             moveAction(e);
         }, { passive: false });
@@ -1064,7 +1077,7 @@
         window.addEventListener('touchend', stopAction);
         window.addEventListener('touchcancel', stopAction);
 
-        // Knoppen (alleen 1x koppelen)
+        // Knoppen
         if (addBtn && !addBtn._digiBound) {
             addBtn._digiBound = true;
             addBtn.addEventListener('click', () => {
@@ -1093,11 +1106,11 @@
         // Live renderen van alle klas-objecten
         onValue(ref(db, boardPath), (snap) => {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
-            digibordObjects = snap.val() || {};
+            objects = snap.val() || {};
 
             snap.forEach((child) => {
                 const obj = child.val();
-                const isSel = child.key === digibordDraggedId;
+                const isSel = child.key === draggedId;
 
                 if (obj.type === 'text') {
                     ctx.font = "bold 24px Arial";
@@ -1122,6 +1135,11 @@
                 }
             });
         });
+    }
+
+    function ensureDigiborden() {
+        initDigibord('');    // bord op scherm 5
+        initDigibord('-2');  // bord op scherm 2 (direct na inloggen)
     }
 
     // Feedback versturen
@@ -1376,6 +1394,8 @@
         if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
         
         document.getElementById('current-class-label').textContent = uClass;
+        const label2 = document.getElementById('current-class-label-2');
+        if (label2) label2.textContent = uClass;
         showScreen(2);
     };
 
@@ -1388,6 +1408,11 @@
         document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
         const el = document.getElementById('screen-' + n);
         if (el) el.classList.remove('hidden');
+
+        // Digiborden meteen initialiseren op scherm 2 en 5
+        if (n === 2 || n === 5) {
+            ensureDigiborden();
+        }
 
         if (n === 3) {
             const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
@@ -1414,7 +1439,6 @@
         }
         if (n === 5) {
             initFileUpload(); 
-            initDigibord();
             initPdfSync();
             if (pdfViewer && !pdfViewer.textContent) pdfViewer.textContent = '';
         }
