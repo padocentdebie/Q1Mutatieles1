@@ -334,84 +334,23 @@
         }
         .feedback-msg strong { color: var(--police-blue); }
 
-        #board-container {
+        /* ─── Digibord via iframe ─── */
+        .board-iframe-wrapper {
             position: relative;
             width: 100%;
-            height: 60vh;
-            background: #ffffff;
+            height: 70vh;
             margin: 10px auto;
             border: 2px solid var(--police-blue);
             border-radius: 12px;
             box-shadow: 0 8px 25px rgba(0,0,0,0.2);
-            touch-action: none;
+            overflow: hidden;
+            background: #ffffff;
         }
-        #board-container canvas {
+        .board-iframe-wrapper iframe {
             width: 100%;
             height: 100%;
+            border: 0;
             display: block;
-            cursor: crosshair;
-            border-radius: 10px;
-        }
-        .digi-toolbar {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
-            padding: 10px 0;
-        }
-        .digi-toolbar input {
-            width: 200px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 16px;
-            margin-bottom: 0;
-        }
-        .digi-toolbar .btn {
-            width: auto;
-            padding: 10px 20px;
-            margin-bottom: 0;
-        }
-        #status {
-            position: absolute;
-            top: 10px;
-            right: 15px;
-            padding: 5px 12px;
-            border-radius: 20px;
-            font-size: 11px;
-            font-weight: bold;
-            background: #eee;
-            border: 1px solid #ccc;
-            z-index: 10;
-        }
-        #status.online {
-            background: #ebffed;
-            color: #2e7d32;
-            border-color: #2e7d32;
-        }
-        #trash-zone {
-            position: absolute;
-            top: 10px;
-            left: 15px;
-            width: 55px;
-            height: 55px;
-            background: #fee2e2;
-            border: 2px dashed #f87171;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 24px;
-            opacity: 0.6;
-            transition: 0.2s;
-            z-index: 10;
-        }
-        #trash-zone.active {
-            transform: scale(1.2);
-            background: #ef4444;
-            opacity: 1;
-            border-style: solid;
         }
     </style>
 </head>
@@ -436,9 +375,24 @@
         </div>
     </div>
 
-    <!-- SCREEN 2: LESDOELEN -->
+    <!-- SCREEN 2: DIGIBORD + LESDOELEN -->
     <div id="screen-2" class="hidden">
-        <h1>Lesdoelen &amp; Werkwijze</h1>
+        <h1>Digibord (Klas: <span id="current-class-label-2"></span>)</h1>
+        <div class="board-iframe-wrapper">
+            <iframe
+                src="https://www.whiteboard.team/app/board/xmpgfKFx"
+                title="Whiteboard.team bord"
+                allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
+                referrerpolicy="no-referrer-when-downgrade"
+                loading="lazy"
+            ></iframe>
+        </div>
+        <p style="font-size: 0.9em; color: #555; margin-top: 8px;">
+            Werkt het bord niet? Open het dan in een nieuw tabblad:
+            <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer">whiteboard.team/app/board/xmpgfKFx</a>
+        </p>
+
+        <h1 style="margin-top:40px;">Lesdoelen &amp; Werkwijze</h1>
         <div class="grid-2">
             <div class="info-block">
                 <h3>ASTMA &amp; Gouden W's</h3>
@@ -583,16 +537,19 @@
 
         <!-- Digibord -->
         <h3>Digibord (multi‑user)</h3>
-        <div id="board-container">
-            <canvas id="whiteboard" width="1200" height="800"></canvas>
-            <div id="status">Status: Laden...</div>
-            <div id="trash-zone">🗑️</div>
+        <div class="board-iframe-wrapper">
+            <iframe
+                src="https://www.whiteboard.team/app/board/xmpgfKFx"
+                title="Whiteboard.team bord"
+                allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
+                referrerpolicy="no-referrer-when-downgrade"
+                loading="lazy"
+            ></iframe>
         </div>
-        <div class="digi-toolbar">
-            <input type="text" id="wordInput" placeholder="Woord invoeren...">
-            <button id="addBtn" class="btn">Toevoegen</button>
-            <button id="clearBtn" class="btn" style="background:var(--danger);">Wis Bord</button>
-        </div>
+        <p style="font-size: 0.9em; color: #555; margin-top: 8px;">
+            Werkt het bord niet? Open het dan in een nieuw tabblad:
+            <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer">whiteboard.team/app/board/xmpgfKFx</a>
+        </p>
 
         <button class="btn" onclick="showScreen(6)" style="margin-top: 25px;">Naar Eindopdracht</button>
     </div>
@@ -926,27 +883,6 @@
         }
     }
 
-    function initDigibord() {
-        const statusEl = document.getElementById('status');
-        if(statusEl) {
-            statusEl.textContent = 'Status: Online';
-            statusEl.classList.add('online');
-        }
-    }
-
-    // Feedback versturen
-    document.getElementById('send-feedback-btn')?.addEventListener('click', () => {
-        const input = document.getElementById('feedback-input');
-        if(!input || !input.value.trim() || !uClass) return;
-        const newRef = push(ref(db, `mutatieles/${uClass}/feedback`));
-        set(newRef, {
-            author: uName || 'Onbekend',
-            text: input.value.trim(),
-            timestamp: Date.now()
-        });
-        input.value = '';
-    });
-
     // ===== SLEEPOPDRACHT SYNCHRONISATIE =====
     function renderDragItems(order) {
         const list = document.getElementById('drag-list');
@@ -1186,6 +1122,8 @@
         if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
         
         document.getElementById('current-class-label').textContent = uClass;
+        const label2 = document.getElementById('current-class-label-2');
+        if (label2) label2.textContent = uClass;
         showScreen(2);
     };
 
@@ -1224,7 +1162,6 @@
         }
         if (n === 5) {
             initFileUpload(); 
-            initDigibord();
             initPdfSync();
             if (pdfViewer && !pdfViewer.textContent) pdfViewer.textContent = '';
         }
