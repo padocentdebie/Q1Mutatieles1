@@ -210,6 +210,45 @@
             border-bottom: 1px solid #eee;
             margin-bottom: 5px;
         }
+        /* ─── Reacties binnen een feed-card ─── */
+        .feed-reactions {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1px dashed #ddd;
+        }
+        .feed-reaction {
+            font-size: 0.9em;
+            padding: 4px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .feed-reaction strong { color: var(--police-blue); }
+        .feed-reply {
+            display: flex;
+            gap: 6px;
+            margin-top: 8px;
+        }
+        .feed-reply input {
+            flex: 1;
+            padding: 6px 10px;
+            margin: 0;
+            font-size: 0.9em;
+        }
+        .feed-reply button {
+            background: var(--police-blue);
+            color: white;
+            border: none;
+            padding: 6px 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.85em;
+            text-transform: uppercase;
+            font-weight: bold;
+            width: auto;
+            margin: 0;
+        }
+        .feed-reply button:hover { background: #002360; }
+        .feed-reply button:disabled { background: #cccccc; cursor: not-allowed; }
+
         .kb-list {
             list-style: none;
             padding-left: 0;
@@ -1521,7 +1560,7 @@
         });
     }
 
-    // Livefeed van de klas bekijken
+    // Livefeed van de klas bekijken (inclusief reacties per leerling)
     function listenClassFeed() {
         if (!uClass) return;
         onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
@@ -1534,6 +1573,7 @@
             Object.entries(data).forEach(([student, val]) => {
                 const card = document.createElement('div');
                 card.className = 'feed-card';
+                card.dataset.student = student;
 
                 let html = `<span class="feed-name">${escapeHtml(student)}</span>`;
 
@@ -1542,9 +1582,67 @@
                 if (val.mutation2) html += `<p><strong>Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</p>`;
                 if (val.mutation3) html += `<p><strong>Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</p>`;
 
+                // Reacties van anderen op deze leerling
+                html += `<div class="feed-reactions">`;
+                if (val.reactions) {
+                    Object.values(val.reactions)
+                        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+                        .forEach(r => {
+                            html += `<div class="feed-reaction"><strong>${escapeHtml(r.author)}:</strong> ${escapeHtml(r.text)}</div>`;
+                        });
+                }
+                html += `<div class="feed-reply">`;
+                html += `<input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input />`;
+                html += `<button type="button" data-reply-btn>Reageer</button>`;
+                html += `</div></div>`;
+
                 card.innerHTML = html;
                 feed.appendChild(card);
             });
+        });
+    }
+
+    // Eenmalig: event delegation voor alle reageerknoppen/Enter in de feed
+    function initClassFeedInteractions() {
+        const feed = document.getElementById('class-feed');
+        if (!feed || feed.dataset.bound) return;
+        feed.dataset.bound = '1';
+
+        feed.addEventListener('click', async (e) => {
+            const btn = e.target.closest('[data-reply-btn]');
+            if (!btn) return;
+            const card = btn.closest('.feed-card');
+            if (!card) return;
+            const student = card.dataset.student;
+            const input = card.querySelector('[data-reply-input]');
+            const text = input?.value.trim();
+            if (!text) return;
+            if (!uName || !uClass) { alert('Log eerst in.'); return; }
+
+            btn.disabled = true;
+            try {
+                const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
+                await set(newRef, {
+                    author: uName,
+                    text: text,
+                    timestamp: Date.now()
+                });
+                input.value = '';
+            } catch (err) {
+                console.error('Reactie mislukt:', err);
+                alert('Reactie mislukt: ' + err.message);
+            } finally {
+                btn.disabled = false;
+            }
+        });
+
+        feed.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter' && e.target.matches('[data-reply-input]')) {
+                e.preventDefault();
+                const card = e.target.closest('.feed-card');
+                const btn = card?.querySelector('[data-reply-btn]');
+                if (btn) btn.click();
+            }
         });
     }
 
@@ -1552,6 +1650,7 @@
     window.startSession = function() {
         originalStartSession();
         listenClassFeed();
+        initClassFeedInteractions();
         initLiveFields();
     };
 
