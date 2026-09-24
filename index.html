@@ -593,7 +593,7 @@
             <div>
                 <h3>Jouw Mutatie (OVT) - wordt gedeeld met klas</h3>
                 <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:150px;"></textarea>
-                <h3>Extra mutatie-notities (lokaal)</h3>
+                <h3>Extra mutatie-notities (gedeeld via livefeed)</h3>
                 <label>Mutatie 1:</label>
                 <textarea id="mutation1" placeholder="Notitie mutatie 1..." style="height:80px; margin-bottom:10px;"></textarea>
                 <label>Mutatie 2:</label>
@@ -1421,31 +1421,97 @@
         }
     };
 
-    // Live sync voor de mutatietekst (Scherm 6)
-    document.getElementById('final-mutation')?.addEventListener('input', (e) => {
-        if(!uClass || !uName) return;
-        set(ref(db, `mutatieles/${uClass}/live/${uName}`), {
-            text: e.target.value,
-            timestamp: Date.now()
+    // ============================================================
+    // === LIVE INVOERVELDEN (scherm 6 → overal zichtbaar) ========
+    // ============================================================
+    const LIVE_FIELD_MAP = {
+        'final-mutation': 'text',
+        'mutation1':      'mutation1',
+        'mutation2':      'mutation2',
+        'mutation3':      'mutation3'
+    };
+
+    function escapeHtml(str) {
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#39;');
+    }
+
+    let liveBoundUserKey = null;
+    let liveInputListeners = [];
+    let liveValueUnsub = null;
+
+    function initLiveFields() {
+        if (!uClass || !uName) return;
+
+        const userKey = `${uClass}/${uName}`;
+        if (liveBoundUserKey === userKey) return;   // al gebonden
+        liveBoundUserKey = userKey;
+
+        // Oude listeners opruimen (bij klas-/naamwissel)
+        liveInputListeners.forEach(({ el, fn }) => el.removeEventListener('input', fn));
+        liveInputListeners = [];
+        if (liveValueUnsub) { liveValueUnsub(); liveValueUnsub = null; }
+
+        const userLiveRef = ref(db, `mutatieles/${uClass}/live/${uName}`);
+
+        // Elke textarea live naar Firebase sturen
+        Object.entries(LIVE_FIELD_MAP).forEach(([id, key]) => {
+            const el = document.getElementById(id);
+            if (!el) return;
+            const fn = () => {
+                update(userLiveRef, {
+                    [key]: el.value,
+                    name: uName,
+                    timestamp: Date.now()
+                });
+            };
+            el.addEventListener('input', fn);
+            liveInputListeners.push({ el, fn });
         });
-    });
+
+        // Eigen waarden terugladen zodra je inlogt / scherm 6 opent
+        liveValueUnsub = onValue(userLiveRef, (snap) => {
+            const data = snap.val() || {};
+            Object.entries(LIVE_FIELD_MAP).forEach(([id, key]) => {
+                const el = document.getElementById(id);
+                if (!el) return;
+                if (document.activeElement === el) return; // niet overschrijven tijdens typen
+                const val = data[key];
+                if (typeof val === 'string' && el.value !== val) {
+                    el.value = val;
+                }
+            });
+        });
+    }
 
     // Livefeed van de klas bekijken
     function listenClassFeed() {
-        if(!uClass) return;
+        if (!uClass) return;
         onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
             const feed = document.getElementById('class-feed');
-            if(!feed) return;
+            if (!feed) return;
             feed.innerHTML = '';
             const data = snap.val();
-            if(data) {
-                Object.entries(data).forEach(([student, val]) => {
-                    const card = document.createElement('div');
-                    card.className = 'feed-card';
-                    card.innerHTML = `<span class="feed-name">${student}</span><p>${val.text || ''}</p>`;
-                    feed.appendChild(card);
-                });
-            }
+            if (!data) return;
+
+            Object.entries(data).forEach(([student, val]) => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+
+                let html = `<span class="feed-name">${escapeHtml(student)}</span>`;
+
+                if (val.text)      html += `<p><strong>Mutatie:</strong> ${escapeHtml(val.text)}</p>`;
+                if (val.mutation1) html += `<p><strong>Mutatie 1:</strong> ${escapeHtml(val.mutation1)}</p>`;
+                if (val.mutation2) html += `<p><strong>Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</p>`;
+                if (val.mutation3) html += `<p><strong>Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</p>`;
+
+                card.innerHTML = html;
+                feed.appendChild(card);
+            });
         });
     }
 
@@ -1453,6 +1519,7 @@
     window.startSession = function() {
         originalStartSession();
         listenClassFeed();
+        initLiveFields();
     };
 
     // ============================================================
