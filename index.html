@@ -142,10 +142,25 @@
             border-radius: 5px;
             cursor: grab;
             user-select: none;
-            transition: transform 0.2s;
+            -webkit-user-select: none;
+            -webkit-touch-callout: none;
+            /* Belangrijk: laat touch-drag werken zonder scroll */
+            touch-action: none;
         }
-        .draggable.dragging { opacity: 0.5; }
         .draggable:active { cursor: grabbing; }
+        .draggable.dragging {
+            opacity: 0.9;
+            cursor: grabbing;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            transform: scale(1.02);
+        }
+        .drag-placeholder {
+            border: 2px dashed var(--police-blue);
+            border-radius: 5px;
+            background: #eef4ff;
+            box-sizing: border-box;
+            transition: height 0.05s ease;
+        }
         .quiz-item {
             background: #fdfdfd;
             padding: 20px;
@@ -396,8 +411,8 @@
         <div class="grid-2">
             <div class="info-block">
                 <h3>ASTMA &amp; Gouden W's</h3>
-                <p>Opbouw van jouw tekst: <strong>Aanleiding<strong>, <strong>Situatie<strong>, <strong>Toedracht<strong>, <strong>Maatregelen<strong> en <strong>Afhandeling<strong>.</p>
-                <p>Beantwoord: <strong>Wie<strong>, <strong>wat<strong>, <strong>waar<strong>, <strong>wanneer<strong>, <strong>waarom<strong>, <strong>welke wijze<strong> en<strong> waarmee<strong>.</p>
+                <p>Opbouw van jouw tekst: <strong>Aanleiding</strong>, <strong>Situatie</strong>, <strong>Toedracht</strong>, <strong>Maatregelen</strong> en <strong>Afhandeling</strong>.</p>
+                <p>Beantwoord: <strong>Wie</strong>, <strong>wat</strong>, <strong>waar</strong>, <strong>wanneer</strong>, <strong>waarom</strong>, <strong>welke wijze</strong> en <strong>waarmee</strong>.</p>
             </div>
             <div>
                 <h3>Schrijfstijl</h3>
@@ -458,10 +473,10 @@
         <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
     </div>
 
-    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD) -->
+    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD + TOUCH) -->
     <div id="screen-3" class="hidden">
         <h1>Sleepopdracht: Orden de Mutatie</h1>
-        <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA):</p>
+        <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA). Werkt met muis én touchscreen — iedereen in de klas ziet de wijzigingen live.</p>
         <div id="drag-list" class="drag-container"></div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
             <button class="btn btn-shuffle" onclick="shuffleOrder()">Schud opnieuw</button>
@@ -648,7 +663,7 @@
         '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
     ];
 
-    // ===== HULP: PDF TEKST WEERGEVEN (vervangt iframe) =====
+    // ===== HULP: PDF TEKST WEERGEVEN =====
     async function openPdfText(url, sync = true) {
         if (!pdfViewer || !pdfPlaceholder) return;
         if (!url) {
@@ -658,7 +673,6 @@
             return;
         }
         try {
-            // Toon laadmelding
             pdfViewer.textContent = 'Bezig met laden van de PDF-tekst...';
             pdfViewer.classList.remove('hidden');
             pdfPlaceholder.classList.add('hidden');
@@ -753,7 +767,7 @@
         });
     }
 
-    // ===== INIT UPLOAD FUNCTIE (MET EXTRA FOUTAFHANDELING) =====
+    // ===== INIT UPLOAD FUNCTIE =====
     function initFileUpload() {
         if (fileListenerSet) return;
         fileListenerSet = true;
@@ -848,13 +862,11 @@
             });
         }
 
-        // Live updates voor bestanden
         const filesRef = ref(db, `mutatieles/${uClass}/files`);
         onValue(filesRef, (snap) => {
             renderFileList(snap.val());
         });
 
-        // Live feedback synchronisatie
         const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
         onValue(feedbackRef, (snap) => {
             const feed = document.getElementById('feedback-feed');
@@ -883,68 +895,180 @@
         }
     }
 
-    // ===== SLEEPOPDRACHT SYNCHRONISATIE =====
-    function renderDragItems(order) {
+    // =====================================================================
+    // ===== SLEEPOPDRACHT – POINTER EVENTS (MUIS + TOUCH) + SYNCHRONISATIE
+    // =====================================================================
+    let isDraggingLocally = false;
+    let dragState = null;
+
+    // Fisher-Yates shuffle
+    function shuffleArray(arr) {
+        const a = arr.slice();
+        for (let i = a.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+    }
+
+    // Maakt een willekeurige volgorde van indexes [0..n-1]
+    function makeShuffledIndexes() {
+        return shuffleArray(dragData.map((_, i) => i));
+    }
+
+    // Rendert de sleepblokken op basis van een array van indexes
+    function renderDragItems(indexes) {
         const list = document.getElementById('drag-list');
-        if(!list) return;
+        if (!list) return;
+
+        // Tijdens eigen drag niet opnieuw renderen (voorkomt flikkering)
+        if (isDraggingLocally) return;
+
+        // Als de volgorde al klopt, niet opnieuw opbouwen
+        const current = getCurrentDragOrder();
+        if (Array.isArray(current) && Array.isArray(indexes) &&
+            current.length === indexes.length &&
+            current.every((v, i) => v === indexes[i])) {
+            return;
+        }
+
         list.innerHTML = '';
-        order.forEach(text => {
+        indexes.forEach((idx) => {
+            const text = dragData[idx];
+            if (typeof text !== 'string') return;
             const div = document.createElement('div');
             div.className = 'draggable';
-            div.draggable = true;
+            div.dataset.idx = String(idx);
             div.innerHTML = text;
-            div.addEventListener('dragstart', () => {
-                div.classList.add('dragging');
-            });
-            div.addEventListener('dragend', () => {
-                div.classList.remove('dragging');
-            });
+            div.addEventListener('pointerdown', onPointerDown);
             list.appendChild(div);
         });
+    }
 
-        if (!list._dragListenersAdded) {
-            list.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                const dragging = document.querySelector('.dragging');
-                if (!dragging) return;
-                const siblings = [...list.querySelectorAll('.draggable:not(.dragging)')];
-                const nextSibling = siblings.find(sibling => {
-                    const rect = sibling.getBoundingClientRect();
-                    return e.clientY <= rect.top + rect.height / 2;
-                });
-                if (nextSibling) {
-                    list.insertBefore(dragging, nextSibling);
-                } else {
-                    list.appendChild(dragging);
-                }
-            });
+    // Leest de huidige volgorde uit als array van indexes
+    function getCurrentDragOrder() {
+        return Array.from(document.querySelectorAll('#drag-list .draggable'))
+            .map(el => parseInt(el.dataset.idx, 10));
+    }
 
-            list.addEventListener('drop', (e) => {
-                e.preventDefault();
-                const currentOrder = getCurrentDragOrder();
-                const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-                set(dragOrderRef, currentOrder);
-            });
-            list._dragListenersAdded = true;
+    // Start slepen
+    function onPointerDown(e) {
+        // Alleen linkermuisknop (touch heeft geen button of button=0)
+        if (e.pointerType === 'mouse' && e.button !== 0) return;
+
+        const el = e.currentTarget;
+        const list = document.getElementById('drag-list');
+        if (!list || !el.parentElement) return;
+
+        isDraggingLocally = true;
+
+        const rect = el.getBoundingClientRect();
+        const offsetX = e.clientX - rect.left;
+        const offsetY = e.clientY - rect.top;
+
+        // Placeholder op de plek van het element
+        const placeholder = document.createElement('div');
+        placeholder.className = 'drag-placeholder';
+        placeholder.style.height = rect.height + 'px';
+        placeholder.style.width = rect.width + 'px';
+        list.insertBefore(placeholder, el);
+
+        // Element "zwevend" maken
+        el.style.position = 'fixed';
+        el.style.left = rect.left + 'px';
+        el.style.top = rect.top + 'px';
+        el.style.width = rect.width + 'px';
+        el.style.zIndex = '9999';
+        el.style.pointerEvents = 'none';
+        el.style.margin = '0';
+        el.classList.add('dragging');
+        document.body.appendChild(el);
+
+        dragState = { el, placeholder, offsetX, offsetY, list };
+
+        document.addEventListener('pointermove', onPointerMove, { passive: false });
+        document.addEventListener('pointerup', onPointerUp);
+        document.addEventListener('pointercancel', onPointerUp);
+
+        e.preventDefault();
+    }
+
+    // Tijdens slepen
+    function onPointerMove(e) {
+        if (!dragState) return;
+        e.preventDefault();
+
+        const { el, offsetX, offsetY, placeholder, list } = dragState;
+
+        el.style.left = (e.clientX - offsetX) + 'px';
+        el.style.top = (e.clientY - offsetY) + 'px';
+
+        const pointerY = e.clientY;
+        // Alle mogelijke doel-items (behalve placeholder)
+        const items = Array.from(list.children).filter(c => c !== placeholder);
+
+        let target = null;
+        for (const item of items) {
+            const r = item.getBoundingClientRect();
+            if (pointerY < r.top + r.height / 2) {
+                target = item;
+                break;
+            }
+        }
+
+        if (target) {
+            list.insertBefore(placeholder, target);
+        } else {
+            list.appendChild(placeholder);
         }
     }
 
-    function getCurrentDragOrder() {
-        const items = document.querySelectorAll('#drag-list .draggable');
-        return Array.from(items).map(el => el.innerHTML);
+    // Einde slepen
+    function onPointerUp() {
+        if (!dragState) return;
+
+        const { el, placeholder, list } = dragState;
+
+        // Element op de placeholder-plek terugzetten
+        list.insertBefore(el, placeholder);
+        placeholder.remove();
+
+        // Stijlen resetten
+        el.style.position = '';
+        el.style.left = '';
+        el.style.top = '';
+        el.style.width = '';
+        el.style.zIndex = '';
+        el.style.pointerEvents = '';
+        el.style.margin = '';
+        el.classList.remove('dragging');
+
+        document.removeEventListener('pointermove', onPointerMove);
+        document.removeEventListener('pointerup', onPointerUp);
+        document.removeEventListener('pointercancel', onPointerUp);
+
+        dragState = null;
+        isDraggingLocally = false;
+
+        // Nieuwe volgorde naar Firebase sturen → alle klassenleden zien het
+        const newOrder = getCurrentDragOrder();
+        if (uClass && Array.isArray(newOrder) && newOrder.length === dragData.length) {
+            set(ref(db, `mutatieles/${uClass}/dragOrder`), newOrder);
+        }
     }
 
+    // Willekeurige volgorde forceren (gedeeld met klas)
     window.shuffleOrder = function() {
-        if(!uClass) return;
-        const shuffled = [...dragData].sort(() => Math.random() - 0.5);
-        const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-        set(dragOrderRef, shuffled);
+        if (!uClass) return;
+        set(ref(db, `mutatieles/${uClass}/dragOrder`), makeShuffledIndexes());
     };
 
+    // Controleer volgorde
     window.checkOrder = function() {
-        const currentItems = [...document.querySelectorAll('#drag-list .draggable')].map(el => el.innerHTML);
-        const isCorrect = JSON.stringify(currentItems) === JSON.stringify(dragData);
-        if(isCorrect) {
+        const current = getCurrentDragOrder();
+        const correct = dragData.map((_, i) => i);
+        const isCorrect = JSON.stringify(current) === JSON.stringify(correct);
+        if (isCorrect) {
             alert("Uitstekend! De volgorde is correct.");
             document.getElementById('next-to-4').classList.remove('hidden');
         } else {
@@ -1053,7 +1177,7 @@
         }
     }
 
-    // ===== PDF-SYNCHRONISATIE: keuzemenu en luisteraar =====
+    // ===== PDF-SYNCHRONISATIE =====
     function initPdfSync() {
         if (pdfSelect) {
             pdfSelect.addEventListener('change', (e) => {
@@ -1061,7 +1185,6 @@
                 if (url) {
                     openPdfText(url, true);
                 } else {
-                    // Leeg maken
                     if (pdfViewer && pdfPlaceholder) {
                         pdfViewer.textContent = '';
                         pdfViewer.classList.add('hidden');
@@ -1081,9 +1204,7 @@
             pdfListener = onValue(currentPdfRef, (snap) => {
                 const url = snap.val();
                 if (url && typeof url === 'string') {
-                    // Laad de PDF-tekst (zonder opnieuw te synchroniseren om loops te voorkomen)
                     openPdfText(url, false);
-                    // Zet de dropdown overeenkomstig
                     if (pdfSelect) {
                         const options = pdfSelect.options;
                         let found = false;
@@ -1099,7 +1220,6 @@
                         }
                     }
                 } else {
-                    // Geen PDF
                     if (pdfViewer && pdfPlaceholder) {
                         pdfViewer.textContent = '';
                         pdfViewer.classList.add('hidden');
@@ -1139,21 +1259,20 @@
 
         if (n === 3) {
             const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
-            get(dragOrderRef).then(snapshot => {
-                if (!snapshot.exists()) {
-                    const shuffled = [...dragData].sort(() => Math.random() - 0.5);
-                    set(dragOrderRef, shuffled);
-                } else {
-                    renderDragItems(snapshot.val());
-                }
-            }).catch(err => console.error(err));
-
             if (dragListener) dragListener();
+
             dragListener = onValue(dragOrderRef, (snap) => {
-                const order = snap.val();
-                if (order) {
-                    renderDragItems(order);
+                let order = snap.val();
+                const isValid = Array.isArray(order) &&
+                    order.length === dragData.length &&
+                    order.every(x => Number.isInteger(x) && x >= 0 && x < dragData.length);
+
+                if (!isValid) {
+                    // Eerste keer of oude/ongeldige data → zet geschudde volgorde
+                    set(dragOrderRef, makeShuffledIndexes());
+                    return; // onValue vuurt opnieuw
                 }
+                renderDragItems(order);
             });
         }
 
@@ -1211,7 +1330,7 @@
     };
 
     // ============================================================
-    // === NIEUW: AUDIO UPLOAD & EXTRA MUTATIES (alleen toevoeging) ===
+    // === AUDIO UPLOAD & EXTRA MUTATIES ==========================
     // ============================================================
     let audioInitDone = false;
 
@@ -1233,7 +1352,6 @@
             return;
         }
 
-        // Luister naar huidige audio in database
         const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
         onValue(currentAudioRef, (snap) => {
             const url = snap.val();
@@ -1251,7 +1369,6 @@
             }
         });
 
-        // Upload functie
         uploadBtn.addEventListener('click', async () => {
             const file = audioInput.files[0];
             if (!file) {
@@ -1277,7 +1394,7 @@
                 await set(currentAudioRef, url);
                 statusDiv.textContent = 'Upload succesvol!';
                 statusDiv.style.color = '#155724';
-                audioInput.value = ''; // reset input
+                audioInput.value = '';
             } catch (err) {
                 console.error('Audio upload mislukt:', err);
                 statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
@@ -1289,7 +1406,6 @@
         });
     }
 
-    // Start de initialisatie (wacht tot uClass beschikbaar is)
     setTimeout(initAudioFeatures, 100);
 </script>
 </body>
