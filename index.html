@@ -4,6 +4,10 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Q1 Mutatieles 1 - Volledig Portaal</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
     <!-- PDF.js library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script>
@@ -22,73 +26,88 @@
         }
         * { box-sizing: border-box; }
         body {
-            font-family: 'Segoe UI', sans-serif;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
             background-color: var(--bg-gray);
             color: var(--text-dark);
             margin: 0;
-            padding: 20px;
+            padding: 0;
             line-height: 1.6;
+            min-height: 100vh;
         }
         .container {
             max-width: 1100px;
-            margin: 0 auto;
+            margin: 20px auto;
             background: var(--white);
-            padding: 40px;
+            padding: 30px;
             border-top: 10px solid var(--police-blue);
             box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
-            border-radius: 4px;
+            border-radius: 8px;
         }
         h1, h2, h3, h4 {
             color: var(--police-blue);
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 0.5px;
+            font-weight: 700;
         }
         .hidden { display: none !important; }
         .login-box {
-            max-width: 400px;
-            margin: 60px auto;
+            max-width: 440px;
+            margin: 40px auto;
             padding: 30px;
             border: 1px solid var(--border-light);
-            border-radius: 8px;
-            background: #f8fafc;
+            border-radius: 12px;
+            background: #ffffff;
+            box-shadow: 0 10px 25px -5px rgba(0,0,0,0.05);
         }
         input, select, textarea {
             width: 100%;
             padding: 12px;
             border: 1px solid var(--border-light);
-            border-radius: 4px;
+            border-radius: 6px;
             margin-bottom: 15px;
             font-size: 15px;
+            transition: border-color 0.2s, box-shadow 0.2s;
+        }
+        input:focus, select:focus, textarea:focus {
+            outline: none;
+            border-color: var(--police-blue);
+            box-shadow: 0 0 0 3px rgba(0, 48, 130, 0.15);
         }
         .btn {
             background-color: var(--police-blue);
             color: white;
-            padding: 14px 28px;
+            padding: 12px 24px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 700;
             width: 100%;
-            transition: background 0.3s;
+            transition: all 0.2s;
             margin-bottom: 10px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
         }
-        .btn:hover { background-color: #002360; }
-        .btn:disabled { background-color: #cccccc; cursor: not-allowed; }
+        .btn:hover { background-color: #002360; transform: translateY(-1px); }
+        .btn:active { transform: translateY(0); }
+        .btn:disabled { background-color: #cccccc; cursor: not-allowed; transform: none; }
         .btn-reset {
             background-color: var(--danger);
-            font-size: 11px;
-            padding: 8px;
+            font-size: 12px;
+            padding: 8px 12px;
         }
+        .btn-reset:hover { background-color: #bd2130; }
         .btn-shuffle {
             background-color: #6c757d;
             width: auto;
-            padding: 8px 20px;
+            padding: 10px 20px;
             font-size: 14px;
-            display: inline-block;
-            margin-right: 10px;
+            display: inline-flex;
         }
-        .btn-secondary { background-color: #6c757d; }
+        .btn-shuffle:hover { background-color: #5a6268; }
+        .btn-secondary { background-color: #6c757d; width: auto; }
         .btn-secondary:hover { background-color: #5a6268; }
         .btn-upload {
             background-color: #28a745;
@@ -102,60 +121,52 @@
             padding: 10px 25px; 
         }
         .btn-browse:hover { background-color: #0056b3; }
-        .btn-refresh {
-            background-color: #17a2b8;
-            width: auto;
-            padding: 8px 20px;
-            font-size: 13px;
-        }
-        .btn-refresh:hover { background-color: #138496; }
-        .btn-test {
-            background-color: #ffc107;
-            color: #212529;
-            width: auto;
-            padding: 8px 20px;
-        }
-        .btn-test:hover { background-color: #e0a800; }
-
         .info-block {
             border-left: 5px solid var(--police-gold);
-            padding: 5px 20px;
+            padding: 15px 20px;
             margin: 20px 0;
             background: #fffcf0;
+            border-radius: 0 8px 8px 0;
         }
         .grid-2 {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 30px;
+            gap: 25px;
             margin: 20px 0;
+        }
+        @media (max-width: 768px) {
+            .grid-2 { grid-template-columns: 1fr; }
+            .container { padding: 15px; margin: 10px; }
         }
         .drag-container {
             display: flex;
             flex-direction: column;
-            gap: 10px;
+            gap: 12px;
             margin: 20px 0;
         }
         .draggable {
             background: white;
             border: 2px solid var(--police-blue);
-            padding: 15px;
-            border-radius: 5px;
+            padding: 16px;
+            border-radius: 8px;
             cursor: grab;
             user-select: none;
             -webkit-user-select: none;
-            -webkit-touch-callout: none;
             touch-action: none;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            transition: background-color 0.2s, box-shadow 0.2s;
         }
         .draggable:active { cursor: grabbing; }
         .draggable.dragging {
-            opacity: 0.9;
+            opacity: 0.95;
             cursor: grabbing;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
             transform: scale(1.02);
+            background: #f8fafc;
         }
         .drag-placeholder {
             border: 2px dashed var(--police-blue);
-            border-radius: 5px;
+            border-radius: 8px;
             background: #eef4ff;
             box-sizing: border-box;
             transition: height 0.05s ease;
@@ -166,16 +177,17 @@
             font-weight: bold;
             background: #fffcf0;
             border-left: 5px solid var(--police-gold);
-            padding: 10px 18px;
+            padding: 12px 18px;
             margin: 15px 0;
-            border-radius: 4px;
+            border-radius: 0 6px 6px 0;
         }
         .quiz-item {
             background: #fdfdfd;
             padding: 20px;
             border: 1px solid #edf2f7;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.02);
         }
         .audio-player-container {
             background: #f1f5f9;
@@ -186,50 +198,60 @@
         }
         audio { width: 100%; }
         .live-feed {
-            margin-top: 40px;
+            margin-top: 20px;
             border-top: 3px solid var(--police-gold);
             padding-top: 20px;
         }
         .feed-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            display: flex;
+            flex-direction: column;
             gap: 15px;
             margin-top: 15px;
+            max-height: 600px;
+            overflow-y: auto;
+            padding-right: 5px;
         }
         .feed-card {
             background: #fff;
-            border: 1px solid #ddd;
-            padding: 15px;
+            border: 1px solid #e2e8f0;
+            padding: 16px;
             border-left: 5px solid var(--police-blue);
-            border-radius: 4px;
+            border-radius: 6px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.04);
         }
         .feed-name {
-            font-weight: bold;
+            font-weight: 700;
             color: var(--police-blue);
-            display: block;
-            border-bottom: 1px solid #eee;
-            margin-bottom: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #edf2f7;
+            padding-bottom: 6px;
+            margin-bottom: 8px;
+            font-size: 1.05em;
         }
-        /* ─── Reacties binnen een feed-card ─── */
         .feed-reactions {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1px dashed #ddd;
+            margin-top: 12px;
+            padding-top: 10px;
+            border-top: 1px dashed #e2e8f0;
         }
         .feed-reaction {
             font-size: 0.9em;
-            padding: 4px 0;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 6px 10px;
+            background: #f8fafc;
+            border-radius: 6px;
+            margin-bottom: 6px;
+            border: 1px solid #f1f5f9;
         }
         .feed-reaction strong { color: var(--police-blue); }
         .feed-reply {
             display: flex;
-            gap: 6px;
-            margin-top: 8px;
+            gap: 8px;
+            margin-top: 10px;
         }
         .feed-reply input {
             flex: 1;
-            padding: 6px 10px;
+            padding: 8px 12px;
             margin: 0;
             font-size: 0.9em;
         }
@@ -237,61 +259,61 @@
             background: var(--police-blue);
             color: white;
             border: none;
-            padding: 6px 14px;
-            border-radius: 4px;
+            padding: 8px 16px;
+            border-radius: 6px;
             cursor: pointer;
             font-size: 0.85em;
             text-transform: uppercase;
-            font-weight: bold;
+            font-weight: 700;
             width: auto;
             margin: 0;
+            white-space: nowrap;
         }
         .feed-reply button:hover { background: #002360; }
         .feed-reply button:disabled { background: #cccccc; cursor: not-allowed; }
-
         .kb-list {
             list-style: none;
             padding-left: 0;
         }
         .kb-list li {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            border-bottom: 1px solid #f1f5f9;
         }
         .kb-list li strong { color: var(--police-blue); }
-
-        /* ─── PDF-viewer (canvas-weergave) ─── */
         #pdf-text-viewer {
             width: 100%;
             height: 600px;
-            border: 1px solid #ccc;
+            border: 1px solid #cbd5e1;
             background: #fafafa;
             padding: 20px;
             overflow: auto;
             color: #1a1a1a;
+            border-radius: 8px;
         }
         .pdf-placeholder { 
-            color: #666; 
+            color: #64748b; 
             font-style: italic; 
             text-align: center; 
-            padding: 40px;
+            padding: 50px 20px;
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
         }
         #drop-zone {
-            border: 3px dashed #ccc;
+            border: 3px dashed #cbd5e1;
             padding: 30px;
             text-align: center;
-            margin: 10px 0;
+            margin: 15px 0;
             border-radius: 12px;
             background: #fafafa;
-            transition: background 0.3s, border-color 0.3s;
+            transition: all 0.3s ease;
             cursor: pointer;
         }
         #drop-zone.dragover {
             background: #e6f0ff;
             border-color: var(--police-blue);
         }
-        #file-input {
-            display: none;
-        }
+        #file-input { display: none; }
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -301,66 +323,39 @@
         }
         #file-list-items li {
             background: #f8fafc;
-            padding: 10px 16px;
+            padding: 12px 16px;
             border-radius: 8px;
             border: 1px solid #e2e8f0;
             cursor: pointer;
-            transition: background 0.2s, border-color 0.2s;
+            transition: all 0.2s;
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
         }
         #file-list-items li:hover {
             background: #f1f5f9;
             border-color: var(--police-blue);
         }
-        .file-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            width: 100%;
-            flex-wrap: wrap;
-            gap: 8px;
-        }
-        .file-name {
-            font-weight: 600;
-            font-size: 1.05em;
-            color: var(--text-dark);
-        }
-        .file-meta {
-            font-size: 0.85em;
-            color: #4a5568;
-            background: #edf2f7;
-            padding: 2px 10px;
-            border-radius: 12px;
-            white-space: nowrap;
-        }
         .file-delete {
             color: var(--danger);
             font-weight: bold;
             cursor: pointer;
-            font-size: 1.2em;
-            margin-left: 8px;
-            padding: 0 6px;
+            font-size: 1.1em;
+            padding: 4px 10px;
             border-radius: 4px;
             transition: background 0.2s;
         }
         .file-delete:hover {
             background: #fee2e2;
-            opacity: 1;
         }
-
         #upload-status {
             margin-top: 15px;
             padding: 12px;
             border-radius: 6px;
-            font-weight: bold;
+            font-weight: 600;
             display: none;
             text-align: center;
         }
-        #upload-status.success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
-        #upload-status.error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        #upload-status.info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
-
         .feedback-area {
             display: flex;
             gap: 10px;
@@ -370,35 +365,32 @@
             flex: 1;
             height: 80px;
             resize: vertical;
-        }
-        .feedback-area button {
-            width: auto;
-            padding: 10px 25px;
-            align-self: flex-end;
+            margin: 0;
         }
         .feedback-feed {
-            max-height: 200px;
+            max-height: 220px;
             overflow-y: auto;
-            border: 1px solid #eee;
-            padding: 10px;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
             background: #fafafa;
-            border-radius: 6px;
+            border-radius: 8px;
             margin-bottom: 20px;
         }
         .feedback-msg {
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
+            padding: 8px 0;
+            border-bottom: 1px solid #edf2f7;
+            font-size: 0.95em;
         }
+        .feedback-msg:last-child { border-bottom: none; }
         .feedback-msg strong { color: var(--police-blue); }
-
         .board-iframe-wrapper {
             position: relative;
             width: 100%;
-            height: 70vh;
-            margin: 10px auto;
+            height: 65vh;
+            margin: 15px auto;
             border: 2px solid var(--police-blue);
             border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
             overflow: hidden;
             background: #ffffff;
         }
@@ -408,1322 +400,1521 @@
             border: 0;
             display: block;
         }
+        /* Navigation Steps Bar */
+        .step-nav {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            padding: 10px;
+            background: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+        .step-btn {
+            padding: 8px 14px;
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 600;
+            background: #f1f5f9;
+            color: #475569;
+            border: 1px solid #cbd5e1;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.2s;
+        }
+        .step-btn:hover { background: #e2e8f0; color: #1e293b; }
+        .step-btn.active { background: var(--police-blue); color: white; border-color: var(--police-blue); }
     </style>
 </head>
 <body>
-
-<div class="container">
-    <!-- SCREEN 1: INLOGGEN -->
-    <div id="screen-1">
-        <div class="login-box">
-            <h2 style="text-align:center;">Inloggen Mutatieles</h2>
-            <input type="text" id="user-name" placeholder="Voornaam" />
-            <select id="user-class">
-                <option value="">Selecteer klas...</option>
-                <option>Alpha</option><option>Bravo</option><option>Charlie</option>
-                <option>Delta</option><option>Echo</option><option>Foxtrot</option>
-                <option>Golf</option><option>Hotel</option><option>Juliett</option>
-                <option>Kilo</option><option>Lima</option><option>Mike</option>
-            </select>
-            <button class="btn" onclick="startSession()">Start Les</button>
-            <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;" />
-            <button class="btn btn-reset" onclick="resetClassData()">Reset klas-data (Docent) - verwijdert ALLES</button>
+    <!-- Top Header Banner -->
+    <header class="bg-[#003082] text-white py-4 px-6 shadow-md flex justify-between items-center">
+        <div class="flex items-center space-x-3">
+            <i class="fa-solid fa-shield-halved text-yellow-400 text-2xl"></i>
+            <span class="font-bold text-xl tracking-wide uppercase">Politie Academie - Mutatieles 1</span>
         </div>
-    </div>
-
-    <!-- SCREEN 2: DIGIBORD + LESDOELEN -->
-    <div id="screen-2" class="hidden">
-        <h1>Digibord (Klas: <span id="current-class-label-2"></span>)</h1>
-        <div class="board-iframe-wrapper">
-            <iframe
-                src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                title="Whiteboard.team bord"
-                allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                referrerpolicy="no-referrer-when-downgrade"
-                loading="lazy"
-            ></iframe>
+        <div id="user-info-banner" class="hidden text-sm flex items-center gap-4 bg-blue-900 px-4 py-1.5 rounded-full border border-blue-700">
+            <span><i class="fa-solid fa-user text-yellow-400 mr-1"></i> <strong id="banner-user-name">-</strong></span>
+            <span class="text-blue-300">|</span>
+            <span><i class="fa-solid fa-users text-yellow-400 mr-1"></i> Klas: <strong id="banner-user-class">-</strong></span>
         </div>
-        <p style="font-size: 0.9em; color: #555; margin-top: 8px;">
-            Werkt het bord niet? Open het dan in een nieuw tabblad:
-            <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer">whiteboard.team/app/board/xmpgfKFx</a>
-        </p>
+    </header>
 
-        <h1 style="margin-top:40px;">Lesdoelen &amp; Werkwijze</h1>
-        <div class="grid-2">
-            <div class="info-block">
-                <h3>ASTMA &amp; Gouden W's</h3>
-                <p>Opbouw van jouw tekst: <strong>Aanleiding</strong>, <strong>Situatie</strong>, <strong>Toedracht</strong>, <strong>Maatregelen</strong> en <strong>Afhandeling</strong>.</p>
-                <p>Beantwoord: <strong>Wie</strong>, <strong>wat</strong>, <strong>waar</strong>, <strong>wanneer</strong>, <strong>waarom</strong>, <strong>welke wijze</strong> en <strong>waarmee</strong>.</p>
-            </div>
-            <div>
-                <h3>Schrijfstijl</h3>
-                <p>Je mag schrijven in:  <strong>Telegramstijl</strong>, <strong>Onvoltooid Verleden Tijd (OVT)</strong>.</p>
-                <p>Je mag  <strong>afkortingen</strong> gebruiken.</p>
-            </div>
+    <div class="container">
+        <!-- Navigation bar (Visible when logged in) -->
+        <div id="nav-bar" class="step-nav hidden">
+            <button class="step-btn" onclick="showScreen(2)" id="nav-btn-2"><i class="fa-solid fa-chalkboard mr-1"></i> Digibord & Doelen</button>
+            <button class="step-btn" onclick="showScreen(25)" id="nav-btn-25"><i class="fa-solid fa-book-open mr-1"></i> Kennisblok</button>
+            <button class="step-btn" onclick="showScreen(3)" id="nav-btn-3"><i class="fa-solid fa-arrows-up-down-left-right mr-1"></i> Sleepopdracht</button>
+            <button class="step-btn" onclick="showScreen(4)" id="nav-btn-4"><i class="fa-solid fa-list-check mr-1"></i> Kennischeck</button>
+            <button class="step-btn" onclick="showScreen(5)" id="nav-btn-5"><i class="fa-solid fa-file-pdf mr-1"></i> PDF & Feedback</button>
+            <button class="step-btn" onclick="showScreen(6)" id="nav-btn-6"><i class="fa-solid fa-pen-to-square mr-1"></i> Eindopdracht</button>
         </div>
-        <button class="btn" onclick="showScreen(25)">Naar Kennisblok</button>
-    </div>
 
-    <!-- SCREEN 25: KENNISBLOK -->
-    <div id="screen-25" class="hidden">
-        <h1>Kennisblok: Mutatie opstellen</h1>
-        <p>
-            Een mutatie wordt in het politiesysteem opgenomen.
-            Het bevat informatie die bruikbaar is voor opsporing, statistieken en bijzondere opdrachten.
-            Een mutatie wordt <strong>niet</strong> voor strafvervolging gebruikt.
-            Een mutatie moet kort en bondig zijn: afkortingen en niet volledige zinnen zijn toegestaan.
-        </p>
-        <div class="info-block">
-            <li>Jij bent de rapporteur (RAPP) die deze mutatie opstelt:</li>
-            <h3>Aanleiding</h3>
-            <ul class="kb-list">
-                <li><strong>Jouw naam:</strong> Voorletter. Achternaam</li>
-                <li><strong>Jouw bevoegdheid:</strong> Agent bij basiseenheid .... (bv. Leusden)</li>
-                <li><strong>Jouw taak:</strong> Wat doe je en waar ben je dat aan het doen? (bv. <em>Bezig met voetsurveillance op de Leuderweg, ter hoogte van de rotonde Baliplein, te Amersfoort</em>).</li>
-                <li><strong>De opdracht / waarneming:</strong> Melding van een medewerker van het  Operationeel Centrum of eigen waarneming (bv. <em>Ik zag dat een groepje jongens voor de Etos op een bankje zat.</em>)</li>
-            </ul>
-
-            <h3>Situatie</h3>
-            <ul class="kb-list">
-                <li>Beschrijf kort hoe de situatie ter plaatse is:</li>
-                <li>* Welk adres / ter hoogte van</li>
-                <li>* Wat voor een woning? Hoekhuis? Appartement? Waar op de galerij?</li>
-                <li> * Hoedanigheid van het verkeer</li>
-                <li>* Hoedanigheid van het weer</li>
-                <li>* Zijn er personenen ter plaatse? Hoeveel? Waar staan deze personen dan? Signalement?</li>
-                <li>* Voertuigen: Merk, type, kleur, kenteken</li>
-            </ul>
-
-            <h3>Toedracht</h3>
-            <ul class="kb-list">
-                <li>Noteer in de verleden tijd de antwoorden op de vragen: <strong>Wie zag je?> Wat zag je? Waar zag je dat? Wanneer zag je dat? Waarom? Waarmee? Op welke wijze?</strong></li>
-                <li>Noteer wat zag, hoorde, voelde,rook en voelde.</li>
+        <!-- SCREEN 1: INLOGGEN -->
+        <div id="screen-1">
+            <div class="login-box">
+                <div class="text-center mb-6">
+                    <i class="fa-solid fa-user-shield text-5xl text-[#003082] mb-3"></i>
+                    <h2 class="text-2xl font-bold">Inloggen Mutatieles</h2>
+                    <p class="text-gray-600 text-sm mt-1">Selecteer je naam en NATO-klas om te starten</p>
+                </div>
                 
-            </ul>
-
-            <h3>Maatregelen</h3>
-            <ul class="kb-list">
-                <li>Noteer in de verleden tijd welke actie, maatregel of afspraak je hebt ondernomen of afgesproken.</li>
-            </ul>
-
-            <h3>Afhandeling</h3>
-            <ul class="kb-list">
-                <li>Noteer wat je doet na afronding van de actie, maatregel of afspraak.</li>
-            </ul>
-        </div>
-        <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
-    </div>
-
-    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD + TOUCH + MEERDERE CASUSSEN) -->
-    <div id="screen-3" class="hidden">
-        <h1>Sleepopdracht: Orden de Mutatie</h1>
-        <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA). Werkt met muis én touchscreen — iedereen in de klas ziet de wijzigingen live.</p>
-        <div id="case-title">Casus wordt geladen…</div>
-        <div id="drag-list" class="drag-container"></div>
-        <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-            <button class="btn btn-shuffle" onclick="shuffleOrder()">Schud opnieuw (nieuwe casus)</button>
-            <button class="btn" onclick="checkOrder()" style="flex:1;">Controleer Volgorde</button>
-        </div>
-        <button class="btn hidden" id="next-to-4" onclick="showScreen(4)">Correct! Naar Kennischeck</button>
-    </div>
-
-    <!-- SCREEN 4: KENNISCHECK -->
-    <div id="screen-4" class="hidden">
-        <h1>Kennischeck</h1>
-        <div id="quiz-container"></div>
-        <button class="btn" onclick="showScreen(5)">Naar PDF &amp; Digibord</button>
-    </div>
-
-    <!-- SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD -->
-    <div id="screen-5" class="hidden">
-        <h1>Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
-
-        <div id="pdf-viewer-container">
-            <div id="pdf-placeholder" class="pdf-placeholder">
-                <h3>📄 Geen PDF geselecteerd</h3>
-                <p>Upload een bestand of klik op een bestand in de lijst hieronder.</p>
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Voornaam / Roepnaam</label>
+                <input type="text" id="user-name" placeholder="Voer je voornaam in..." />
+                
+                <label class="block text-sm font-semibold text-gray-700 mb-1">Selecteer NATO-klas</label>
+                <select id="user-class">
+                    <option value="">Selecteer klas...</option>
+                    <option value="Alpha">Alpha</option>
+                    <option value="Bravo">Bravo</option>
+                    <option value="Charlie">Charlie</option>
+                    <option value="Delta">Delta</option>
+                    <option value="Echo">Echo</option>
+                    <option value="Foxtrot">Foxtrot</option>
+                    <option value="Golf">Golf</option>
+                    <option value="Hotel">Hotel</option>
+                    <option value="Juliett">Juliett</option>
+                    <option value="Kilo">Kilo</option>
+                    <option value="Lima">Lima</option>
+                    <option value="Mike">Mike</option>
+                </select>
+                
+                <button class="btn mt-2" onclick="startSession()">
+                    <i class="fa-solid fa-right-to-bracket"></i> Start Les
+                </button>
+                
+                <hr class="my-6 border-gray-200" />
+                
+                <button class="btn btn-reset" onclick="confirmResetClassData()">
+                    <i class="fa-solid fa-triangle-exclamation"></i> Reset klas-data (Docent)
+                </button>
             </div>
-            <div id="pdf-text-viewer" class="hidden"></div>
         </div>
 
-        <div style="margin: 15px 0;">
-            <label for="pdf-select">Kies een vaste PDF:</label>
-            <select id="pdf-select" style="width: auto; display: inline-block;">
-                <option value="">-- Kies een bestand --</option>
-                <option value="./Mutatieles1.pdf">Mutatieles1.pdf</option>
-                <option value="./mutatie2.pdf">mutatie2.pdf</option>
-                <option value="./mutatie3.pdf">mutatie3.pdf</option>
-            </select>
-        </div>
-
-        <div id="file-upload-area">
-            <div id="drop-zone">
-                <p style="font-size: 1.2em; margin-bottom: 10px;">📁 Sleep hier PDF-bestanden heen</p>
-                <p style="color: #666; font-size: 0.9em;">of gebruik de knop hieronder</p>
-                <input type="file" id="file-input" multiple accept=".pdf" />
+        <!-- SCREEN 2: DIGIBORD + LESDOELEN -->
+        <div id="screen-2" class="hidden">
+            <div class="flex justify-between items-center mb-4">
+                <h1 class="text-2xl font-bold">Digibord (Klas: <span id="current-class-label-2" class="text-yellow-600"></span>)</h1>
             </div>
             
-            <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
-                <button id="browse-btn" class="btn btn-browse">📂 Blader naar bestand</button>
-                <button id="upload-btn" class="btn btn-upload" disabled>Upload Geselecteerde</button>
+            <div class="board-iframe-wrapper">
+                <iframe
+                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
+                    title="Whiteboard.team bord"
+                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    loading="lazy"
+                ></iframe>
             </div>
+            <p class="text-xs text-gray-500 mb-6 flex items-center gap-1">
+                <i class="fa-solid fa-circle-info"></i> Werkt het bord niet direct? Open het in een nieuw tabblad:
+                <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold ml-1">whiteboard.team/app/board/xmpgfKFx</a>
+            </p>
 
-            <div id="upload-status"></div>
-        </div>
-
-        <div id="file-list" style="margin-top: 25px;">
-            <h3>Geüploade bestanden</h3>
-            <ul id="file-list-items">
-                <li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>
-            </ul>
-        </div>
-
-        <h3 style="margin-top: 30px;">Feedback over deze mutatie</h3>
-        <div class="feedback-area">
-            <textarea id="feedback-input" placeholder="Schrijf hier je opmerkingen..."></textarea>
-            <button class="btn" id="send-feedback-btn" style="width:auto; padding:10px 30px;">Verstuur</button>
-        </div>
-        <div id="feedback-feed" class="feedback-feed"></div>
-
-        <h3>Digibord (multi‑user)</h3>
-        <div class="board-iframe-wrapper">
-            <iframe
-                src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                title="Whiteboard.team bord"
-                allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                referrerpolicy="no-referrer-when-downgrade"
-                loading="lazy"
-            ></iframe>
-        </div>
-        <p style="font-size: 0.9em; color: #555; margin-top: 8px;">
-            Werkt het bord niet? Open het dan in een nieuw tabblad:
-            <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer">whiteboard.team/app/board/xmpgfKFx</a>
-        </p>
-
-        <button class="btn" onclick="showScreen(6)" style="margin-top: 25px;">Naar Eindopdracht</button>
-    </div>
-
-    <!-- =============== SCREEN 6: EINDOPDRACHT =============== -->
-    <div id="screen-6" class="hidden">
-        <h1>Eindopdracht: Incident Laan 1914</h1>
-        <div class="info-block">
-            <strong>Locatie:</strong> Laan 1914, Amersfoort | <strong>Betrokkene:</strong> Mw. S. de Jong (±25jr)
-        </div>
-
-        <div class="audio-player-container">
-            <audio controls>
-                <source src="Laan 1914 2 (1).mp3" type="audio/mpeg" />
-            </audio>
-        </div>
-
-        <div style="margin: 20px 0; border-top: 2px solid #ddd; padding-top: 20px;">
-            <h3>📤 Upload eigen audiobestand</h3>
-            <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
-                <input type="file" id="audio-file-input" accept="audio/*" style="width: auto; flex:1;" />
-                <button id="upload-audio-btn" class="btn btn-upload" style="width: auto;">Upload audio</button>
+            <h1 class="text-2xl font-bold mt-8 border-t pt-6">Lesdoelen &amp; Werkwijze</h1>
+            <div class="grid-2">
+                <div class="info-block">
+                    <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-star text-yellow-500 mr-2"></i>ASTMA &amp; Gouden W's</h3>
+                    <p class="mb-2">Opbouw van jouw mutatietekst:</p>
+                    <ul class="list-disc pl-5 space-y-1 mb-3">
+                        <li><strong>Aanleiding</strong> (Waarom ben je ter plaatse?)</li>
+                        <li><strong>Situatie</strong> (Wat/wie tref je aan?)</li>
+                        <li><strong>Toedracht</strong> (Wat is er precies gebeurd?)</li>
+                        <li><strong>Maatregelen</strong> (Wat heb je gedaan?)</li>
+                        <li><strong>Afhandeling</strong> (Hoe sluit je het af?)</li>
+                    </ul>
+                    <p class="text-sm bg-yellow-100 p-2 rounded">Beantwoord de Gouden W's: <strong>Wie, wat, waar, wanneer, waarom, welke wijze</strong> en <strong>waarmee</strong>.</p>
+                </div>
+                <div class="bg-slate-50 p-5 rounded-lg border border-slate-200">
+                    <h3 class="font-bold text-lg mb-2"><i class="fa-solid fa-pen-nib text-blue-800 mr-2"></i>Schrijfstijl</h3>
+                    <p class="mb-2">Je schrijft zakelijk, objectief en helder:</p>
+                    <ul class="list-disc pl-5 space-y-2 text-gray-700">
+                        <li><strong>Telegramstijl</strong> (Kort, bondig, kernachtig).</li>
+                        <li><strong>Onvoltooid Verleden Tijd (OVT)</strong> (Toegankelijk en chronologisch).</li>
+                        <li>Je mag goedgekeurde <strong>afkortingen</strong> gebruiken (bv. RAPP, OC, t.b.v., t.z.v.).</li>
+                    </ul>
+                </div>
             </div>
-            <div id="audio-upload-status" style="margin-top: 10px; font-weight: bold; display: none;"></div>
-            <div style="margin-top: 15px;">
-                <audio id="uploaded-audio-player" controls style="width: 100%;"></audio>
+            <div class="mt-6 flex justify-end">
+                <button class="btn btn-secondary w-auto px-8" onclick="showScreen(25)">
+                    Naar Kennisblok <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
             </div>
         </div>
 
-        <div class="grid-2">
-            <div>
-                <h3>Jouw Mutatie (OVT) - wordt gedeeld met klas</h3>
-                <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:150px;"></textarea>
-                <h3>Extra mutatie-notities (gedeeld via livefeed)</h3>
-                <label>Mutatie 1:</label>
-                <textarea id="mutation1" placeholder="Notitie mutatie 1..." style="height:80px; margin-bottom:10px;"></textarea>
-                <label>Mutatie 2:</label>
-                <textarea id="mutation2" placeholder="Notitie mutatie 2..." style="height:80px; margin-bottom:10px;"></textarea>
-                <label>Mutatie 3:</label>
-                <textarea id="mutation3" placeholder="Notitie mutatie 3..." style="height:80px;"></textarea>
-                <button id="submit-mutation-btn" class="btn" style="margin-top:10px;">Verstuur mutatie naar klas</button>
-            </div>
-            <div class="live-feed" style="margin-top:0; border-top:none;">
-                <h3>Live Feed Klas: <span id="current-class-label"></span></h3>
-                <div id="class-feed" class="feed-container"></div>
-            </div>
-        </div>
-        <button class="btn btn-secondary" onclick="showScreen(5)">Terug naar PDF &amp; Digibord</button>
-    </div>
-</div>
-
-<script type="module">
-    // ===== Firebase Configuration & Imports =====
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-    import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
-
-    const firebaseConfig = {
-        apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
-        authDomain: "mutatieles-q1.firebaseapp.com",
-        databaseURL: "https://mutatieles-q1-default-rtdb.europe-west1.firebasedatabase.app",
-        projectId: "mutatieles-q1",
-        storageBucket: "mutatieles-q1.appspot.com",
-        messagingSenderId: "102871328901",
-        appId: "1:102871328901:web:531b26daebef374a2b978c"
-    };
-
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
-    const storage = getStorage(app);
-
-    // Global state
-    let uName = "";
-    let uClass = "";
-    let selectedFiles = [];
-    let fileListenerSet = false;
-    let dragListener = null;
-    let pdfListener = null;
-
-    // DOM Elements
-    const pdfViewer = document.getElementById('pdf-text-viewer');
-    const pdfPlaceholder = document.getElementById('pdf-placeholder');
-    const uploadStatus = document.getElementById('upload-status');
-    const fileListItems = document.getElementById('file-list-items');
-    const pdfSelect = document.getElementById('pdf-select');
-
-    // =====================================================================
-    // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) ==========
-    // =====================================================================
-    const allCases = [
-        {
-            title: 'Casus 1: Verwarde vrouw op de Laan 1914',
-            blocks: [
-                '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-                '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
-                '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg.',
-                '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-                '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
-            ]
-        },
-        {
-            title: 'Casus 2: Winkeldiefstal supermarkt',
-            blocks: [
-                '<strong>*</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van een winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort. Melding afkomstig van een medewerker van het OC.',
-                '<strong>*</strong> Rond 15.35 uur kwam ik ter plaatse. Betreft een supermarkt in een winkelstraat. Voor de ingang stond een mannelijke medewerker van de winkel. Het was bewolkt weer, lichte regen. Aanwezig: 1 verdachte, man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen. Geen voertuig aangetroffen.',
-                '<strong>*</strong> Ik zag dat de verdachte door een medewerker werd tegengehouden nabij de kassa. Ik hoorde dat de medewerker verklaarde dat hij de verdachte meerdere malen goederen in zijn jaszak zag stoppen zonder te betalen. Ik zag dat de verdachte zich hierop rustig gedroeg, maar geen uitleg gaf. Ik rook geen alcohol. Ik voelde geen wapens bij de fouillering. Ik zag op camerabeelden dat de verdachte drie blikjes energie-drank en een pak koffie in zijn jas stopte.',
-                '<strong>*</strong> Verdachte aangehouden ter zake diefstal. Verdachte overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier. Goederen in beslag genomen en geretourneerd aan winkelier. Proces-verbaal opgemaakt.',
-                '<strong>*</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
-            ]
-        },
-        {
-            title: 'Casus 3: Verkeersongeval met letsel',
-            blocks: [
-                '<strong>*</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein te Amersfoort, bezig met een verkeerscontrole. Ik kreeg een spoedmelding van het OC betreffende een verkeersongeval met letsel op de N226, richting Woudenberg.',
-                '<strong>*</strong> Rond 17.55 uur kwam ik ter plaatse. Betreft een voorrangsweg met fietspad. Weersomstandigheden: droog, zicht goed, druk verkeer. Ik zag een personenauto (Merk: Volkswagen, type: Golf, kleur: zwart, kenteken: 1-ABC-23) en een omgevallen fiets. Ik zag één slachtoffer, vrouw, ±55jr, liggend op het fietspad. Omstanders stonden rondom het slachtoffer.',
-                '<strong>*</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde van een getuige dat de automobilist rechtsaf sloeg en de fietser daarbij over het hoofd zag. Ik zag dat de bestuurder, man, ±40jr, zichtbaar geschrokken was. Ik rook geen alcohol. Ik voelde een zwakke pols bij het slachtoffer. Ik zag een hoofdwond en een vervormde rechterarm bij het slachtoffer.',
-                '<strong>*</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet voor hulpverlening. EHBO toegepast tot aankomst ambulance. Bestuurder gehoord als getuige. Verkeer omgeleid via parallelweg. Ademanalyse bij bestuurder afgenomen: 0,0 ugl.',
-                '<strong>*</strong> Slachtoffer overgedragen aan ambulancepersoneel en overgebracht naar ziekenhuis. Voertuig geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie gedeeld met verkeerspolitie.'
-            ]
-        },
-        {
-            title: 'Casus 4: Overlast jeugd / vernieling bushokje',
-            blocks: [
-                '<strong>*</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, op de Birkstraat te Amersfoort bezig met mijn surveillance. Ik kreeg een melding van het OC betreffende overlast van een groep jongeren bij een bushokje aan de Groningerstraat.',
-                '<strong>*</strong> Rond 22.40 uur kwam ik ter plaatse. Betreft een bushalte aan een doorgaande weg in een woonwijk. Het was donker, droog, weinig verkeer. Ik zag een groep van ongeveer 6 jongeren, allen mannelijk, leeftijd ±14-17jr, in donkere kleding. Ik zag een vernield bushokje: gebroken glas op de grond, beschadigde abri. Ik zag één persoon met een honkbalknuppel in zijn hand.',
-                '<strong>*</strong> Ik zag dat de jongeren op mij afkeken toen ik naderde. Ik hoorde dat één van hen "wegwezen" riep. Ik zag dat de groep zich opsplitste en in verschillende richtingen wegrende. Ik zag dat de jongen met de honkbalknuppel de knuppel weggooide in de bosjes. Ik zag dat een tweede jongen bleef staan. Ik rook een sterke henneplucht in de omgeving.',
-                '<strong>*</strong> Jongen die bleef staan staande gehouden. Honkbalknuppel in beslag genomen. Identiteit vastgesteld. Ouders telefonisch op de hoogte gesteld. Proces-verbaal opgemaakt t.z.v. vernieling. Melding gemaakt bij gemeente t.b.v. herstel bushokje.',
-                '<strong>*</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent. Aangifte vernieling opgenomen namens de gemeente.'
-            ]
-        },
-        {
-            title: 'Casus 5: Vermissing demente bejaarde',
-            blocks: [
-                '<strong>*</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, agent bij basiseenheid Amersfoort-Zuid, op het politiebureau bezig met de afhandeling van binnengekomen mutaties. Ik kreeg een melding van het OC betreffende een vermissing van een demente man van 82 jaar uit zorgcentrum De Lichtenberg aan de Daam Fockemalaan.',
-                '<strong>*</strong> Rond 20.30 uur kwam ik ter plaatse bij het zorgcentrum. Betreft een groot zorgcomplex met meerdere verdiepingen en een omsloten tuin. Het was donker, droog, temperatuur ±8°C. Ik sprak de dienstdoende verzorgende. Ik zag dat de kamer van de heer Van Dijk leeg was. Ik zag dat zijn jas en schoenen weg waren. Signalement: man, 82jr, 1.75m, grijs haar, bruine bril, grijze jas, donkere broek.',
-                '<strong>*</strong> Ik hoorde van de verzorgende dat de heer Van Dijk rond 19.30 uur voor het laatst was gezien tijdens het avondeten. Ik hoorde dat hij de laatste tijd vaker aangaf naar zijn overleden vrouw te willen. Ik zag op camerabeelden dat hij om 19.45 uur via de hoofdingang naar buiten liep en linksaf richting het park ging. Ik zag dat hij alleen liep en geen tas bij zich had.',
-                '<strong>*</strong> Burgernet-bericht uitgezet. Eenheid met speurhond ingezet richting het park. Collega\'s gestationeerd bij mogelijke routes. Foto van betrokkene gedeeld met eenheden. Buurtonderzoek gestart.',
-                '<strong>*</strong> Betrokkene rond 22.10 uur aangetroffen in het park, zittend op een bankje, onderkoeld maar aanspreekbaar. Overgedragen aan ambulancepersoneel. Familie en zorgcentrum geïnformeerd. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
-            ]
-        }
-    ];
-
-    // Huidige casus-index (globaal, zodat drag-logica weet met welke casus we werken)
-    let currentCaseIndex = -1;
-
-    // ===== HULP: PDF WEERGEVEN (canvas rendering, geen platte tekst) =====
-    async function openPdfText(url, sync = true) {
-        if (!pdfViewer || !pdfPlaceholder) return;
-        if (!url) {
-            pdfViewer.innerHTML = '';
-            pdfViewer.classList.add('hidden');
-            pdfPlaceholder.classList.remove('hidden');
-            return;
-        }
-        try {
-            pdfViewer.textContent = 'Bezig met laden van de PDF...';
-            pdfViewer.classList.remove('hidden');
-            pdfPlaceholder.classList.add('hidden');
-
-            const pdf = await pdfjsLib.getDocument(url).promise;
-
-            // Leegmaken en canvassen toevoegen
-            pdfViewer.innerHTML = '';
-
-            // Bepaal schaal op basis van containerbreedte
-            const containerWidth = (pdfViewer.clientWidth || 800) - 40;
-
-            for (let i = 1; i <= pdf.numPages; i++) {
-                const page = await pdf.getPage(i);
-                const unscaledViewport = page.getViewport({ scale: 1 });
-                const scale = Math.max(1, Math.min(2.5, containerWidth / unscaledViewport.width));
-                const viewport = page.getViewport({ scale: scale });
-
-                const canvas = document.createElement('canvas');
-                const context = canvas.getContext('2d');
-                canvas.width = viewport.width;
-                canvas.height = viewport.height;
-                canvas.style.display = 'block';
-                canvas.style.margin = '0 auto 15px auto';
-                canvas.style.maxWidth = '100%';
-                canvas.style.height = 'auto';
-                canvas.style.border = '1px solid #ddd';
-                canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
-                canvas.style.background = '#fff';
-
-                pdfViewer.appendChild(canvas);
-
-                await page.render({
-                    canvasContext: context,
-                    viewport: viewport
-                }).promise;
-            }
-
-            if (sync && uClass) {
-                const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                set(currentPdfRef, url);
-            }
-        } catch (err) {
-            console.error('PDF laadfout:', err);
-            pdfViewer.textContent = 'Fout bij laden van PDF: ' + err.message;
-        }
-    }
-
-    // ===== HULP: STATUS BERICHTEN =====
-    function setStatus(msg, type = "info") {
-        if(!uploadStatus) return;
-        uploadStatus.textContent = msg;
-        uploadStatus.className = type;
-        uploadStatus.style.display = "block";
-        if(type === "success") {
-            uploadStatus.style.background = "#d4edda";
-            uploadStatus.style.color = "#155724";
-        } else if (type === "error") {
-            uploadStatus.style.background = "#f8d7da";
-            uploadStatus.style.color = "#721c24";
-        } else {
-            uploadStatus.style.background = "#d1ecf1";
-            uploadStatus.style.color = "#0c5460";
-        }
-        setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
-    }
-
-    // ===== FUNCTIE OM BESTANDENLIJST TE RENDEREN =====
-    function renderFileList(files) {
-        if(!fileListItems) return;
-        fileListItems.innerHTML = '';
-        if (!files || Object.keys(files).length === 0) {
-            fileListItems.innerHTML = '<li style="background: none; border: none; cursor: default; padding: 0; color: #888;">Geen bestanden gevonden.</li>';
-            return;
-        }
-        
-        const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
-        entries.forEach((fileData) => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <span>📄 ${fileData.name}</span>
-                <span class="file-delete" title="Verwijderen">✕</span>
-            `;
+        <!-- SCREEN 25: KENNISBLOK -->
+        <div id="screen-25" class="hidden">
+            <h1 class="text-2xl font-bold mb-3">Kennisblok: Mutatie opstellen</h1>
+            <p class="text-gray-700 mb-4 leading-relaxed">
+                Een mutatie wordt in het politiesysteem opgenomen. Het bevat waardevolle informatie die bruikbaar is voor opsporing, statistieken en bijzondere opdrachten.
+                Een mutatie dient <strong>niet</strong> rechtstreeks als wettig bewijsmiddel voor strafvervolging, maar vormt de basis voor verslaglegging.
+                Kort en bondig schrijven is de norm: afkortingen en functionele onvolledige zinnen in telegramstijl zijn toegestaan.
+            </p>
             
-            li.addEventListener('click', (e) => {
-                if (e.target.classList.contains('file-delete')) return;
-                openPdfText(fileData.url, true);
+            <div class="info-block space-y-4">
+                <p class="font-semibold text-blue-900">Jij bent de rapporteur (RAPP) die deze mutatie opstelt according to ASTMA:</p>
+                
+                <div class="bg-white p-4 rounded border border-yellow-200">
+                    <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">1. Aanleiding</h3>
+                    <ul class="kb-list text-sm">
+                        <li><strong>Jouw naam:</strong> Voorletter. Achternaam (bv. RAPP J. Voordewind)</li>
+                        <li><strong>Jouw bevoegdheid:</strong> Agent bij basiseenheid ... (bv. Leusden / Amersfoort)</li>
+                        <li><strong>Jouw taak:</strong> Wat doe je en waar? (bv. <em>Bezig met surveillance op de Leusderweg ter hoogte van de rotonde Baliplein te Amersfoort</em>).</li>
+                        <li><strong>De opdracht / waarneming:</strong> Melding van de centralist van het Operationeel Centrum (OC) of eigen waarneming.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-yellow-200">
+                    <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">2. Situatie</h3>
+                    <ul class="kb-list text-sm">
+                        <li>Beschrijf kort en zakelijk hoe de situatie ter plaatse wordt aangetroffen:</li>
+                        <li>* Exact adres / ter hoogte van / omschrijving van het pand of het wegvak.</li>
+                        <li>* Hoedanigheid van het verkeer en het weer (zicht, neerslag, wegdek).</li>
+                        <li>* Aanwezige personen: aantal, exacte positie, gedrag, signalement.</li>
+                        <li>* Voertuigen: Merk, type, kleur, kenteken.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-yellow-200">
+                    <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">3. Toedracht (OVT &amp; Filmisch)</h3>
+                    <ul class="kb-list text-sm">
+                        <li>Noteer op accurate en <strong>filmische wijze</strong> in de Onvoltooid Verleden Tijd (OVT) wat er exact gebeurd is. Met 'filmisch' bedoelen we dat de lezer als het ware een filmtapestry voor ogen krijgt van wat jij als agent hebt waargenomen.</li>
+                        <li>Beantwoord de vragen: <strong>Wie zag je? Wat zag je? Waar zag je dat? Wanneer zag je dat? Waarom? Waarmee? Op welke wijze?</strong></li>
+                        <li>Beschrijf zintuiglijke waarnemingen: wat je zag, hoorde, rook of voelde.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-yellow-200">
+                    <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">4. Maatregelen</h3>
+                    <ul class="kb-list text-sm">
+                        <li>Noteer in OVT welke acties, maatregelen of handhaversafspraken je direct hebt ondernomen (bv. aanhouden, ambtshalve fouilleren, afzetten, EHBO, ademanalyse).</li>
+                    </ul>
+                </div>
+
+                <div class="bg-white p-4 rounded border border-yellow-200">
+                    <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">5. Afhandeling</h3>
+                    <ul class="kb-list text-sm">
+                        <li>Noteer hoe de casus wordt afgesloten of overgedragen (bv. overgebracht naar bureau, mutatie overgedragen aan wijkagent t.b.v. zorgopvolging, voertuig geborgen).</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button class="btn btn-secondary w-auto px-8" onclick="showScreen(3)">
+                    Naar Sleepopdracht <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD + TOUCH + MEERDERE CASUSSEN) -->
+        <div id="screen-3" class="hidden">
+            <h1 class="text-2xl font-bold mb-2">Sleepopdracht: Orden de Mutatie</h1>
+            <p class="text-gray-600 mb-4">Sleep de tekstblokjes in de juiste ASTMA-volgorde. Werkt met muis én touchscreen — alle klasgenoten zien live updates van de klas-casus.</p>
+            
+            <div id="case-title">Casus wordt geladen…</div>
+            
+            <div id="drag-list" class="drag-container"></div>
+            
+            <div class="flex gap-3 flex-wrap my-4">
+                <button class="btn btn-shuffle" onclick="shuffleOrder()">
+                    <i class="fa-solid fa-shuffle"></i> Schud opnieuw (nieuwe casus)
+                </button>
+                <button class="btn flex-1" onclick="checkOrder()">
+                    <i class="fa-solid fa-check"></i> Controleer Volgorde
+                </button>
+            </div>
+            
+            <div class="mt-4 flex justify-end">
+                <button class="btn hidden w-auto bg-green-600 hover:bg-green-700" id="next-to-4" onclick="showScreen(4)">
+                    Correct! Naar Kennischeck <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 4: KENNISCHECK -->
+        <div id="screen-4" class="hidden">
+            <h1 class="text-2xl font-bold mb-4">Kennischeck Mutatieleer</h1>
+            <div id="quiz-container"></div>
+            <div class="mt-6 flex justify-end">
+                <button class="btn btn-secondary w-auto px-8" onclick="showScreen(5)">
+                    Naar PDF &amp; Digibord <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD -->
+        <div id="screen-5" class="hidden">
+            <h1 class="text-2xl font-bold mb-4">Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
+            
+            <div id="pdf-viewer-container" class="mb-4">
+                <div id="pdf-placeholder" class="pdf-placeholder">
+                    <i class="fa-solid fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                    <h3 class="text-lg font-bold text-gray-700">📄 Geen PDF geselecteerd</h3>
+                    <p class="text-sm">Upload een bestand of kies een vast document uit het keuzemenu.</p>
+                </div>
+                <div id="pdf-text-viewer" class="hidden"></div>
+            </div>
+
+            <div class="my-4 bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center gap-4 flex-wrap">
+                <label for="pdf-select" class="font-semibold text-gray-700">Kies een vaste les-PDF:</label>
+                <select id="pdf-select" class="w-auto flex-1 max-w-xs mb-0">
+                    <option value="">-- Kies een bestand --</option>
+                    <option value="./Mutatieles1.pdf">Mutatieles1.pdf</option>
+                    <option value="./mutatie2.pdf">mutatie2.pdf</option>
+                    <option value="./mutatie3.pdf">mutatie3.pdf</option>
+                </select>
+            </div>
+
+            <div id="file-upload-area" class="my-6">
+                <div id="drop-zone">
+                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-800 mb-2"></i>
+                    <p class="text-lg font-semibold text-gray-800">📁 Sleep hier PDF-bestanden heen</p>
+                    <p class="text-sm text-gray-500">of gebruik de knop hieronder om te bladeren</p>
+                    <input type="file" id="file-input" multiple accept=".pdf" />
+                </div>
+                
+                <div class="flex gap-3 flex-wrap mt-3">
+                    <button id="browse-btn" class="btn btn-browse">
+                        <i class="fa-solid fa-folder-open"></i> Blader naar bestand
+                    </button>
+                    <button id="upload-btn" class="btn btn-upload" disabled>
+                        <i class="fa-solid fa-upload"></i> Upload Geselecteerde
+                    </button>
+                </div>
+                <div id="upload-status"></div>
+            </div>
+
+            <div id="file-list" class="mt-6">
+                <h3 class="text-lg font-bold mb-3 border-b pb-2"><i class="fa-solid fa-list-ul mr-2"></i>Geüploade bestanden in deze klas</h3>
+                <ul id="file-list-items">
+                    <li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden.</li>
+                </ul>
+            </div>
+
+            <h3 class="text-lg font-bold mt-8 mb-2 border-b pb-2"><i class="fa-solid fa-comments mr-2"></i>Live Feedback over deze mutatie</h3>
+            <div class="feedback-area">
+                <textarea id="feedback-input" placeholder="Schrijf hier je opmerking of tip voor de klas..."></textarea>
+                <button class="btn btn-secondary" id="send-feedback-btn">
+                    <i class="fa-solid fa-paper-plane"></i> Verstuur
+                </button>
+            </div>
+            <div id="feedback-feed" class="feedback-feed"></div>
+
+            <h3 class="text-lg font-bold mt-8 mb-2"><i class="fa-solid fa-chalkboard mr-2"></i>Digibord (multi‑user)</h3>
+            <div class="board-iframe-wrapper">
+                <iframe
+                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
+                    title="Whiteboard.team bord"
+                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
+                    referrerpolicy="no-referrer-when-downgrade"
+                    loading="lazy"
+                ></iframe>
+            </div>
+
+            <div class="mt-6 flex justify-end">
+                <button class="btn btn-secondary w-auto px-8" onclick="showScreen(6)">
+                    Naar Eindopdracht <i class="fa-solid fa-arrow-right ml-2"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- SCREEN 6: EINDOPDRACHT -->
+        <div id="screen-6" class="hidden">
+            <h1 class="text-2xl font-bold mb-3">Eindopdracht: Incident Laan 1914</h1>
+            
+            <div class="info-block">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+                    <div><strong>Locatie:</strong> Laan 1914, Amersfoort</div>
+                    <div><strong>Betrokkene:</strong> Mw. S. de Jong (±25jr)</div>
+                </div>
+            </div>
+
+            <div class="audio-player-container">
+                <label class="block text-sm font-semibold text-gray-700 mb-2"><i class="fa-solid fa-volume-high mr-2"></i>Standaard Les-audio:</label>
+                <audio controls>
+                    <source src="Laan 1914 2 (1).mp3" type="audio/mpeg" />
+                    Je browser ondersteunt dit audio-element niet.
+                </audio>
+            </div>
+
+            <div class="my-6 border-t pt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                <h3 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload eigen audiobestand naar klas</h3>
+                <div class="flex gap-3 flex-wrap items-center">
+                    <input type="file" id="audio-file-input" accept="audio/*" class="w-auto flex-1 mb-0" />
+                    <button id="upload-audio-btn" class="btn btn-upload mb-0">
+                        <i class="fa-solid fa-file-audio"></i> Upload audio
+                    </button>
+                </div>
+                <div id="audio-upload-status" class="mt-2 text-sm font-semibold hidden"></div>
+                <div class="mt-3">
+                    <p class="text-xs text-gray-500 mb-1">Actueel geüploade klas-audio:</p>
+                    <audio id="uploaded-audio-player" controls class="w-full"></audio>
+                </div>
+            </div>
+
+            <div class="grid-2">
+                <div>
+                    <h3 class="text-lg font-bold mb-2"><i class="fa-solid fa-pen-clip mr-2"></i>Jouw Mutatie (OVT)</h3>
+                    <p class="text-xs text-gray-500 mb-2">Typ hieronder jouw hoofdmutatie. Klik op 'Verstuur mutatie naar klas' om live te delen met collega's.</p>
+                    <textarea id="final-mutation" placeholder="Begin hier met typen van je hoofdmutatie in OVT..." class="h-36 mb-4"></textarea>
+                    
+                    <h3 class="text-md font-bold text-blue-900 mb-2 border-t pt-3">Extra mutatie-notities</h3>
+                    <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 1:</label>
+                    <textarea id="mutation1" placeholder="Notitie mutatie 1..." class="h-20 mb-2"></textarea>
+                    
+                    <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 2:</label>
+                    <textarea id="mutation2" placeholder="Notitie mutatie 2..." class="h-20 mb-2"></textarea>
+                    
+                    <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 3:</label>
+                    <textarea id="mutation3" placeholder="Notitie mutatie 3..." class="h-20 mb-3"></textarea>
+                    
+                    <button id="submit-mutation-btn" class="btn bg-green-600 hover:bg-green-700 py-3 text-base">
+                        <i class="fa-solid fa-paper-plane"></i> Verstuur mutatie naar klas
+                    </button>
+                </div>
+
+                <div class="live-feed">
+                    <div class="flex justify-between items-center mb-3 border-b pb-2">
+                        <h3 class="text-lg font-bold"><i class="fa-solid fa-tower-broadcast text-red-600 animate-pulse mr-2"></i>Live Feed Klas: <span id="current-class-label" class="text-yellow-600"></span></h3>
+                    </div>
+                    <p class="text-xs text-gray-500 mb-2">Hier verschijnen alle inzendingen van je klasgenoten realtime. Je kunt onder elke mutatie reageren.</p>
+                    <div id="class-feed" class="feed-container"></div>
+                </div>
+            </div>
+
+            <div class="mt-6 border-t pt-4 flex justify-start">
+                <button class="btn btn-secondary" onclick="showScreen(5)">
+                    <i class="fa-solid fa-arrow-left"></i> Terug naar PDF &amp; Digibord
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal Container for Dialogs (Replaces alert & confirm) -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+        <div class="bg-white rounded-xl max-w-md w-full p-6 shadow-2xl border-t-8 border-[#003082] transform transition-all">
+            <h3 id="modal-title" class="text-xl font-bold text-[#003082] mb-3">Melding</h3>
+            <p id="modal-message" class="text-gray-700 text-sm mb-6 leading-relaxed">Berichttekst...</p>
+            <div class="flex justify-end gap-3" id="modal-buttons">
+                <button id="modal-btn-confirm" class="btn mb-0 w-auto px-6">OK</button>
+                <button id="modal-btn-cancel" class="btn btn-secondary mb-0 w-auto px-6 hidden">Annuleren</button>
+            </div>
+        </div>
+    </div>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
+            authDomain: "mutatieles-q1.firebaseapp.com",
+            databaseURL: "https://mutatieles-q1-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "mutatieles-q1",
+            storageBucket: "mutatieles-q1.appspot.com",
+            messagingSenderId: "102871328901",
+            appId: "1:102871328901:web:531b26daebef374a2b978c"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
+        const storage = getStorage(app);
+
+        // State Variables
+        let uName = "";
+        let uClass = "";
+        let selectedFiles = [];
+        let fileListenerSet = false;
+        let dragListener = null;
+        let pdfListener = null;
+
+        // Draft storage to prevent keystroke loss during live updates
+        const draftReplyTexts = {};
+
+        // DOM Element Cache
+        const pdfViewer = document.getElementById('pdf-text-viewer');
+        const pdfPlaceholder = document.getElementById('pdf-placeholder');
+        const uploadStatus = document.getElementById('upload-status');
+        const fileListItems = document.getElementById('file-list-items');
+        const pdfSelect = document.getElementById('pdf-select');
+
+        // Custom Modal replacement for alert & confirm
+        window.customModal = function({ title = "Melding", message = "", isConfirm = false, onConfirm = null }) {
+            const modal = document.getElementById('custom-modal');
+            const titleEl = document.getElementById('modal-title');
+            const msgEl = document.getElementById('modal-message');
+            const btnConfirm = document.getElementById('modal-btn-confirm');
+            const btnCancel = document.getElementById('modal-btn-cancel');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (isConfirm) {
+                btnCancel.classList.remove('hidden');
+                btnConfirm.textContent = "Ja, uitvoeren";
+            } else {
+                btnCancel.classList.add('hidden');
+                btnConfirm.textContent = "Begrepen";
+            }
+
+            modal.classList.remove('hidden');
+
+            const handleConfirm = () => {
+                modal.classList.add('hidden');
+                btnConfirm.removeEventListener('click', handleConfirm);
+                btnCancel.removeEventListener('click', handleCancel);
+                if (onConfirm) onConfirm();
+            };
+
+            const handleCancel = () => {
+                modal.classList.add('hidden');
+                btnConfirm.removeEventListener('click', handleConfirm);
+                btnCancel.removeEventListener('click', handleCancel);
+            };
+
+            btnConfirm.onclick = handleConfirm;
+            btnCancel.onclick = handleCancel;
+        };
+
+        // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) =====
+        const allCases = [
+            {
+                title: 'Casus 1: Verwarde vrouw op de Laan 1914',
+                blocks: [
+                    '<strong>* Aanleiding:</strong> Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+                    '<strong>* Situatie:</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
+                    '<strong>* Toedracht:</strong> Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
+                    '<strong>* Maatregelen:</strong> Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
+                    '<strong>* Afhandeling:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
+                ]
+            },
+            {
+                title: 'Casus 2: Winkeldiefstal supermarkt',
+                blocks: [
+                    '<strong>* Aanleiding:</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort.',
+                    '<strong>* Situatie:</strong> Rond 15.35 uur kwam ik ter plaatse. Het was bewolkt met lichte regen. Voor de ingang stond een medewerker van de winkel met 1 verdachte: man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen.',
+                    '<strong>* Toedracht:</strong> Ik zag dat de verdachte door de medewerker werd tegengehouden nabij de kassa. Ik hoorde de medewerker verklaren dat hij de verdachte goederen in zijn jaszak zag stoppen zonder te betalen. Op camerabeelden zag ik dat verdachte blikjes energiedrank en koffie verstopte.',
+                    '<strong>* Maatregelen:</strong> Verdachte aangehouden ter zake diefstal en overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier en goederen in beslag genomen.',
+                    '<strong>* Afhandeling:</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
+                ]
+            },
+            {
+                title: 'Casus 3: Verkeersongeval met letsel',
+                blocks: [
+                    '<strong>* Aanleiding:</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein bezig met verkeerscontrole. Spoedmelding ontvangen van OC betreft ongeval N226.',
+                    '<strong>* Situatie:</strong> Rond 17.55 uur kwam ik ter plaatse op de voorrangsweg. Zicht was goed, druk verkeer. Aangetroffen: personenauto (VW Golf, zwart, 1-ABC-23) en omgevallen fiets. Slachtoffer: vrouw, ±55jr, liggend op fietspad.',
+                    '<strong>* Toedracht:</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde getuige verklaren dat automobilist rechtsaf sloeg en fietser over het hoofd zag. Ik zag dat bestuurder geschrokken was en zag bij slachtoffer hoofdwond en armletsel.',
+                    '<strong>* Maatregelen:</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet en EHBO verleend. Ademanalyse bij bestuurder afgenomen (0,0 ugl). Verkeer omgeleid.',
+                    '<strong>* Afhandeling:</strong> Slachtoffer overgebracht naar ziekenhuis. Auto geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie naar verkeerspolitie.'
+                ]
+            },
+            {
+                title: 'Casus 4: Overlast jeugd / vernieling bushokje',
+                blocks: [
+                    '<strong>* Aanleiding:</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, bezig met surveillance op de Birkstraat. Melding OC ontvangen betreft overlast jeugd bij bushalte Groningerstraat.',
+                    '<strong>* Situatie:</strong> Ter plaatse rond 22.40 uur. Donker en droog. Aangetroffen: groep van 6 jongeren (mannelijk, ±14-17jr) in donkere kleding bij vernield bushokje met gebroken glas op de grond. Één jongen met honkbalknuppel.',
+                    '<strong>* Toedracht:</strong> Ik zag de groep opsplitsen en wegrennen bij mijn nadering. Ik zag dat de jongen met de knuppel deze in de bosjes gooide. Ik zag dat een tweede jongen bleef staan. Er hing een sterke henneplucht.',
+                    '<strong>* Maatregelen:</strong> Bleven staan jongen staande gehouden. Honkbalknuppel veiliggesteld. Identiteit vastgesteld en ouders gebeld. Melding gemaakt bij gemeente voor herstel abri.',
+                    '<strong>* Afhandeling:</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent t.b.v. dossieropbouw.'
+                ]
+            },
+            {
+                title: 'Casus 5: Vermissing demente bejaarde',
+                blocks: [
+                    '<strong>* Aanleiding:</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, op het bureau bezig met mutatieafhandeling. Melding OC ontvangen betreft vermissing demente man (82jr) uit zorgcentrum De Lichtenberg.',
+                    '<strong>* Situatie:</strong> Rond 20.30 uur ter plaatse bij het zorgcomplex. Het was donker en 8°C. Kamer van betrokkene was leeg, jas en schoenen weg. Signalement: man, 82jr, grijs haar, bruine bril, grijze jas.',
+                    '<strong>* Toedracht:</strong> Verzorgende verklaarde dat betrokkene rond 19.30 uur voor het laatst gezien was. Op camerabeelden zag ik dat hij om 19.45 uur de hoofdingang verliet richting het park.',
+                    '<strong>* Maatregelen:</strong> Burgernet opgestart. Speurhond ingezet in het park. Foto verspreid onder surveillance-eenheden. Buurtonderzoek in de omgeving opgestart.',
+                    '<strong>* Afhandeling:</strong> Betrokkene om 22.10 uur aangetroffen op bankje in het park, onderkoeld. Overgedragen aan ambulance. Mutatie gedeeld met wijkagent.'
+                ]
+            }
+        ];
+
+        let currentCaseIndex = -1;
+
+        // ===== HULP: PDF WEERGEVEN (Canvas rendering) =====
+        async function openPdfText(url, sync = true) {
+            if (!pdfViewer || !pdfPlaceholder) return;
+            if (!url) {
+                pdfViewer.innerHTML = '';
+                pdfViewer.classList.add('hidden');
+                pdfPlaceholder.classList.remove('hidden');
+                return;
+            }
+            try {
+                pdfViewer.textContent = 'Bezig met laden en renderen van de PDF...';
+                pdfViewer.classList.remove('hidden');
+                pdfPlaceholder.classList.add('hidden');
+                
+                const pdf = await pdfjsLib.getDocument(url).promise;
+                pdfViewer.innerHTML = '';
+                
+                const containerWidth = (pdfViewer.clientWidth || 800) - 40;
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const unscaledViewport = page.getViewport({ scale: 1 });
+                    const scale = Math.max(1, Math.min(2.5, containerWidth / unscaledViewport.width));
+                    const viewport = page.getViewport({ scale: scale });
+                    
+                    const canvas = document.createElement('canvas');
+                    const context = canvas.getContext('2d');
+                    canvas.width = viewport.width;
+                    canvas.height = viewport.height;
+                    canvas.style.display = 'block';
+                    canvas.style.margin = '0 auto 15px auto';
+                    canvas.style.maxWidth = '100%';
+                    canvas.style.height = 'auto';
+                    canvas.style.border = '1px solid #cbd5e1';
+                    canvas.style.borderRadius = '6px';
+                    canvas.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
+                    canvas.style.background = '#fff';
+                    
+                    pdfViewer.appendChild(canvas);
+                    await page.render({
+                        canvasContext: context,
+                        viewport: viewport
+                    }).promise;
+                }
+                
+                if (sync && uClass) {
+                    const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
+                    set(currentPdfRef, url);
+                }
+            } catch (err) {
+                console.error('PDF laadfout:', err);
+                pdfViewer.textContent = 'Fout bij laden van PDF: ' + err.message;
+            }
+        }
+
+        function setStatus(msg, type = "info") {
+            if(!uploadStatus) return;
+            uploadStatus.textContent = msg;
+            uploadStatus.className = type;
+            uploadStatus.style.display = "block";
+            if(type === "success") {
+                uploadStatus.style.background = "#d4edda";
+                uploadStatus.style.color = "#155724";
+            } else if (type === "error") {
+                uploadStatus.style.background = "#f8d7da";
+                uploadStatus.style.color = "#721c24";
+            } else {
+                uploadStatus.style.background = "#d1ecf1";
+                uploadStatus.style.color = "#0c5460";
+            }
+            setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
+        }
+
+        // Render File List in Screen 5
+        function renderFileList(files) {
+            if(!fileListItems) return;
+            fileListItems.innerHTML = '';
+            if (!files || Object.keys(files).length === 0) {
+                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
+                return;
+            }
+            
+            const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
+            entries.forEach((fileData) => {
+                const li = document.createElement('li');
+                li.innerHTML = `
+                    <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
+                    <span class="file-delete" title="Verwijderen"><i class="fa-solid fa-trash-can"></i></span>
+                `;
+                
+                li.addEventListener('click', (e) => {
+                    if (e.target.closest('.file-delete')) return;
+                    openPdfText(fileData.url, true);
+                });
+
+                const deleteBtn = li.querySelector('.file-delete');
+                deleteBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    window.customModal({
+                        title: "Bestand verwijderen",
+                        message: `Weet je zeker dat je het bestand "${fileData.name}" wilt verwijderen voor de klas?`,
+                        isConfirm: true,
+                        onConfirm: async () => {
+                            try {
+                                if (fileData.storagePath) {
+                                    const fileRef = storageRef(storage, fileData.storagePath);
+                                    await deleteObject(fileRef);
+                                }
+                                const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
+                                if (snapshot.exists()) {
+                                    const allFiles = snapshot.val();
+                                    for (let key in allFiles) {
+                                        const f = allFiles[key];
+                                        if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
+                                            await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
+                                            break;
+                                        }
+                                    }
+                                }
+                            } catch (err) {
+                                console.error("Verwijderen mislukt:", err);
+                                window.customModal({ title: "Fout", message: "Fout bij verwijderen: " + err.message });
+                            }
+                        }
+                    });
+                });
+                fileListItems.appendChild(li);
+            });
+        }
+
+        function initFileUpload() {
+            if (fileListenerSet) return;
+            fileListenerSet = true;
+
+            const dropZone = document.getElementById('drop-zone');
+            const fileInput = document.getElementById('file-input');
+            const uploadBtn = document.getElementById('upload-btn');
+            const browseBtn = document.getElementById('browse-btn');
+            
+            if(browseBtn && fileInput) {
+                browseBtn.addEventListener('click', () => fileInput.click());
+            }
+
+            if(dropZone && fileInput) {
+                dropZone.addEventListener('click', (e) => {
+                    if (e.target !== browseBtn) fileInput.click();
+                });
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('dragover');
+                });
+                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('dragover');
+                    if (e.dataTransfer.files.length) {
+                        fileInput.files = e.dataTransfer.files;
+                        selectedFiles = Array.from(fileInput.files);
+                        updateUploadStatus();
+                    }
+                });
+            }
+
+            if(fileInput) {
+                fileInput.addEventListener('change', () => {
+                    selectedFiles = Array.from(fileInput.files);
+                    updateUploadStatus();
+                });
+            }
+
+            if(uploadBtn) {
+                uploadBtn.addEventListener('click', async () => {
+                    if (selectedFiles.length === 0) {
+                        window.customModal({ title: "Attentie", message: "Selecteer eerst een of meer PDF-bestanden." });
+                        return;
+                    }
+                    if (!uClass) {
+                        window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
+                        return;
+                    }
+                    uploadBtn.disabled = true;
+                    uploadBtn.textContent = 'Uploaden...';
+                    setStatus("Bezig met uploaden naar Firebase...", "info");
+                    
+                    let successCount = 0;
+                    for (const file of selectedFiles) {
+                        try {
+                            const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                            const fileRef = storageRef(storage, path);
+                            await uploadBytes(fileRef, file);
+                            const url = await getDownloadURL(fileRef);
+                            const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                            await set(newFileRef, {
+                                name: file.name,
+                                url: url,
+                                storagePath: path,
+                                uploadedBy: uName || 'onbekend',
+                                timestamp: Date.now()
+                            });
+                            successCount++;
+                        } catch (err) {
+                            console.error("Upload mislukt:", err);
+                            setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
+                        }
+                    }
+                    selectedFiles = [];
+                    if(fileInput) fileInput.value = '';
+                    updateUploadStatus();
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'Upload Geselecteerde';
+                    if (successCount > 0) {
+                        setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                    }
+                });
+            }
+
+            // Realtime listener for uploaded files
+            const filesRef = ref(db, `mutatieles/${uClass}/files`);
+            onValue(filesRef, (snap) => {
+                renderFileList(snap.val());
             });
 
-            const deleteBtn = li.querySelector('.file-delete');
-            deleteBtn.addEventListener('click', async (e) => {
-                e.stopPropagation();
-                if (!confirm(`Bestand "${fileData.name}" definitief verwijderen?`)) return;
-                
-                try {
-                    if (fileData.storagePath) {
-                        const fileRef = storageRef(storage, fileData.storagePath);
-                        await deleteObject(fileRef);
+            // Feedback listener
+            const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
+            onValue(feedbackRef, (snap) => {
+                const feed = document.getElementById('feedback-feed');
+                if(!feed) return;
+                feed.innerHTML = '';
+                const data = snap.val();
+                if(data) {
+                    Object.values(data).reverse().forEach(item => {
+                        const div = document.createElement('div');
+                        div.className = 'feedback-msg';
+                        div.innerHTML = `<strong>${item.author}:</strong> ${item.text}`;
+                        feed.appendChild(div);
+                    });
+                }
+            });
+
+            // Feedback submit button
+            const sendFeedbackBtn = document.getElementById('send-feedback-btn');
+            const feedbackInput = document.getElementById('feedback-input');
+            if (sendFeedbackBtn && feedbackInput && !sendFeedbackBtn.dataset.bound) {
+                sendFeedbackBtn.dataset.bound = '1';
+                sendFeedbackBtn.addEventListener('click', async () => {
+                    const text = feedbackInput.value.trim();
+                    if (!text) {
+                        window.customModal({ title: "Invoer vereist", message: "Typ eerst een opmerking." });
+                        return;
                     }
-                    const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
-                    if (snapshot.exists()) {
-                        const allFiles = snapshot.val();
-                        for (let key in allFiles) {
-                            const f = allFiles[key];
-                            if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
-                                await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
-                                break;
+                    if (!uClass || !uName) return;
+                    sendFeedbackBtn.disabled = true;
+                    try {
+                        const newRef = push(ref(db, `mutatieles/${uClass}/feedback`));
+                        await set(newRef, {
+                            author: uName,
+                            text: text,
+                            timestamp: Date.now()
+                        });
+                        feedbackInput.value = '';
+                    } catch (err) {
+                        console.error('Feedback versturen mislukt:', err);
+                    } finally {
+                        sendFeedbackBtn.disabled = false;
+                    }
+                });
+            }
+
+            function updateUploadStatus() {
+                const dropZoneText = document.querySelector('#drop-zone p');
+                if(!dropZoneText || !uploadBtn) return;
+                if (selectedFiles.length) {
+                    dropZoneText.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload Geselecteerde".`;
+                    uploadBtn.disabled = false;
+                } else {
+                    dropZoneText.innerHTML = `📁 Sleep hier PDF-bestanden heen`;
+                    uploadBtn.disabled = true;
+                }
+            }
+        }
+
+        // ===== SLEEPOPDRACHT – POINTER EVENTS (MUIS + TOUCH) =====
+        let isDraggingLocally = false;
+        let dragState = null;
+        let renderedCaseIndex = -1;
+
+        function shuffleArray(arr) {
+            const a = arr.slice();
+            for (let i = a.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [a[i], a[j]] = [a[j], a[i]];
+            }
+            return a;
+        }
+
+        function makeShuffledIndexes(caseIndex) {
+            const n = allCases[caseIndex].blocks.length;
+            return shuffleArray(Array.from({ length: n }, (_, i) => i));
+        }
+
+        function pickRandomCaseIndex(exclude = -1) {
+            if (allCases.length <= 1) return 0;
+            let idx = Math.floor(Math.random() * allCases.length);
+            let safety = 0;
+            while (idx === exclude && safety < 50) {
+                idx = Math.floor(Math.random() * allCases.length);
+                safety++;
+            }
+            return idx;
+        }
+
+        function renderDragItems(indexes, caseIndex) {
+            const list = document.getElementById('drag-list');
+            if (!list || isDraggingLocally) return;
+
+            if (renderedCaseIndex === caseIndex) {
+                const current = getCurrentDragOrder();
+                if (Array.isArray(current) && Array.isArray(indexes) &&
+                    current.length === indexes.length &&
+                    current.every((v, i) => v === indexes[i])) {
+                    return;
+                }
+            }
+
+            const blocks = allCases[caseIndex].blocks;
+            list.innerHTML = '';
+            indexes.forEach((idx) => {
+                const text = blocks[idx];
+                if (typeof text !== 'string') return;
+                const div = document.createElement('div');
+                div.className = 'draggable';
+                div.dataset.idx = String(idx);
+                div.innerHTML = text;
+                div.addEventListener('pointerdown', onPointerDown);
+                list.appendChild(div);
+            });
+
+            renderedCaseIndex = caseIndex;
+            const titleEl = document.getElementById('case-title');
+            if (titleEl) titleEl.textContent = 'Casus: ' + allCases[caseIndex].title;
+            const nextBtn = document.getElementById('next-to-4');
+            if (nextBtn) nextBtn.classList.add('hidden');
+        }
+
+        function getCurrentDragOrder() {
+            return Array.from(document.querySelectorAll('#drag-list .draggable'))
+                .map(el => parseInt(el.dataset.idx, 10));
+        }
+
+        function onPointerDown(e) {
+            if (e.pointerType === 'mouse' && e.button !== 0) return;
+            const el = e.currentTarget;
+            const list = document.getElementById('drag-list');
+            if (!list || !el.parentElement) return;
+
+            isDraggingLocally = true;
+            const rect = el.getBoundingClientRect();
+            const offsetX = e.clientX - rect.left;
+            const offsetY = e.clientY - rect.top;
+
+            const placeholder = document.createElement('div');
+            placeholder.className = 'drag-placeholder';
+            placeholder.style.height = rect.height + 'px';
+            placeholder.style.width = rect.width + 'px';
+            list.insertBefore(placeholder, el);
+
+            el.style.position = 'fixed';
+            el.style.left = rect.left + 'px';
+            el.style.top = rect.top + 'px';
+            el.style.width = rect.width + 'px';
+            el.style.zIndex = '9999';
+            el.style.pointerEvents = 'none';
+            el.style.margin = '0';
+            el.classList.add('dragging');
+            document.body.appendChild(el);
+
+            dragState = {
+                el, placeholder, offsetX, offsetY, list,
+                startedCaseIndex: currentCaseIndex,
+                startedOrder: getCurrentDragOrder()
+            };
+
+            document.addEventListener('pointermove', onPointerMove, { passive: false });
+            document.addEventListener('pointerup', onPointerUp);
+            document.addEventListener('pointercancel', onPointerUp);
+            e.preventDefault();
+        }
+
+        function onPointerMove(e) {
+            if (!dragState) return;
+            e.preventDefault();
+            const { el, offsetX, offsetY, placeholder, list } = dragState;
+            el.style.left = (e.clientX - offsetX) + 'px';
+            el.style.top = (e.clientY - offsetY) + 'px';
+
+            const pointerY = e.clientY;
+            const items = Array.from(list.children).filter(c => c !== placeholder);
+            let target = null;
+            for (const item of items) {
+                const r = item.getBoundingClientRect();
+                if (pointerY < r.top + r.height / 2) {
+                    target = item;
+                    break;
+                }
+            }
+            if (target) {
+                list.insertBefore(placeholder, target);
+            } else {
+                list.appendChild(placeholder);
+            }
+        }
+
+        function onPointerUp() {
+            if (!dragState) return;
+            const { el, placeholder, list, startedCaseIndex } = dragState;
+            list.insertBefore(el, placeholder);
+            placeholder.remove();
+
+            el.style.position = '';
+            el.style.left = '';
+            el.style.top = '';
+            el.style.width = '';
+            el.style.zIndex = '';
+            el.style.pointerEvents = '';
+            el.style.margin = '';
+            el.classList.remove('dragging');
+
+            document.removeEventListener('pointermove', onPointerMove);
+            document.removeEventListener('pointerup', onPointerUp);
+            document.removeEventListener('pointercancel', onPointerUp);
+
+            const caseChangedDuringDrag = (startedCaseIndex !== currentCaseIndex);
+            dragState = null;
+            isDraggingLocally = false;
+
+            if (caseChangedDuringDrag) {
+                forceRerenderCurrentCase();
+                return;
+            }
+
+            const newOrder = getCurrentDragOrder();
+            const expectedLength = allCases[currentCaseIndex]?.blocks.length;
+            if (uClass && Array.isArray(newOrder) && newOrder.length === expectedLength) {
+                set(ref(db, `mutatieles/${uClass}/sleepopdracht/order`), newOrder);
+            }
+        }
+
+        function forceRerenderCurrentCase() {
+            if (currentCaseIndex < 0) return;
+            const list = document.getElementById('drag-list');
+            if (list) list.innerHTML = '';
+            renderedCaseIndex = -1;
+            get(ref(db, `mutatieles/${uClass}/sleepopdracht`)).then(snap => {
+                const data = snap.val();
+                if (data && Array.isArray(data.order) && typeof data.caseIndex === 'number') {
+                    currentCaseIndex = data.caseIndex;
+                    renderDragItems(data.order, data.caseIndex);
+                }
+            });
+        }
+
+        window.shuffleOrder = function() {
+            if (!uClass) return;
+            const newIdx = pickRandomCaseIndex(currentCaseIndex);
+            const newOrder = makeShuffledIndexes(newIdx);
+            set(ref(db, `mutatieles/${uClass}/sleepopdracht`), {
+                caseIndex: newIdx,
+                order: newOrder
+            });
+        };
+
+        window.checkOrder = function() {
+            if (currentCaseIndex < 0) return;
+            const current = getCurrentDragOrder();
+            const correct = allCases[currentCaseIndex].blocks.map((_, i) => i);
+            const isCorrect = JSON.stringify(current) === JSON.stringify(correct);
+
+            if (isCorrect) {
+                window.customModal({
+                    title: "Gefeliciteerd!",
+                    message: "Uitstekend werk! De ASTMA-volgorde is helemaal correct opgesteld."
+                });
+                document.getElementById('next-to-4').classList.remove('hidden');
+            } else {
+                window.customModal({
+                    title: "Nog niet juist",
+                    message: "De volgorde is nog niet helemaal correct volgens de ASTMA-structuur. Controleer de blokken en probeer het opnieuw."
+                });
+            }
+        };
+
+        // ===== KENNISCHECK (SCHERM 4) =====
+        const quizData = [
+            {
+                vraag: "Wat is de juiste volgorde van het ASTMA-model?",
+                opties: [
+                    "Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling",
+                    "Aanleiding, Toedracht, Situatie, Maatregelen, Afhandeling",
+                    "Situatie, Aanleiding, Toedracht, Maatregelen, Afhandeling"
+                ],
+                correct: 0
+            },
+            {
+                vraag: "Wat betekent de afkorting OVT in het kader van verslaglegging?",
+                opties: [
+                    "Onvoltooid Verleden Tijd",
+                    "Onvoltooid Toekomende Tijd",
+                    "Overleg Verleden Tijd"
+                ],
+                correct: 0
+            },
+            {
+                vraag: "Welke vragen behoren tot de Gouden W's?",
+                opties: [
+                    "Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
+                    "Wie, wat, waar, wanneer, waarom, hoe, waarmee",
+                    "Wie, wat, waar, wanneer, waarom, hoe, wat"
+                ],
+                correct: 0
+            },
+            {
+                vraag: "Waar wordt een politiemutatie NIET voor gebruikt?",
+                opties: [
+                    "Voor opsporing en informatieopbouw",
+                    "Voor statistieken en bijzondere opdrachten",
+                    "Als rechtstreeks wettig bewijsmiddel voor strafvervolging"
+                ],
+                correct: 2
+            }
+        ];
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            if(!container) return;
+            container.innerHTML = '';
+            
+            quizData.forEach((q, index) => {
+                const div = document.createElement('div');
+                div.className = 'quiz-item';
+                div.innerHTML = `<p class="font-bold text-gray-800 mb-3"><span class="text-blue-800">Vraag ${index+1}:</span> ${q.vraag}</p>`;
+                
+                q.opties.forEach((opt, i) => {
+                    const label = document.createElement('label');
+                    label.className = 'flex items-center gap-2 p-2 rounded hover:bg-gray-100 cursor-pointer text-sm my-1 border border-gray-100';
+                    const radio = document.createElement('input');
+                    radio.type = 'radio';
+                    radio.name = `quiz${index}`;
+                    radio.value = i;
+                    label.appendChild(radio);
+                    label.appendChild(document.createTextNode(opt));
+                    div.appendChild(label);
+                });
+                container.appendChild(div);
+            });
+
+            const checkBtn = document.createElement('button');
+            checkBtn.className = 'btn mt-4';
+            checkBtn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Controleer antwoorden';
+            checkBtn.onclick = checkQuiz;
+            container.appendChild(checkBtn);
+
+            const resultDiv = document.createElement('div');
+            resultDiv.id = 'quiz-result';
+            resultDiv.className = 'mt-4 font-bold text-lg p-3 rounded text-center hidden';
+            container.appendChild(resultDiv);
+        }
+
+        function checkQuiz() {
+            let score = 0;
+            quizData.forEach((q, index) => {
+                const radios = document.getElementsByName(`quiz${index}`);
+                let selected = null;
+                for (let r of radios) {
+                    if (r.checked) {
+                        selected = parseInt(r.value);
+                        break;
+                    }
+                }
+                if (selected === q.correct) score++;
+            });
+
+            const resultDiv = document.getElementById('quiz-result');
+            if(resultDiv) {
+                resultDiv.classList.remove('hidden');
+                if(score === quizData.length) {
+                    resultDiv.textContent = `🎉 Gefeliciteerd! Alle ${quizData.length} vragen zijn correct!`;
+                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-green-100 text-green-800 border border-green-300';
+                } else {
+                    resultDiv.textContent = `Je hebt ${score} van de ${quizData.length} vragen goed. Probeer het opnieuw.`;
+                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-red-100 text-red-800 border border-red-300';
+                }
+            }
+        }
+
+        function initPdfSync() {
+            if (pdfSelect) {
+                pdfSelect.addEventListener('change', (e) => {
+                    const url = e.target.value;
+                    if (url) {
+                        openPdfText(url, true);
+                    } else {
+                        if (pdfViewer && pdfPlaceholder) {
+                            pdfViewer.innerHTML = '';
+                            pdfViewer.classList.add('hidden');
+                            pdfPlaceholder.classList.remove('hidden');
+                        }
+                        if (uClass) {
+                            set(ref(db, `mutatieles/${uClass}/currentPdf`), null);
+                        }
+                    }
+                });
+            }
+
+            if (uClass) {
+                if (pdfListener) pdfListener();
+                pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
+                    const url = snap.val();
+                    if (url && typeof url === 'string') {
+                        openPdfText(url, false);
+                        if (pdfSelect) {
+                            const options = pdfSelect.options;
+                            for (let i = 0; i < options.length; i++) {
+                                if (options[i].value === url) {
+                                    pdfSelect.selectedIndex = i;
+                                    break;
+                                }
                             }
                         }
                     }
-                } catch (err) {
-                    console.error("Verwijderen mislukt:", err);
-                    alert("Fout bij verwijderen: " + err.message);
-                }
-            });
-            fileListItems.appendChild(li);
-        });
-    }
-
-    // ===== INIT UPLOAD FUNCTIE =====
-    function initFileUpload() {
-        if (fileListenerSet) return;
-        fileListenerSet = true;
-
-        const dropZone = document.getElementById('drop-zone');
-        const fileInput = document.getElementById('file-input');
-        const uploadBtn = document.getElementById('upload-btn');
-        const browseBtn = document.getElementById('browse-btn');
-        const dropZoneText = document.querySelector('#drop-zone p');
-
-        if(browseBtn && fileInput) {
-            browseBtn.addEventListener('click', () => {
-                fileInput.click();
-            });
-        }
-
-        if(dropZone && fileInput) {
-            dropZone.addEventListener('click', () => fileInput.click());
-
-            dropZone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropZone.classList.add('dragover');
-            });
-            dropZone.addEventListener('dragleave', () => {
-                dropZone.classList.remove('dragover');
-            });
-            dropZone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropZone.classList.remove('dragover');
-                if (e.dataTransfer.files.length) {
-                    fileInput.files = e.dataTransfer.files;
-                    selectedFiles = Array.from(fileInput.files);
-                    updateUploadStatus();
-                }
-            });
-        }
-
-        if(fileInput) {
-            fileInput.addEventListener('change', () => {
-                selectedFiles = Array.from(fileInput.files);
-                updateUploadStatus();
-            });
-        }
-
-        if(uploadBtn) {
-            uploadBtn.addEventListener('click', async () => {
-                if (selectedFiles.length === 0) {
-                    alert("Selecteer eerst PDF-bestanden.");
-                    return;
-                }
-                if (!uClass) {
-                    alert("Klas niet geselecteerd. Log eerst in.");
-                    return;
-                }
-
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = 'Uploaden...';
-                setStatus("Bezig met uploaden...", "info");
-
-                let successCount = 0;
-                for (const file of selectedFiles) {
-                    try {
-                        const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                        const fileRef = storageRef(storage, path);
-                        await uploadBytes(fileRef, file);
-                        const url = await getDownloadURL(fileRef);
-
-                        const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                        await set(newFileRef, {
-                            name: file.name,
-                            url: url,
-                            storagePath: path,
-                            uploadedBy: uName || 'onbekend',
-                            timestamp: Date.now()
-                        });
-                        successCount++;
-                    } catch (err) {
-                        console.error("Upload mislukt voor ${file.name}:", err);
-                        setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
-                    }
-                }
-
-                selectedFiles = [];
-                if(fileInput) fileInput.value = '';
-                updateUploadStatus();
-                uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Upload Geselecteerde';
-
-                if (successCount > 0) {
-                    setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                }
-            });
-        }
-
-        const filesRef = ref(db, `mutatieles/${uClass}/files`);
-        onValue(filesRef, (snap) => {
-            renderFileList(snap.val());
-        });
-
-        const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
-        onValue(feedbackRef, (snap) => {
-            const feed = document.getElementById('feedback-feed');
-            if(!feed) return;
-            feed.innerHTML = '';
-            const data = snap.val();
-            if(data) {
-                Object.values(data).reverse().forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'feedback-msg';
-                    div.innerHTML = `<strong>${item.author}:</strong> ${item.text}`;
-                    feed.appendChild(div);
                 });
             }
-        });
+        }
 
-        // ===== VERSTUUR-KNOP VOOR FEEDBACK =====
-        const sendFeedbackBtn = document.getElementById('send-feedback-btn');
-        const feedbackInput = document.getElementById('feedback-input');
-        if (sendFeedbackBtn && feedbackInput && !sendFeedbackBtn.dataset.bound) {
-            sendFeedbackBtn.dataset.bound = '1';
-            sendFeedbackBtn.addEventListener('click', async () => {
-                const text = feedbackInput.value.trim();
-                if (!text) {
-                    alert('Typ eerst een opmerking voordat je verstuurt.');
+        window.startSession = function() {
+            const nameInput = document.getElementById('user-name');
+            const classSelect = document.getElementById('user-class');
+            uName = nameInput.value.trim();
+            uClass = classSelect.value;
+            
+            if(!uName || !uClass) {
+                window.customModal({ title: "Inloggen mislukt", message: "Vul a.u.b. je naam in en kies een NATO-klas." });
+                return;
+            }
+            
+            document.getElementById('banner-user-name').textContent = uName;
+            document.getElementById('banner-user-class').textContent = uClass;
+            document.getElementById('user-info-banner').classList.remove('hidden');
+            document.getElementById('nav-bar').classList.remove('hidden');
+
+            document.getElementById('current-class-label').textContent = uClass;
+            const label2 = document.getElementById('current-class-label-2');
+            if (label2) label2.textContent = uClass;
+
+            showScreen(2);
+            listenClassFeed();
+            initClassFeedInteractions();
+            initSubmitMutation();
+            initAudioFeatures();
+        };
+
+        window.showScreen = function(n) {
+            if (n !== 3 && dragListener) {
+                dragListener();
+                dragListener = null;
+                renderedCaseIndex = -1;
+            }
+
+            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+            const activeNavBtn = document.getElementById('nav-btn-' + n);
+            if (activeNavBtn) activeNavBtn.classList.add('active');
+
+            document.querySelectorAll('.container > div:not(#nav-bar)').forEach(d => d.classList.add('hidden'));
+            const el = document.getElementById('screen-' + n);
+            if (el) el.classList.remove('hidden');
+
+            if (n === 3) {
+                const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
+                if (dragListener) dragListener();
+                dragListener = onValue(sleepRef, (snap) => {
+                    const data = snap.val();
+                    let caseIndex = data?.caseIndex;
+                    let order = data?.order;
+                    const validCaseIndex = Number.isInteger(caseIndex) && caseIndex >= 0 && caseIndex < allCases.length;
+                    const expectedLen = validCaseIndex ? allCases[caseIndex].blocks.length : 0;
+                    const validOrder = Array.isArray(order) && order.length === expectedLen && order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
+
+                    if (!validCaseIndex || !validOrder) {
+                        const newIdx = pickRandomCaseIndex();
+                        const newOrder = makeShuffledIndexes(newIdx);
+                        set(sleepRef, { caseIndex: newIdx, order: newOrder });
+                        return;
+                    }
+                    currentCaseIndex = caseIndex;
+                    if (!isDraggingLocally) renderDragItems(order, caseIndex);
+                });
+            }
+
+            if (n === 4) renderQuiz();
+            if (n === 5) {
+                initFileUpload(); 
+                initPdfSync();
+            }
+        };
+
+        window.confirmResetClassData = function() {
+            const c = document.getElementById('user-class').value;
+            if(!c) {
+                window.customModal({ title: "Attentie", message: "Selecteer eerst een klas om te resetten." });
+                return;
+            }
+            window.customModal({
+                title: "Reset klas-data",
+                message: `Weet je zeker dat je ALLE data voor klas ${c} wilt wissen? Dit kan niet ongedaan worden gemaakt.`,
+                isConfirm: true,
+                onConfirm: () => {
+                    remove(ref(db, `mutatieles/${c}`));
+                    window.customModal({ title: "Gereset", message: `Alle data voor klas ${c} is succesvol gewist.` });
+                }
+            });
+        };
+
+        // ===== MUTATIE VERSTUREN (scherm 6 → feed) =====
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function initSubmitMutation() {
+            const btn = document.getElementById('submit-mutation-btn');
+            if (!btn || btn.dataset.bound) return;
+            btn.dataset.bound = '1';
+
+            btn.addEventListener('click', async () => {
+                if (!uClass || !uName) return;
+                
+                const finalText = (document.getElementById('final-mutation')?.value || '').trim();
+                const m1 = (document.getElementById('mutation1')?.value || '').trim();
+                const m2 = (document.getElementById('mutation2')?.value || '').trim();
+                const m3 = (document.getElementById('mutation3')?.value || '').trim();
+
+                if (!finalText && !m1 && !m2 && !m3) {
+                    window.customModal({ title: "Geen invoer", message: "Vul ten minste één mutatieveld in voordat je verstuurt." });
                     return;
                 }
-                if (!uClass || !uName) {
-                    alert('Log eerst in met naam en klas.');
-                    return;
-                }
-                sendFeedbackBtn.disabled = true;
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Bezig met versturen...';
+
                 try {
-                    const newRef = push(ref(db, `mutatieles/${uClass}/feedback`));
+                    await update(ref(db, `mutatieles/${uClass}/live/${uName}`), {
+                        name: uName,
+                        text: finalText,
+                        mutation1: m1,
+                        mutation2: m2,
+                        mutation3: m3,
+                        timestamp: Date.now()
+                    });
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Succesvol verstuurd!';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                } catch (err) {
+                    console.error('Versturen mislukt:', err);
+                    window.customModal({ title: "Fout", message: "Versturen mislukt: " + err.message });
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Livefeed Non-Disruptive Reconciliation logic
+        function listenClassFeed() {
+            if (!uClass) return;
+            
+            onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
+                const feed = document.getElementById('class-feed');
+                if (!feed) return;
+
+                const data = snap.val() || {};
+
+                // 1. Capture current active element focus & selection range
+                const activeEl = document.activeElement;
+                let activeStudentKey = null;
+                let selStart = 0, selEnd = 0;
+
+                if (activeEl && activeEl.matches('[data-reply-input]')) {
+                    activeStudentKey = activeEl.dataset.studentKey;
+                    try {
+                        selStart = activeEl.selectionStart;
+                        selEnd = activeEl.selectionEnd;
+                    } catch (e) {}
+                }
+
+                // 2. Save draft inputs from DOM
+                feed.querySelectorAll('[data-reply-input]').forEach(input => {
+                    const key = input.dataset.studentKey;
+                    if (key) draftReplyTexts[key] = input.value;
+                });
+
+                // 3. Render feed cards gracefully
+                feed.innerHTML = '';
+                const entries = Object.entries(data);
+
+                if (entries.length === 0) {
+                    feed.innerHTML = '<p class="text-sm text-gray-500 italic p-3 text-center">Nog geen mutaties ingeleverd in deze klas.</p>';
+                    return;
+                }
+
+                entries.forEach(([student, val]) => {
+                    if (!val || typeof val !== 'object') return;
+
+                    const card = document.createElement('div');
+                    card.className = 'feed-card';
+                    card.dataset.student = student;
+
+                    let html = `<div class="feed-name">
+                        <span><i class="fa-solid fa-user text-blue-800 mr-1.5"></i> ${escapeHtml(student)}</span>
+                        <span class="text-xs text-gray-400 font-normal"><i class="fa-regular fa-clock mr-1"></i> Live</span>
+                    </div>`;
+
+                    if (val.text) html += `<div class="text-sm my-1"><strong class="text-blue-900">Hoofdmutatie:</strong> ${escapeHtml(val.text)}</div>`;
+                    if (val.mutation1) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 1:</strong> ${escapeHtml(val.mutation1)}</div>`;
+                    if (val.mutation2) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</div>`;
+                    if (val.mutation3) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</div>`;
+
+                    // Reactions section
+                    html += `<div class="feed-reactions">`;
+                    if (val.reactions) {
+                        Object.values(val.reactions)
+                            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+                            .forEach(r => {
+                                html += `<div class="feed-reaction"><strong>${escapeHtml(r.author)}:</strong> ${escapeHtml(r.text)}</div>`;
+                            });
+                    }
+
+                    // Draft reply text preservation
+                    const draftVal = draftReplyTexts[student] || '';
+
+                    html += `<div class="feed-reply">
+                        <input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input data-student-key="${escapeHtml(student)}" value="${escapeHtml(draftVal)}" />
+                        <button type="button" data-reply-btn data-student-key="${escapeHtml(student)}">Reageer</button>
+                    </div></div>`;
+
+                    card.innerHTML = html;
+                    feed.appendChild(card);
+                });
+
+                // 4. Restore focus and cursor position
+                if (activeStudentKey) {
+                    const newInput = feed.querySelector(`[data-reply-input][data-student-key="${CSS.escape(activeStudentKey)}"]`);
+                    if (newInput) {
+                        newInput.focus();
+                        try { newInput.setSelectionRange(selStart, selEnd); } catch (e) {}
+                    }
+                }
+            });
+        }
+
+        function initClassFeedInteractions() {
+            const feed = document.getElementById('class-feed');
+            if (!feed || feed.dataset.bound) return;
+            feed.dataset.bound = '1';
+
+            // Track live draft changes
+            feed.addEventListener('input', (e) => {
+                if (e.target.matches('[data-reply-input]')) {
+                    const studentKey = e.target.dataset.studentKey;
+                    if (studentKey) draftReplyTexts[studentKey] = e.target.value;
+                }
+            });
+
+            feed.addEventListener('click', async (e) => {
+                const btn = e.target.closest('[data-reply-btn]');
+                if (!btn) return;
+
+                const student = btn.dataset.studentKey;
+                const card = btn.closest('.feed-card');
+                const input = card?.querySelector('[data-reply-input]');
+                const text = input?.value.trim();
+
+                if (!text) return;
+                if (!uName || !uClass) {
+                    window.customModal({ title: "Inloggen vereist", message: "Log eerst in met je naam en klas." });
+                    return;
+                }
+
+                btn.disabled = true;
+                try {
+                    const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
                     await set(newRef, {
                         author: uName,
                         text: text,
                         timestamp: Date.now()
                     });
-                    feedbackInput.value = '';
+                    delete draftReplyTexts[student];
+                    if (input) input.value = '';
                 } catch (err) {
-                    console.error('Feedback versturen mislukt:', err);
-                    alert('Fout bij versturen: ' + err.message);
+                    console.error('Reactie mislukt:', err);
                 } finally {
-                    sendFeedbackBtn.disabled = false;
+                    btn.disabled = false;
+                }
+            });
+
+            feed.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.matches('[data-reply-input]')) {
+                    e.preventDefault();
+                    const card = e.target.closest('.feed-card');
+                    const btn = card?.querySelector('[data-reply-btn]');
+                    if (btn) btn.click();
                 }
             });
         }
 
-        function updateUploadStatus() {
-            if(!dropZoneText || !uploadBtn) return;
-            if (selectedFiles.length) {
-                dropZoneText.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload" om te verzenden.`;
-                uploadBtn.disabled = false;
-            } else {
-                dropZoneText.innerHTML = `📁 Sleep hier PDF-bestanden heen<br>of gebruik de knop hieronder`;
-                uploadBtn.disabled = true;
-            }
-        }
-    }
+        // ===== AUDIO UPLOAD & MEDIA =====
+        let audioInitDone = false;
+        function initAudioFeatures() {
+            if (audioInitDone) return;
+            if (!uClass) return;
+            audioInitDone = true;
 
-    // =====================================================================
-    // ===== SLEEPOPDRACHT – POINTER EVENTS (MUIS + TOUCH) + SYNCHRONISATIE
-    // =====================================================================
-    let isDraggingLocally = false;
-    let dragState = null;
-    let renderedCaseIndex = -1;
+            const audioInput = document.getElementById('audio-file-input');
+            const uploadBtn = document.getElementById('upload-audio-btn');
+            const statusDiv = document.getElementById('audio-upload-status');
+            const audioPlayer = document.getElementById('uploaded-audio-player');
 
-    function shuffleArray(arr) {
-        const a = arr.slice();
-        for (let i = a.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [a[i], a[j]] = [a[j], a[i]];
-        }
-        return a;
-    }
+            if (!audioInput || !uploadBtn || !statusDiv || !audioPlayer) return;
 
-    function makeShuffledIndexes(caseIndex) {
-        const n = allCases[caseIndex].blocks.length;
-        return shuffleArray(Array.from({ length: n }, (_, i) => i));
-    }
-
-    function pickRandomCaseIndex(exclude = -1) {
-        if (allCases.length <= 1) return 0;
-        let idx = Math.floor(Math.random() * allCases.length);
-        let safety = 0;
-        while (idx === exclude && safety < 50) {
-            idx = Math.floor(Math.random() * allCases.length);
-            safety++;
-        }
-        return idx;
-    }
-
-    function renderDragItems(indexes, caseIndex) {
-        const list = document.getElementById('drag-list');
-        if (!list) return;
-
-        if (isDraggingLocally) return;
-
-        if (renderedCaseIndex === caseIndex) {
-            const current = getCurrentDragOrder();
-            if (Array.isArray(current) && Array.isArray(indexes) &&
-                current.length === indexes.length &&
-                current.every((v, i) => v === indexes[i])) {
-                return;
-            }
-        }
-
-        const blocks = allCases[caseIndex].blocks;
-        list.innerHTML = '';
-        indexes.forEach((idx) => {
-            const text = blocks[idx];
-            if (typeof text !== 'string') return;
-            const div = document.createElement('div');
-            div.className = 'draggable';
-            div.dataset.idx = String(idx);
-            div.innerHTML = text;
-            div.addEventListener('pointerdown', onPointerDown);
-            list.appendChild(div);
-        });
-
-        renderedCaseIndex = caseIndex;
-
-        const titleEl = document.getElementById('case-title');
-        if (titleEl) titleEl.textContent = 'Casus: ' + allCases[caseIndex].title;
-
-        const nextBtn = document.getElementById('next-to-4');
-        if (nextBtn) nextBtn.classList.add('hidden');
-    }
-
-    function getCurrentDragOrder() {
-        return Array.from(document.querySelectorAll('#drag-list .draggable'))
-            .map(el => parseInt(el.dataset.idx, 10));
-    }
-
-    function onPointerDown(e) {
-        if (e.pointerType === 'mouse' && e.button !== 0) return;
-
-        const el = e.currentTarget;
-        const list = document.getElementById('drag-list');
-        if (!list || !el.parentElement) return;
-
-        isDraggingLocally = true;
-
-        const rect = el.getBoundingClientRect();
-        const offsetX = e.clientX - rect.left;
-        const offsetY = e.clientY - rect.top;
-
-        const placeholder = document.createElement('div');
-        placeholder.className = 'drag-placeholder';
-        placeholder.style.height = rect.height + 'px';
-        placeholder.style.width = rect.width + 'px';
-        list.insertBefore(placeholder, el);
-
-        el.style.position = 'fixed';
-        el.style.left = rect.left + 'px';
-        el.style.top = rect.top + 'px';
-        el.style.width = rect.width + 'px';
-        el.style.zIndex = '9999';
-        el.style.pointerEvents = 'none';
-        el.style.margin = '0';
-        el.classList.add('dragging');
-        document.body.appendChild(el);
-
-        dragState = {
-            el,
-            placeholder,
-            offsetX,
-            offsetY,
-            list,
-            startedCaseIndex: currentCaseIndex,
-            startedOrder: getCurrentDragOrder()
-        };
-
-        document.addEventListener('pointermove', onPointerMove, { passive: false });
-        document.addEventListener('pointerup', onPointerUp);
-        document.addEventListener('pointercancel', onPointerUp);
-
-        e.preventDefault();
-    }
-
-    function onPointerMove(e) {
-        if (!dragState) return;
-        e.preventDefault();
-
-        const { el, offsetX, offsetY, placeholder, list } = dragState;
-
-        el.style.left = (e.clientX - offsetX) + 'px';
-        el.style.top = (e.clientY - offsetY) + 'px';
-
-        const pointerY = e.clientY;
-        const items = Array.from(list.children).filter(c => c !== placeholder);
-
-        let target = null;
-        for (const item of items) {
-            const r = item.getBoundingClientRect();
-            if (pointerY < r.top + r.height / 2) {
-                target = item;
-                break;
-            }
-        }
-
-        if (target) {
-            list.insertBefore(placeholder, target);
-        } else {
-            list.appendChild(placeholder);
-        }
-    }
-
-    function onPointerUp() {
-        if (!dragState) return;
-
-        const { el, placeholder, list, startedCaseIndex } = dragState;
-
-        list.insertBefore(el, placeholder);
-        placeholder.remove();
-
-        el.style.position = '';
-        el.style.left = '';
-        el.style.top = '';
-        el.style.width = '';
-        el.style.zIndex = '';
-        el.style.pointerEvents = '';
-        el.style.margin = '';
-        el.classList.remove('dragging');
-
-        document.removeEventListener('pointermove', onPointerMove);
-        document.removeEventListener('pointerup', onPointerUp);
-        document.removeEventListener('pointercancel', onPointerUp);
-
-        const caseChangedDuringDrag = (startedCaseIndex !== currentCaseIndex);
-        dragState = null;
-        isDraggingLocally = false;
-
-        if (caseChangedDuringDrag) {
-            forceRerenderCurrentCase();
-            return;
-        }
-
-        const newOrder = getCurrentDragOrder();
-        const expectedLength = allCases[currentCaseIndex]?.blocks.length;
-        if (uClass && Array.isArray(newOrder) &&
-            newOrder.length === expectedLength) {
-            set(ref(db, `mutatieles/${uClass}/sleepopdracht/order`), newOrder);
-        }
-    }
-
-    function forceRerenderCurrentCase() {
-        if (currentCaseIndex < 0) return;
-        const list = document.getElementById('drag-list');
-        if (list) list.innerHTML = '';
-        renderedCaseIndex = -1;
-
-        const dataRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
-        get(dataRef).then(snap => {
-            const data = snap.val();
-            if (data && Array.isArray(data.order) && typeof data.caseIndex === 'number') {
-                currentCaseIndex = data.caseIndex;
-                renderDragItems(data.order, data.caseIndex);
-            }
-        });
-    }
-
-    window.shuffleOrder = function() {
-        if (!uClass) return;
-        const newIdx = pickRandomCaseIndex(currentCaseIndex);
-        const newOrder = makeShuffledIndexes(newIdx);
-        set(ref(db, `mutatieles/${uClass}/sleepopdracht`), {
-            caseIndex: newIdx,
-            order: newOrder
-        });
-    };
-
-    window.checkOrder = function() {
-        if (currentCaseIndex < 0) return;
-        const current = getCurrentDragOrder();
-        const correct = allCases[currentCaseIndex].blocks.map((_, i) => i);
-        const isCorrect = JSON.stringify(current) === JSON.stringify(correct);
-        if (isCorrect) {
-            alert("Uitstekend! De volgorde is correct.");
-            document.getElementById('next-to-4').classList.remove('hidden');
-        } else {
-            alert("De volgorde is nog niet helemaal juist. Probeer het opnieuw.");
-        }
-    };
-
-    // ===== KENNISCHECK (SCHERM 4) =====
-    const quizData = [
-        {
-            vraag: "Wat is de juiste volgorde van ASTMA?",
-            opties: [
-                "Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling",
-                "Aanleiding, Toedracht, Situatie, Maatregelen, Afhandeling",
-                "Situatie, Aanleiding, Toedracht, Maatregelen, Afhandeling"
-            ],
-            correct: 0
-        },
-        {
-            vraag: "Wat betekent OVT?",
-            opties: [
-                "Onvoltooid Verleden Tijd",
-                "Onvoltooid Toekomende Tijd",
-                "Overleg Verleden Tijd"
-            ],
-            correct: 0
-        },
-        {
-            vraag: "Welke vragen horen bij de Gouden W's?",
-            opties: [
-                "Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
-                "Wie, wat, waar, wanneer, waarom, hoe, waarmee",
-                "Wie, wat, waar, wanneer, waarom, hoe, wat"
-            ],
-            correct: 1
-        },
-        {
-            vraag: "Waar wordt een mutatie NIET voor gebruikt?",
-            opties: [
-                "Voor opsporing",
-                "Voor statistieken",
-                "Voor strafvervolging"
-            ],
-            correct: 2
-        }
-    ];
-
-    function renderQuiz() {
-        const container = document.getElementById('quiz-container');
-        if(!container) return;
-        container.innerHTML = '';
-        quizData.forEach((q, index) => {
-            const div = document.createElement('div');
-            div.className = 'quiz-item';
-            div.innerHTML = `<p><strong>Vraag ${index+1}:</strong> ${q.vraag}</p>`;
-            q.opties.forEach((opt, i) => {
-                const label = document.createElement('label');
-                label.style.display = 'block';
-                label.style.margin = '5px 0';
-                const radio = document.createElement('input');
-                radio.type = 'radio';
-                radio.name = `quiz${index}`;
-                radio.value = i;
-                label.appendChild(radio);
-                label.appendChild(document.createTextNode(' ' + opt));
-                div.appendChild(label);
-            });
-            container.appendChild(div);
-        });
-
-        const checkBtn = document.createElement('button');
-        checkBtn.className = 'btn';
-        checkBtn.textContent = 'Controleer antwoorden';
-        checkBtn.onclick = checkQuiz;
-        container.appendChild(checkBtn);
-
-        const resultDiv = document.createElement('div');
-        resultDiv.id = 'quiz-result';
-        resultDiv.style.marginTop = '15px';
-        resultDiv.style.fontWeight = 'bold';
-        container.appendChild(resultDiv);
-    }
-
-    function checkQuiz() {
-        let score = 0;
-        quizData.forEach((q, index) => {
-            const radios = document.getElementsByName(`quiz${index}`);
-            let selected = null;
-            for (let r of radios) {
-                if (r.checked) {
-                    selected = parseInt(r.value);
-                    break;
-                }
-            }
-            if (selected === q.correct) score++;
-        });
-        const resultDiv = document.getElementById('quiz-result');
-        if(resultDiv) {
-            if(score === quizData.length) {
-                resultDiv.textContent = '🎉 Gefeliciteerd! Alle antwoorden zijn correct!';
-                resultDiv.style.color = 'green';
-            } else {
-                resultDiv.textContent = `Je hebt ${score} van de ${quizData.length} vragen goed. Probeer opnieuw.`;
-                resultDiv.style.color = 'red';
-            }
-        }
-    }
-
-    // ===== PDF-SYNCHRONISATIE =====
-    function initPdfSync() {
-        if (pdfSelect) {
-            pdfSelect.addEventListener('change', (e) => {
-                const url = e.target.value;
-                if (url) {
-                    openPdfText(url, true);
-                } else {
-                    if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.innerHTML = '';
-                        pdfViewer.classList.add('hidden');
-                        pdfPlaceholder.classList.remove('hidden');
-                    }
-                    if (uClass) {
-                        const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                        set(currentPdfRef, null);
-                    }
-                }
-            });
-        }
-
-        if (uClass) {
-            if (pdfListener) pdfListener();
-            const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-            pdfListener = onValue(currentPdfRef, (snap) => {
+            const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
+            onValue(currentAudioRef, (snap) => {
                 const url = snap.val();
                 if (url && typeof url === 'string') {
-                    openPdfText(url, false);
-                    if (pdfSelect) {
-                        const options = pdfSelect.options;
-                        let found = false;
-                        for (let i = 0; i < options.length; i++) {
-                            if (options[i].value === url) {
-                                pdfSelect.selectedIndex = i;
-                                found = true;
-                                break;
-                            }
-                        }
-                        if (!found) {
-                            pdfSelect.selectedIndex = 0;
-                        }
-                    }
+                    audioPlayer.src = url;
+                    statusDiv.textContent = 'Audio geladen van klas-server.';
+                    statusDiv.classList.remove('hidden');
+                    statusDiv.style.color = '#155724';
                 } else {
-                    if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.innerHTML = '';
-                        pdfViewer.classList.add('hidden');
-                        pdfPlaceholder.classList.remove('hidden');
-                    }
-                    if (pdfSelect) {
-                        pdfSelect.selectedIndex = 0;
-                    }
+                    audioPlayer.src = '';
+                    statusDiv.textContent = 'Nog geen geüploade audio gevonden voor deze klas.';
+                    statusDiv.classList.remove('hidden');
+                    statusDiv.style.color = '#6c757d';
                 }
             });
-        }
-    }
 
-    // ===== SESSIE & SCHERMNAVIGATIE =====
-    window.startSession = function() {
-        const nameInput = document.getElementById('user-name');
-        const classSelect = document.getElementById('user-class');
-        uName = nameInput.value.trim();
-        uClass = classSelect.value;
-        if(!uName || !uClass) return alert("Vul a.u.b. je naam en klas in.");
-        
-        document.getElementById('current-class-label').textContent = uClass;
-        const label2 = document.getElementById('current-class-label-2');
-        if (label2) label2.textContent = uClass;
-        showScreen(2);
-    };
-
-    window.showScreen = function(n) {
-        if (n !== 3 && dragListener) {
-            dragListener();
-            dragListener = null;
-            renderedCaseIndex = -1;
-        }
-
-        document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
-        const el = document.getElementById('screen-' + n);
-        if (el) el.classList.remove('hidden');
-
-        if (n === 3) {
-            const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
-            if (dragListener) dragListener();
-
-            dragListener = onValue(sleepRef, (snap) => {
-                const data = snap.val();
-
-                let caseIndex = data?.caseIndex;
-                let order = data?.order;
-                const validCaseIndex = Number.isInteger(caseIndex) &&
-                    caseIndex >= 0 && caseIndex < allCases.length;
-                const expectedLen = validCaseIndex ? allCases[caseIndex].blocks.length : 0;
-                const validOrder = Array.isArray(order) && order.length === expectedLen &&
-                    order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
-
-                if (!validCaseIndex || !validOrder) {
-                    const newIdx = pickRandomCaseIndex();
-                    const newOrder = makeShuffledIndexes(newIdx);
-                    set(sleepRef, { caseIndex: newIdx, order: newOrder });
+            uploadBtn.addEventListener('click', async () => {
+                const file = audioInput.files[0];
+                if (!file) {
+                    window.customModal({ title: "Geen bestand", message: "Selecteer eerst een audiobestand om te uploaden." });
                     return;
                 }
+                if (!uClass) return;
 
-                currentCaseIndex = caseIndex;
+                uploadBtn.disabled = true;
+                uploadBtn.textContent = 'Uploaden...';
+                statusDiv.textContent = 'Bezig met uploaden naar Firebase Storage...';
+                statusDiv.classList.remove('hidden');
+                statusDiv.style.color = '#0c5460';
 
-                if (isDraggingLocally) {
-                    return;
+                try {
+                    const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
+                    const fileRef = storageRef(storage, path);
+                    await uploadBytes(fileRef, file);
+                    const url = await getDownloadURL(fileRef);
+                    await set(currentAudioRef, url);
+                    statusDiv.textContent = 'Audio succesvol geüpload voor de klas!';
+                    statusDiv.style.color = '#155724';
+                    audioInput.value = '';
+                } catch (err) {
+                    console.error('Audio upload mislukt:', err);
+                    statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
+                    statusDiv.style.color = '#721c24';
+                } finally {
+                    uploadBtn.disabled = false;
+                    uploadBtn.textContent = 'Upload audio';
                 }
-
-                renderDragItems(order, caseIndex);
             });
         }
-
-        if (n === 4) {
-            renderQuiz();
-        }
-        if (n === 5) {
-            initFileUpload(); 
-            initPdfSync();
-            if (pdfViewer && !pdfViewer.querySelector('canvas')) {
-                pdfViewer.innerHTML = '';
-            }
-        }
-    };
-
-    window.resetClassData = function() {
-        const c = document.getElementById('user-class').value;
-        if(!c) return alert("Selecteer eerst een klas om te resetten.");
-        if(confirm(`Weet je zeker dat je ALLE data voor klas ${c} wilt wissen?`)) {
-            remove(ref(db, `mutatieles/${c}`));
-            alert(`Data voor klas ${c} is gewist.`);
-        }
-    };
-
-    // ============================================================
-    // === MUTATIE VERSTUREN (scherm 6 → feed) ===================
-    // ============================================================
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;')
-            .replace(/'/g, '&#39;');
-    }
-
-    function initSubmitMutation() {
-        const btn = document.getElementById('submit-mutation-btn');
-        if (!btn || btn.dataset.bound) return;
-        btn.dataset.bound = '1';
-
-        btn.addEventListener('click', async () => {
-            if (!uClass || !uName) {
-                alert('Log eerst in met naam en klas.');
-                return;
-            }
-            const finalText = (document.getElementById('final-mutation')?.value || '').trim();
-            const m1 = (document.getElementById('mutation1')?.value || '').trim();
-            const m2 = (document.getElementById('mutation2')?.value || '').trim();
-            const m3 = (document.getElementById('mutation3')?.value || '').trim();
-
-            if (!finalText && !m1 && !m2 && !m3) {
-                alert('Vul eerst je mutatie in voordat je verstuurt.');
-                return;
-            }
-
-            btn.disabled = true;
-            const originalLabel = btn.textContent;
-            btn.textContent = 'Versturen...';
-            try {
-                // update() i.p.v. set() zodat bestaande reactions onder deze leerling behouden blijven
-                await update(ref(db, `mutatieles/${uClass}/live/${uName}`), {
-                    name: uName,
-                    text: finalText,
-                    mutation1: m1,
-                    mutation2: m2,
-                    mutation3: m3,
-                    timestamp: Date.now()
-                });
-                btn.textContent = 'Verstuurd ✓';
-                setTimeout(() => { btn.textContent = originalLabel; }, 1500);
-            } catch (err) {
-                console.error('Versturen mislukt:', err);
-                alert('Versturen mislukt: ' + err.message);
-                btn.textContent = originalLabel;
-            } finally {
-                btn.disabled = false;
-            }
-        });
-    }
-
-    // Livefeed van de klas bekijken (inclusief reacties per leerling)
-    function listenClassFeed() {
-        if (!uClass) return;
-        onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
-            const feed = document.getElementById('class-feed');
-            if (!feed) return;
-            feed.innerHTML = '';
-            const data = snap.val();
-            if (!data) return;
-
-            Object.entries(data).forEach(([student, val]) => {
-                if (!val || typeof val !== 'object') return;
-                const card = document.createElement('div');
-                card.className = 'feed-card';
-                card.dataset.student = student;
-
-                let html = `<span class="feed-name">${escapeHtml(student)}</span>`;
-
-                if (val.text)      html += `<p><strong>Mutatie:</strong> ${escapeHtml(val.text)}</p>`;
-                if (val.mutation1) html += `<p><strong>Mutatie 1:</strong> ${escapeHtml(val.mutation1)}</p>`;
-                if (val.mutation2) html += `<p><strong>Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</p>`;
-                if (val.mutation3) html += `<p><strong>Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</p>`;
-
-                // Reacties van anderen op deze leerling
-                html += `<div class="feed-reactions">`;
-                if (val.reactions) {
-                    Object.values(val.reactions)
-                        .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-                        .forEach(r => {
-                            html += `<div class="feed-reaction"><strong>${escapeHtml(r.author)}:</strong> ${escapeHtml(r.text)}</div>`;
-                        });
-                }
-                html += `<div class="feed-reply">`;
-                html += `<input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input />`;
-                html += `<button type="button" data-reply-btn>Reageer</button>`;
-                html += `</div></div>`;
-
-                card.innerHTML = html;
-                feed.appendChild(card);
-            });
-        });
-    }
-
-    // Eenmalig: event delegation voor alle reageerknoppen/Enter in de feed
-    function initClassFeedInteractions() {
-        const feed = document.getElementById('class-feed');
-        if (!feed || feed.dataset.bound) return;
-        feed.dataset.bound = '1';
-
-        feed.addEventListener('click', async (e) => {
-            const btn = e.target.closest('[data-reply-btn]');
-            if (!btn) return;
-            const card = btn.closest('.feed-card');
-            if (!card) return;
-            const student = card.dataset.student;
-            const input = card.querySelector('[data-reply-input]');
-            const text = input?.value.trim();
-            if (!text) return;
-            if (!uName || !uClass) { alert('Log eerst in.'); return; }
-
-            btn.disabled = true;
-            try {
-                const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
-                await set(newRef, {
-                    author: uName,
-                    text: text,
-                    timestamp: Date.now()
-                });
-                input.value = '';
-            } catch (err) {
-                console.error('Reactie mislukt:', err);
-                alert('Reactie mislukt: ' + err.message);
-            } finally {
-                btn.disabled = false;
-            }
-        });
-
-        feed.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && e.target.matches('[data-reply-input]')) {
-                e.preventDefault();
-                const card = e.target.closest('.feed-card');
-                const btn = card?.querySelector('[data-reply-btn]');
-                if (btn) btn.click();
-            }
-        });
-    }
-
-    const originalStartSession = window.startSession;
-    window.startSession = function() {
-        originalStartSession();
-        listenClassFeed();
-        initClassFeedInteractions();
-        initSubmitMutation();
-    };
-
-    // ============================================================
-    // === AUDIO UPLOAD & EXTRA MUTATIES ==========================
-    // ============================================================
-    let audioInitDone = false;
-
-    function initAudioFeatures() {
-        if (audioInitDone) return;
-        if (!uClass) {
-            setTimeout(initAudioFeatures, 500);
-            return;
-        }
-        audioInitDone = true;
-
-        const audioInput = document.getElementById('audio-file-input');
-        const uploadBtn = document.getElementById('upload-audio-btn');
-        const statusDiv = document.getElementById('audio-upload-status');
-        const audioPlayer = document.getElementById('uploaded-audio-player');
-
-        if (!audioInput || !uploadBtn || !statusDiv || !audioPlayer) {
-            console.warn('Audio elementen niet gevonden');
-            return;
-        }
-
-        const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
-        onValue(currentAudioRef, (snap) => {
-            const url = snap.val();
-            if (url && typeof url === 'string') {
-                audioPlayer.src = url;
-                audioPlayer.load();
-                statusDiv.textContent = 'Audio geladen van server.';
-                statusDiv.style.display = 'block';
-                statusDiv.style.color = '#155724';
-            } else {
-                audioPlayer.src = '';
-                statusDiv.textContent = 'Geen geüploade audio gevonden.';
-                statusDiv.style.display = 'block';
-                statusDiv.style.color = '#6c757d';
-            }
-        });
-
-        uploadBtn.addEventListener('click', async () => {
-            const file = audioInput.files[0];
-            if (!file) {
-                alert('Selecteer eerst een audiobestand.');
-                return;
-            }
-            if (!uClass) {
-                alert('Klas niet geselecteerd.');
-                return;
-            }
-
-            uploadBtn.disabled = true;
-            uploadBtn.textContent = 'Uploaden...';
-            statusDiv.textContent = 'Bezig met uploaden...';
-            statusDiv.style.display = 'block';
-            statusDiv.style.color = '#0c5460';
-
-            try {
-                const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
-                const fileRef = storageRef(storage, path);
-                await uploadBytes(fileRef, file);
-                const url = await getDownloadURL(fileRef);
-                await set(currentAudioRef, url);
-                statusDiv.textContent = 'Upload succesvol!';
-                statusDiv.style.color = '#155724';
-                audioInput.value = '';
-            } catch (err) {
-                console.error('Audio upload mislukt:', err);
-                statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
-                statusDiv.style.color = '#721c24';
-            } finally {
-                uploadBtn.disabled = false;
-                uploadBtn.textContent = 'Upload audio';
-            }
-        });
-    }
-
-    setTimeout(initAudioFeatures, 100);
-</script>
+    </script>
 </body>
 </html>
