@@ -220,6 +220,7 @@
         }
         .kb-list li strong { color: var(--police-blue); }
 
+        /* ─── PDF-viewer (canvas-weergave) ─── */
         #pdf-text-viewer {
             width: 100%;
             height: 600px;
@@ -227,10 +228,6 @@
             background: #fafafa;
             padding: 20px;
             overflow: auto;
-            font-family: 'Courier New', monospace;
-            font-size: 14px;
-            white-space: pre-wrap;
-            line-height: 1.5;
             color: #1a1a1a;
         }
         .pdf-placeholder { 
@@ -386,7 +383,7 @@
                 <option value="">Selecteer klas...</option>
                 <option>Alpha</option><option>Bravo</option><option>Charlie</option>
                 <option>Delta</option><option>Echo</option><option>Foxtrot</option>
-                <option>Golf</option><option>Hotel</option><option>Juliet</option>
+                <option>Golf</option><option>Hotel</option><option>Juliett</option>
                 <option>Kilo</option><option>Lima</option><option>Mike</option>
             </select>
             <button class="btn" onclick="startSession()">Start Les</button>
@@ -707,28 +704,53 @@
     // Huidige casus-index (globaal, zodat drag-logica weet met welke casus we werken)
     let currentCaseIndex = -1;
 
-    // ===== HULP: PDF TEKST WEERGEVEN =====
+    // ===== HULP: PDF WEERGEVEN (canvas rendering, geen platte tekst) =====
     async function openPdfText(url, sync = true) {
         if (!pdfViewer || !pdfPlaceholder) return;
         if (!url) {
-            pdfViewer.textContent = '';
+            pdfViewer.innerHTML = '';
             pdfViewer.classList.add('hidden');
             pdfPlaceholder.classList.remove('hidden');
             return;
         }
         try {
-            pdfViewer.textContent = 'Bezig met laden van de PDF-tekst...';
+            pdfViewer.textContent = 'Bezig met laden van de PDF...';
             pdfViewer.classList.remove('hidden');
             pdfPlaceholder.classList.add('hidden');
 
             const pdf = await pdfjsLib.getDocument(url).promise;
-            let fullText = '';
+
+            // Leegmaken en canvassen toevoegen
+            pdfViewer.innerHTML = '';
+
+            // Bepaal schaal op basis van containerbreedte
+            const containerWidth = (pdfViewer.clientWidth || 800) - 40;
+
             for (let i = 1; i <= pdf.numPages; i++) {
                 const page = await pdf.getPage(i);
-                const content = await page.getTextContent();
-                fullText += content.items.map(item => item.str).join(' ') + '\n\n';
+                const unscaledViewport = page.getViewport({ scale: 1 });
+                const scale = Math.max(1, Math.min(2.5, containerWidth / unscaledViewport.width));
+                const viewport = page.getViewport({ scale: scale });
+
+                const canvas = document.createElement('canvas');
+                const context = canvas.getContext('2d');
+                canvas.width = viewport.width;
+                canvas.height = viewport.height;
+                canvas.style.display = 'block';
+                canvas.style.margin = '0 auto 15px auto';
+                canvas.style.maxWidth = '100%';
+                canvas.style.height = 'auto';
+                canvas.style.border = '1px solid #ddd';
+                canvas.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                canvas.style.background = '#fff';
+
+                pdfViewer.appendChild(canvas);
+
+                await page.render({
+                    canvasContext: context,
+                    viewport: viewport
+                }).promise;
             }
-            pdfViewer.textContent = fullText;
 
             if (sync && uClass) {
                 const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
@@ -944,9 +966,8 @@
     // =====================================================================
     let isDraggingLocally = false;
     let dragState = null;
-    let renderedCaseIndex = -1;   // welke casus staat nu in de DOM
+    let renderedCaseIndex = -1;
 
-    // Fisher-Yates shuffle
     function shuffleArray(arr) {
         const a = arr.slice();
         for (let i = a.length - 1; i > 0; i--) {
@@ -956,13 +977,11 @@
         return a;
     }
 
-    // Willekeurige index-array voor een gegeven casus
     function makeShuffledIndexes(caseIndex) {
         const n = allCases[caseIndex].blocks.length;
         return shuffleArray(Array.from({ length: n }, (_, i) => i));
     }
 
-    // Willekeurige casus-index (anders dan de huidige indien mogelijk)
     function pickRandomCaseIndex(exclude = -1) {
         if (allCases.length <= 1) return 0;
         let idx = Math.floor(Math.random() * allCases.length);
@@ -974,15 +993,12 @@
         return idx;
     }
 
-    // Rendert de sleepblokken op basis van een array van indexes voor een casus
     function renderDragItems(indexes, caseIndex) {
         const list = document.getElementById('drag-list');
         if (!list) return;
 
-        // Tijdens eigen drag niet opnieuw renderen (voorkomt flikkering)
         if (isDraggingLocally) return;
 
-        // Als het exact dezelfde casus EN dezelfde volgorde is: niets doen
         if (renderedCaseIndex === caseIndex) {
             const current = getCurrentDragOrder();
             if (Array.isArray(current) && Array.isArray(indexes) &&
@@ -1007,22 +1023,18 @@
 
         renderedCaseIndex = caseIndex;
 
-        // Casustitel tonen
         const titleEl = document.getElementById('case-title');
         if (titleEl) titleEl.textContent = 'Casus: ' + allCases[caseIndex].title;
 
-        // "Correct!" knop verbergen bij (her)laden van een casus
         const nextBtn = document.getElementById('next-to-4');
         if (nextBtn) nextBtn.classList.add('hidden');
     }
 
-    // Leest de huidige volgorde uit als array van indexes
     function getCurrentDragOrder() {
         return Array.from(document.querySelectorAll('#drag-list .draggable'))
             .map(el => parseInt(el.dataset.idx, 10));
     }
 
-    // Start slepen
     function onPointerDown(e) {
         if (e.pointerType === 'mouse' && e.button !== 0) return;
 
@@ -1069,7 +1081,6 @@
         e.preventDefault();
     }
 
-    // Tijdens slepen
     function onPointerMove(e) {
         if (!dragState) return;
         e.preventDefault();
@@ -1098,7 +1109,6 @@
         }
     }
 
-    // Einde slepen
     function onPointerUp() {
         if (!dragState) return;
 
@@ -1125,15 +1135,10 @@
         isDraggingLocally = false;
 
         if (caseChangedDuringDrag) {
-            // Casus is tijdens de drag veranderd → niet opslaan.
-            // De DOM heeft nog oude blokken; forceer opnieuw renderen met
-            // de meest recente data uit Firebase (listener heeft de nieuwste
-            // case + order al opgeslagen in renderedCaseIndex/currentCaseIndex).
             forceRerenderCurrentCase();
             return;
         }
 
-        // Nieuwe volgorde naar Firebase sturen (alleen als de casus nog klopt)
         const newOrder = getCurrentDragOrder();
         const expectedLength = allCases[currentCaseIndex]?.blocks.length;
         if (uClass && Array.isArray(newOrder) &&
@@ -1142,7 +1147,6 @@
         }
     }
 
-    // Forceert opnieuw renderen van de huidige casus met de laatste Firebase-data
     function forceRerenderCurrentCase() {
         if (currentCaseIndex < 0) return;
         const list = document.getElementById('drag-list');
@@ -1159,7 +1163,6 @@
         });
     }
 
-    // Willekeurige NIEUWE casus + geschudde volgorde (gedeeld met klas)
     window.shuffleOrder = function() {
         if (!uClass) return;
         const newIdx = pickRandomCaseIndex(currentCaseIndex);
@@ -1170,7 +1173,6 @@
         });
     };
 
-    // Controleer volgorde
     window.checkOrder = function() {
         if (currentCaseIndex < 0) return;
         const current = getCurrentDragOrder();
@@ -1294,7 +1296,7 @@
                     openPdfText(url, true);
                 } else {
                     if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.textContent = '';
+                        pdfViewer.innerHTML = '';
                         pdfViewer.classList.add('hidden');
                         pdfPlaceholder.classList.remove('hidden');
                     }
@@ -1329,7 +1331,7 @@
                     }
                 } else {
                     if (pdfViewer && pdfPlaceholder) {
-                        pdfViewer.textContent = '';
+                        pdfViewer.innerHTML = '';
                         pdfViewer.classList.add('hidden');
                         pdfPlaceholder.classList.remove('hidden');
                     }
@@ -1373,7 +1375,6 @@
             dragListener = onValue(sleepRef, (snap) => {
                 const data = snap.val();
 
-                // Validatie
                 let caseIndex = data?.caseIndex;
                 let order = data?.order;
                 const validCaseIndex = Number.isInteger(caseIndex) &&
@@ -1383,20 +1384,15 @@
                     order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
 
                 if (!validCaseIndex || !validOrder) {
-                    // Eerste keer (of oude/ongeldige data) → random casus + geschudde volgorde
                     const newIdx = pickRandomCaseIndex();
                     const newOrder = makeShuffledIndexes(newIdx);
                     set(sleepRef, { caseIndex: newIdx, order: newOrder });
-                    return; // onValue vuurt opnieuw met de nieuwe data
+                    return;
                 }
 
                 currentCaseIndex = caseIndex;
 
-                // Tijdens eigen drag: alleen de casus-index bijwerken,
-                // niet de DOM overschrijven (voorkomt flikkering).
                 if (isDraggingLocally) {
-                    // Als de casus is veranderd tijdens onze drag, wordt
-                    // dit na pointerup afgehandeld in onPointerUp.
                     return;
                 }
 
@@ -1410,7 +1406,9 @@
         if (n === 5) {
             initFileUpload(); 
             initPdfSync();
-            if (pdfViewer && !pdfViewer.textContent) pdfViewer.textContent = '';
+            if (pdfViewer && !pdfViewer.querySelector('canvas')) {
+                pdfViewer.innerHTML = '';
+            }
         }
     };
 
