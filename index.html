@@ -144,7 +144,6 @@
             user-select: none;
             -webkit-user-select: none;
             -webkit-touch-callout: none;
-            /* Belangrijk: laat touch-drag werken zonder scroll */
             touch-action: none;
         }
         .draggable:active { cursor: grabbing; }
@@ -160,6 +159,16 @@
             background: #eef4ff;
             box-sizing: border-box;
             transition: height 0.05s ease;
+        }
+        #case-title {
+            font-size: 1.15em;
+            color: var(--police-blue);
+            font-weight: bold;
+            background: #fffcf0;
+            border-left: 5px solid var(--police-gold);
+            padding: 10px 18px;
+            margin: 15px 0;
+            border-radius: 4px;
         }
         .quiz-item {
             background: #fdfdfd;
@@ -211,7 +220,6 @@
         }
         .kb-list li strong { color: var(--police-blue); }
 
-        /* ─── Tekstviewer (vervangt iframe) ─── */
         #pdf-text-viewer {
             width: 100%;
             height: 600px;
@@ -248,7 +256,6 @@
         #file-input {
             display: none;
         }
-        /* ─── Verbeterde bestandenlijst ─── */
         #file-list-items {
             list-style: none;
             padding: 0;
@@ -305,7 +312,6 @@
             background: #fee2e2;
             opacity: 1;
         }
-        /* ─── einde verbeteringen ─── */
 
         #upload-status {
             margin-top: 15px;
@@ -349,7 +355,6 @@
         }
         .feedback-msg strong { color: var(--police-blue); }
 
-        /* ─── Digibord via iframe ─── */
         .board-iframe-wrapper {
             position: relative;
             width: 100%;
@@ -473,13 +478,14 @@
         <button class="btn" onclick="showScreen(3)">Naar Sleepopdracht</button>
     </div>
 
-    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD + TOUCH) -->
+    <!-- SCREEN 3: SLEEPOPDRACHT (GESYNCHRONISEERD + TOUCH + MEERDERE CASUSSEN) -->
     <div id="screen-3" class="hidden">
         <h1>Sleepopdracht: Orden de Mutatie</h1>
         <p>Sleep de tekstblokjes in de juiste volgorde (ASTMA). Werkt met muis én touchscreen — iedereen in de klas ziet de wijzigingen live.</p>
+        <div id="case-title">Casus wordt geladen…</div>
         <div id="drag-list" class="drag-container"></div>
         <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;">
-            <button class="btn btn-shuffle" onclick="shuffleOrder()">Schud opnieuw</button>
+            <button class="btn btn-shuffle" onclick="shuffleOrder()">Schud opnieuw (nieuwe casus)</button>
             <button class="btn" onclick="checkOrder()" style="flex:1;">Controleer Volgorde</button>
         </div>
         <button class="btn hidden" id="next-to-4" onclick="showScreen(4)">Correct! Naar Kennischeck</button>
@@ -496,7 +502,6 @@
     <div id="screen-5" class="hidden">
         <h1>Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
 
-        <!-- PDF Tekstviewer (geen iframe) -->
         <div id="pdf-viewer-container">
             <div id="pdf-placeholder" class="pdf-placeholder">
                 <h3>📄 Geen PDF geselecteerd</h3>
@@ -505,7 +510,6 @@
             <div id="pdf-text-viewer" class="hidden"></div>
         </div>
 
-        <!-- Keuzemenu voor vaste PDF's -->
         <div style="margin: 15px 0;">
             <label for="pdf-select">Kies een vaste PDF:</label>
             <select id="pdf-select" style="width: auto; display: inline-block;">
@@ -516,7 +520,6 @@
             </select>
         </div>
 
-        <!-- Upload zone -->
         <div id="file-upload-area">
             <div id="drop-zone">
                 <p style="font-size: 1.2em; margin-bottom: 10px;">📁 Sleep hier PDF-bestanden heen</p>
@@ -524,17 +527,14 @@
                 <input type="file" id="file-input" multiple accept=".pdf" />
             </div>
             
-            <!-- Knop bestanden bladeren en uploaden -->
             <div style="display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap;">
                 <button id="browse-btn" class="btn btn-browse">📂 Blader naar bestand</button>
                 <button id="upload-btn" class="btn btn-upload" disabled>Upload Geselecteerde</button>
             </div>
 
-            <!-- Statusmelding -->
             <div id="upload-status"></div>
         </div>
 
-        <!-- Bestandenlijst (verbeterd) -->
         <div id="file-list" style="margin-top: 25px;">
             <h3>Geüploade bestanden</h3>
             <ul id="file-list-items">
@@ -542,7 +542,6 @@
             </ul>
         </div>
 
-        <!-- Feedback -->
         <h3 style="margin-top: 30px;">Feedback over deze mutatie</h3>
         <div class="feedback-area">
             <textarea id="feedback-input" placeholder="Schrijf hier je opmerkingen..."></textarea>
@@ -550,7 +549,6 @@
         </div>
         <div id="feedback-feed" class="feedback-feed"></div>
 
-        <!-- Digibord -->
         <h3>Digibord (multi‑user)</h3>
         <div class="board-iframe-wrapper">
             <iframe
@@ -569,21 +567,19 @@
         <button class="btn" onclick="showScreen(6)" style="margin-top: 25px;">Naar Eindopdracht</button>
     </div>
 
-    <!-- =============== SCREEN 6: EINDOPDRACHT (AANGEPAST) =============== -->
+    <!-- =============== SCREEN 6: EINDOPDRACHT =============== -->
     <div id="screen-6" class="hidden">
         <h1>Eindopdracht: Incident Laan 1914</h1>
         <div class="info-block">
             <strong>Locatie:</strong> Laan 1914, Amersfoort | <strong>Betrokkene:</strong> Mw. S. de Jong (±25jr)
         </div>
 
-        <!-- BESTAANDE AUDIO (vast bestand) -->
         <div class="audio-player-container">
             <audio controls>
                 <source src="Laan 1914 2 (1).mp3" type="audio/mpeg" />
             </audio>
         </div>
 
-        <!-- === NIEUW: EIGEN AUDIO UPLOAD === -->
         <div style="margin: 20px 0; border-top: 2px solid #ddd; padding-top: 20px;">
             <h3>📤 Upload eigen audiobestand</h3>
             <div style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center;">
@@ -600,7 +596,6 @@
             <div>
                 <h3>Jouw Mutatie (OVT) - wordt gedeeld met klas</h3>
                 <textarea id="final-mutation" placeholder="Begin hier met typen..." style="height:150px;"></textarea>
-                <!-- === NIEUW: drie extra tekstvelden voor mutaties === -->
                 <h3>Extra mutatie-notities (lokaal)</h3>
                 <label>Mutatie 1:</label>
                 <textarea id="mutation1" placeholder="Notitie mutatie 1..." style="height:80px; margin-bottom:10px;"></textarea>
@@ -616,7 +611,6 @@
         </div>
         <button class="btn btn-secondary" onclick="showScreen(5)">Terug naar PDF &amp; Digibord</button>
     </div>
-    <!-- =============== EINDE SCREEN 6 =============== -->
 </div>
 
 <script type="module">
@@ -654,14 +648,64 @@
     const fileListItems = document.getElementById('file-list-items');
     const pdfSelect = document.getElementById('pdf-select');
 
-    // ===== SLEEPOPDRACHT – JUISTE TEKSTEN (ASTMA) =====
-    const dragData = [
-        '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-        '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
-        '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg',
-        '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
-        '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
+    // =====================================================================
+    // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) ==========
+    // =====================================================================
+    const allCases = [
+        {
+            title: 'Casus 1: Verwarde vrouw op de Laan 1914',
+            blocks: [
+                '<strong>*</strong> Op woensdag 12 augustus 2026,rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35, 3832 RZ, te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+                '<strong>*</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan aan de Loes van Overeemlaan is een geasfalteerde weg die een ovale vorm rondloopt. In het midden van de ovaal staan twee wit blauwe gebouwtjes van één verdieping hoog. Vanaf de oprijlijn naar deze ovaallopende weg  trof ik voor het gebouwtje dat het verst van mij verwijderd is mw. De Jong aan. Zij maakte een verwarde indruk. Zij liep heen en terug, zonder een duidelijk doel.',
+                '<strong>*</strong> Ik sprak mw. aan. Ik vroeg haar naar haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik vroeg haar of zij de weg zocht. Ik hoorde dat zij zei dat zij zocht naar een sportzaak waarvan zij de naam niet kende. Mw. De Jong verklaarde dat haar vriend als instructeur bij de sportzaak werkte. Tijdens gesprek bleek mw. gedesoriënteerd over locatie en bestemming. Zij was onrustig. Liep regelmatig van mij weg en kwam dan terug. Zij maakte moeilijk oogcontact. Zij keek van mij weg als ik haar wat vroeg.',
+                '<strong>*</strong> Mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na aarzeling mee in.',
+                '<strong>*</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
+            ]
+        },
+        {
+            title: 'Casus 2: Winkeldiefstal supermarkt',
+            blocks: [
+                '<strong>*</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van een winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort. Melding afkomstig van een medewerker van het OC.',
+                '<strong>*</strong> Rond 15.35 uur kwam ik ter plaatse. Betreft een supermarkt in een winkelstraat. Voor de ingang stond een mannelijke medewerker van de winkel. Het was bewolkt weer, lichte regen. Aanwezig: 1 verdachte, man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen. Geen voertuig aangetroffen.',
+                '<strong>*</strong> Ik zag dat de verdachte door een medewerker werd tegengehouden nabij de kassa. Ik hoorde dat de medewerker verklaarde dat hij de verdachte meerdere malen goederen in zijn jaszak zag stoppen zonder te betalen. Ik zag dat de verdachte zich hierop rustig gedroeg, maar geen uitleg gaf. Ik rook geen alcohol. Ik voelde geen wapens bij de fouillering. Ik zag op camerabeelden dat de verdachte drie blikjes energie-drank en een pak koffie in zijn jas stopte.',
+                '<strong>*</strong> Verdachte aangehouden ter zake diefstal. Verdachte overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier. Goederen in beslag genomen en geretourneerd aan winkelier. Proces-verbaal opgemaakt.',
+                '<strong>*</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
+            ]
+        },
+        {
+            title: 'Casus 3: Verkeersongeval met letsel',
+            blocks: [
+                '<strong>*</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein te Amersfoort, bezig met een verkeerscontrole. Ik kreeg een spoedmelding van het OC betreffende een verkeersongeval met letsel op de N226, richting Woudenberg.',
+                '<strong>*</strong> Rond 17.55 uur kwam ik ter plaatse. Betreft een voorrangsweg met fietspad. Weersomstandigheden: droog, zicht goed, druk verkeer. Ik zag een personenauto (Merk: Volkswagen, type: Golf, kleur: zwart, kenteken: 1-ABC-23) en een omgevallen fiets. Ik zag één slachtoffer, vrouw, ±55jr, liggend op het fietspad. Omstanders stonden rondom het slachtoffer.',
+                '<strong>*</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde van een getuige dat de automobilist rechtsaf sloeg en de fietser daarbij over het hoofd zag. Ik zag dat de bestuurder, man, ±40jr, zichtbaar geschrokken was. Ik rook geen alcohol. Ik voelde een zwakke pols bij het slachtoffer. Ik zag een hoofdwond en een vervormde rechterarm bij het slachtoffer.',
+                '<strong>*</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet voor hulpverlening. EHBO toegepast tot aankomst ambulance. Bestuurder gehoord als getuige. Verkeer omgeleid via parallelweg. Ademanalyse bij bestuurder afgenomen: 0,0 ugl.',
+                '<strong>*</strong> Slachtoffer overgedragen aan ambulancepersoneel en overgebracht naar ziekenhuis. Voertuig geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie gedeeld met verkeerspolitie.'
+            ]
+        },
+        {
+            title: 'Casus 4: Overlast jeugd / vernieling bushokje',
+            blocks: [
+                '<strong>*</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, op de Birkstraat te Amersfoort bezig met mijn surveillance. Ik kreeg een melding van het OC betreffende overlast van een groep jongeren bij een bushokje aan de Groningerstraat.',
+                '<strong>*</strong> Rond 22.40 uur kwam ik ter plaatse. Betreft een bushalte aan een doorgaande weg in een woonwijk. Het was donker, droog, weinig verkeer. Ik zag een groep van ongeveer 6 jongeren, allen mannelijk, leeftijd ±14-17jr, in donkere kleding. Ik zag een vernield bushokje: gebroken glas op de grond, beschadigde abri. Ik zag één persoon met een honkbalknuppel in zijn hand.',
+                '<strong>*</strong> Ik zag dat de jongeren op mij afkeken toen ik naderde. Ik hoorde dat één van hen "wegwezen" riep. Ik zag dat de groep zich opsplitste en in verschillende richtingen wegrende. Ik zag dat de jongen met de honkbalknuppel de knuppel weggooide in de bosjes. Ik zag dat een tweede jongen bleef staan. Ik rook een sterke henneplucht in de omgeving.',
+                '<strong>*</strong> Jongen die bleef staan staande gehouden. Honkbalknuppel in beslag genomen. Identiteit vastgesteld. Ouders telefonisch op de hoogte gesteld. Proces-verbaal opgemaakt t.z.v. vernieling. Melding gemaakt bij gemeente t.b.v. herstel bushokje.',
+                '<strong>*</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent. Aangifte vernieling opgenomen namens de gemeente.'
+            ]
+        },
+        {
+            title: 'Casus 5: Vermissing demente bejaarde',
+            blocks: [
+                '<strong>*</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, agent bij basiseenheid Amersfoort-Zuid, op het politiebureau bezig met de afhandeling van binnengekomen mutaties. Ik kreeg een melding van het OC betreffende een vermissing van een demente man van 82 jaar uit zorgcentrum De Lichtenberg aan de Daam Fockemalaan.',
+                '<strong>*</strong> Rond 20.30 uur kwam ik ter plaatse bij het zorgcentrum. Betreft een groot zorgcomplex met meerdere verdiepingen en een omsloten tuin. Het was donker, droog, temperatuur ±8°C. Ik sprak de dienstdoende verzorgende. Ik zag dat de kamer van de heer Van Dijk leeg was. Ik zag dat zijn jas en schoenen weg waren. Signalement: man, 82jr, 1.75m, grijs haar, bruine bril, grijze jas, donkere broek.',
+                '<strong>*</strong> Ik hoorde van de verzorgende dat de heer Van Dijk rond 19.30 uur voor het laatst was gezien tijdens het avondeten. Ik hoorde dat hij de laatste tijd vaker aangaf naar zijn overleden vrouw te willen. Ik zag op camerabeelden dat hij om 19.45 uur via de hoofdingang naar buiten liep en linksaf richting het park ging. Ik zag dat hij alleen liep en geen tas bij zich had.',
+                '<strong>*</strong> Burgernet-bericht uitgezet. Eenheid met speurhond ingezet richting het park. Collega\'s gestationeerd bij mogelijke routes. Foto van betrokkene gedeeld met eenheden. Buurtonderzoek gestart.',
+                '<strong>*</strong> Betrokkene rond 22.10 uur aangetroffen in het park, zittend op een bankje, onderkoeld maar aanspreekbaar. Overgedragen aan ambulancepersoneel. Familie en zorgcentrum geïnformeerd. Mutatie gedeeld met wijkagent t.b.v. zorgopvolging.'
+            ]
+        }
     ];
+
+    // Huidige casus-index (globaal, zodat drag-logica weet met welke casus we werken)
+    let currentCaseIndex = -1;
 
     // ===== HULP: PDF TEKST WEERGEVEN =====
     async function openPdfText(url, sync = true) {
@@ -900,6 +944,7 @@
     // =====================================================================
     let isDraggingLocally = false;
     let dragState = null;
+    let renderedCaseIndex = -1;   // welke casus staat nu in de DOM
 
     // Fisher-Yates shuffle
     function shuffleArray(arr) {
@@ -911,30 +956,46 @@
         return a;
     }
 
-    // Maakt een willekeurige volgorde van indexes [0..n-1]
-    function makeShuffledIndexes() {
-        return shuffleArray(dragData.map((_, i) => i));
+    // Willekeurige index-array voor een gegeven casus
+    function makeShuffledIndexes(caseIndex) {
+        const n = allCases[caseIndex].blocks.length;
+        return shuffleArray(Array.from({ length: n }, (_, i) => i));
     }
 
-    // Rendert de sleepblokken op basis van een array van indexes
-    function renderDragItems(indexes) {
+    // Willekeurige casus-index (anders dan de huidige indien mogelijk)
+    function pickRandomCaseIndex(exclude = -1) {
+        if (allCases.length <= 1) return 0;
+        let idx = Math.floor(Math.random() * allCases.length);
+        let safety = 0;
+        while (idx === exclude && safety < 50) {
+            idx = Math.floor(Math.random() * allCases.length);
+            safety++;
+        }
+        return idx;
+    }
+
+    // Rendert de sleepblokken op basis van een array van indexes voor een casus
+    function renderDragItems(indexes, caseIndex) {
         const list = document.getElementById('drag-list');
         if (!list) return;
 
         // Tijdens eigen drag niet opnieuw renderen (voorkomt flikkering)
         if (isDraggingLocally) return;
 
-        // Als de volgorde al klopt, niet opnieuw opbouwen
-        const current = getCurrentDragOrder();
-        if (Array.isArray(current) && Array.isArray(indexes) &&
-            current.length === indexes.length &&
-            current.every((v, i) => v === indexes[i])) {
-            return;
+        // Als het exact dezelfde casus EN dezelfde volgorde is: niets doen
+        if (renderedCaseIndex === caseIndex) {
+            const current = getCurrentDragOrder();
+            if (Array.isArray(current) && Array.isArray(indexes) &&
+                current.length === indexes.length &&
+                current.every((v, i) => v === indexes[i])) {
+                return;
+            }
         }
 
+        const blocks = allCases[caseIndex].blocks;
         list.innerHTML = '';
         indexes.forEach((idx) => {
-            const text = dragData[idx];
+            const text = blocks[idx];
             if (typeof text !== 'string') return;
             const div = document.createElement('div');
             div.className = 'draggable';
@@ -943,6 +1004,16 @@
             div.addEventListener('pointerdown', onPointerDown);
             list.appendChild(div);
         });
+
+        renderedCaseIndex = caseIndex;
+
+        // Casustitel tonen
+        const titleEl = document.getElementById('case-title');
+        if (titleEl) titleEl.textContent = 'Casus: ' + allCases[caseIndex].title;
+
+        // "Correct!" knop verbergen bij (her)laden van een casus
+        const nextBtn = document.getElementById('next-to-4');
+        if (nextBtn) nextBtn.classList.add('hidden');
     }
 
     // Leest de huidige volgorde uit als array van indexes
@@ -953,7 +1024,6 @@
 
     // Start slepen
     function onPointerDown(e) {
-        // Alleen linkermuisknop (touch heeft geen button of button=0)
         if (e.pointerType === 'mouse' && e.button !== 0) return;
 
         const el = e.currentTarget;
@@ -966,14 +1036,12 @@
         const offsetX = e.clientX - rect.left;
         const offsetY = e.clientY - rect.top;
 
-        // Placeholder op de plek van het element
         const placeholder = document.createElement('div');
         placeholder.className = 'drag-placeholder';
         placeholder.style.height = rect.height + 'px';
         placeholder.style.width = rect.width + 'px';
         list.insertBefore(placeholder, el);
 
-        // Element "zwevend" maken
         el.style.position = 'fixed';
         el.style.left = rect.left + 'px';
         el.style.top = rect.top + 'px';
@@ -984,7 +1052,15 @@
         el.classList.add('dragging');
         document.body.appendChild(el);
 
-        dragState = { el, placeholder, offsetX, offsetY, list };
+        dragState = {
+            el,
+            placeholder,
+            offsetX,
+            offsetY,
+            list,
+            startedCaseIndex: currentCaseIndex,
+            startedOrder: getCurrentDragOrder()
+        };
 
         document.addEventListener('pointermove', onPointerMove, { passive: false });
         document.addEventListener('pointerup', onPointerUp);
@@ -1004,7 +1080,6 @@
         el.style.top = (e.clientY - offsetY) + 'px';
 
         const pointerY = e.clientY;
-        // Alle mogelijke doel-items (behalve placeholder)
         const items = Array.from(list.children).filter(c => c !== placeholder);
 
         let target = null;
@@ -1027,13 +1102,11 @@
     function onPointerUp() {
         if (!dragState) return;
 
-        const { el, placeholder, list } = dragState;
+        const { el, placeholder, list, startedCaseIndex } = dragState;
 
-        // Element op de placeholder-plek terugzetten
         list.insertBefore(el, placeholder);
         placeholder.remove();
 
-        // Stijlen resetten
         el.style.position = '';
         el.style.left = '';
         el.style.top = '';
@@ -1047,26 +1120,61 @@
         document.removeEventListener('pointerup', onPointerUp);
         document.removeEventListener('pointercancel', onPointerUp);
 
+        const caseChangedDuringDrag = (startedCaseIndex !== currentCaseIndex);
         dragState = null;
         isDraggingLocally = false;
 
-        // Nieuwe volgorde naar Firebase sturen → alle klassenleden zien het
+        if (caseChangedDuringDrag) {
+            // Casus is tijdens de drag veranderd → niet opslaan.
+            // De DOM heeft nog oude blokken; forceer opnieuw renderen met
+            // de meest recente data uit Firebase (listener heeft de nieuwste
+            // case + order al opgeslagen in renderedCaseIndex/currentCaseIndex).
+            forceRerenderCurrentCase();
+            return;
+        }
+
+        // Nieuwe volgorde naar Firebase sturen (alleen als de casus nog klopt)
         const newOrder = getCurrentDragOrder();
-        if (uClass && Array.isArray(newOrder) && newOrder.length === dragData.length) {
-            set(ref(db, `mutatieles/${uClass}/dragOrder`), newOrder);
+        const expectedLength = allCases[currentCaseIndex]?.blocks.length;
+        if (uClass && Array.isArray(newOrder) &&
+            newOrder.length === expectedLength) {
+            set(ref(db, `mutatieles/${uClass}/sleepopdracht/order`), newOrder);
         }
     }
 
-    // Willekeurige volgorde forceren (gedeeld met klas)
+    // Forceert opnieuw renderen van de huidige casus met de laatste Firebase-data
+    function forceRerenderCurrentCase() {
+        if (currentCaseIndex < 0) return;
+        const list = document.getElementById('drag-list');
+        if (list) list.innerHTML = '';
+        renderedCaseIndex = -1;
+
+        const dataRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
+        get(dataRef).then(snap => {
+            const data = snap.val();
+            if (data && Array.isArray(data.order) && typeof data.caseIndex === 'number') {
+                currentCaseIndex = data.caseIndex;
+                renderDragItems(data.order, data.caseIndex);
+            }
+        });
+    }
+
+    // Willekeurige NIEUWE casus + geschudde volgorde (gedeeld met klas)
     window.shuffleOrder = function() {
         if (!uClass) return;
-        set(ref(db, `mutatieles/${uClass}/dragOrder`), makeShuffledIndexes());
+        const newIdx = pickRandomCaseIndex(currentCaseIndex);
+        const newOrder = makeShuffledIndexes(newIdx);
+        set(ref(db, `mutatieles/${uClass}/sleepopdracht`), {
+            caseIndex: newIdx,
+            order: newOrder
+        });
     };
 
     // Controleer volgorde
     window.checkOrder = function() {
+        if (currentCaseIndex < 0) return;
         const current = getCurrentDragOrder();
-        const correct = dragData.map((_, i) => i);
+        const correct = allCases[currentCaseIndex].blocks.map((_, i) => i);
         const isCorrect = JSON.stringify(current) === JSON.stringify(correct);
         if (isCorrect) {
             alert("Uitstekend! De volgorde is correct.");
@@ -1251,6 +1359,7 @@
         if (n !== 3 && dragListener) {
             dragListener();
             dragListener = null;
+            renderedCaseIndex = -1;
         }
 
         document.querySelectorAll('.container > div').forEach(d => d.classList.add('hidden'));
@@ -1258,21 +1367,40 @@
         if (el) el.classList.remove('hidden');
 
         if (n === 3) {
-            const dragOrderRef = ref(db, `mutatieles/${uClass}/dragOrder`);
+            const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
             if (dragListener) dragListener();
 
-            dragListener = onValue(dragOrderRef, (snap) => {
-                let order = snap.val();
-                const isValid = Array.isArray(order) &&
-                    order.length === dragData.length &&
-                    order.every(x => Number.isInteger(x) && x >= 0 && x < dragData.length);
+            dragListener = onValue(sleepRef, (snap) => {
+                const data = snap.val();
 
-                if (!isValid) {
-                    // Eerste keer of oude/ongeldige data → zet geschudde volgorde
-                    set(dragOrderRef, makeShuffledIndexes());
-                    return; // onValue vuurt opnieuw
+                // Validatie
+                let caseIndex = data?.caseIndex;
+                let order = data?.order;
+                const validCaseIndex = Number.isInteger(caseIndex) &&
+                    caseIndex >= 0 && caseIndex < allCases.length;
+                const expectedLen = validCaseIndex ? allCases[caseIndex].blocks.length : 0;
+                const validOrder = Array.isArray(order) && order.length === expectedLen &&
+                    order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
+
+                if (!validCaseIndex || !validOrder) {
+                    // Eerste keer (of oude/ongeldige data) → random casus + geschudde volgorde
+                    const newIdx = pickRandomCaseIndex();
+                    const newOrder = makeShuffledIndexes(newIdx);
+                    set(sleepRef, { caseIndex: newIdx, order: newOrder });
+                    return; // onValue vuurt opnieuw met de nieuwe data
                 }
-                renderDragItems(order);
+
+                currentCaseIndex = caseIndex;
+
+                // Tijdens eigen drag: alleen de casus-index bijwerken,
+                // niet de DOM overschrijven (voorkomt flikkering).
+                if (isDraggingLocally) {
+                    // Als de casus is veranderd tijdens onze drag, wordt
+                    // dit na pointerup afgehandeld in onPointerUp.
+                    return;
+                }
+
+                renderDragItems(order, caseIndex);
             });
         }
 
