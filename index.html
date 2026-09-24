@@ -949,6 +949,39 @@
             }
         });
 
+        // ===== VERSTUUR-KNOP VOOR FEEDBACK =====
+        const sendFeedbackBtn = document.getElementById('send-feedback-btn');
+        const feedbackInput = document.getElementById('feedback-input');
+        if (sendFeedbackBtn && feedbackInput && !sendFeedbackBtn.dataset.bound) {
+            sendFeedbackBtn.dataset.bound = '1';
+            sendFeedbackBtn.addEventListener('click', async () => {
+                const text = feedbackInput.value.trim();
+                if (!text) {
+                    alert('Typ eerst een opmerking voordat je verstuurt.');
+                    return;
+                }
+                if (!uClass || !uName) {
+                    alert('Log eerst in met naam en klas.');
+                    return;
+                }
+                sendFeedbackBtn.disabled = true;
+                try {
+                    const newRef = push(ref(db, `mutatieles/${uClass}/feedback`));
+                    await set(newRef, {
+                        author: uName,
+                        text: text,
+                        timestamp: Date.now()
+                    });
+                    feedbackInput.value = '';
+                } catch (err) {
+                    console.error('Feedback versturen mislukt:', err);
+                    alert('Fout bij versturen: ' + err.message);
+                } finally {
+                    sendFeedbackBtn.disabled = false;
+                }
+            });
+        }
+
         function updateUploadStatus() {
             if(!dropZoneText || !uploadBtn) return;
             if (selectedFiles.length) {
