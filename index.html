@@ -741,17 +741,47 @@
             </div>
 
             <div class="my-6 border-t pt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h3 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload eigen audiobestand naar klas</h3>
+                <h3 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-folder-open mr-2"></i>M4A-bestand kiezen &amp; afspelen op alle apparaten</h3>
+                <p class="text-xs text-gray-600 mb-3">Kies een <strong>.m4a</strong> bestand vanaf je computer of memorystick. Het gekozen bestand wordt gedeeld en afgespeeld op alle ingelogde apparaten van de studenten in deze klas.</p>
+
                 <div class="flex gap-3 flex-wrap items-center">
-                    <input type="file" id="audio-file-input" accept="audio/*" class="w-auto flex-1 mb-0" />
-                    <button id="upload-audio-btn" class="btn btn-upload mb-0">
-                        <i class="fa-solid fa-file-audio"></i> Upload audio
+                    <input type="file" id="audio-file-input" accept=".m4a,audio/mp4,audio/x-m4a" class="hidden" />
+                    <button type="button" id="browse-audio-btn" class="btn btn-browse mb-0">
+                        <i class="fa-solid fa-hard-drive"></i> Blader naar .m4a (PC / USB)
                     </button>
+                    <span id="selected-audio-name" class="text-sm text-gray-700 font-medium flex-1 min-w-[180px]">Geen .m4a bestand gekozen</span>
                 </div>
+
                 <div id="audio-upload-status" class="mt-2 text-sm font-semibold hidden"></div>
-                <div class="mt-3">
-                    <p class="text-xs text-gray-500 mb-1">Actueel geüploade klas-audio:</p>
+
+                <div class="mt-4 bg-white p-3 rounded border border-gray-200">
+                    <div class="flex justify-between items-center flex-wrap gap-2 mb-2">
+                        <p class="text-xs font-bold text-blue-900 uppercase m-0">
+                            <i class="fa-solid fa-music mr-1"></i> M4A Player (Klas): <span id="active-audio-filename" class="font-normal text-gray-700">Geen bestand geladen</span>
+                        </p>
+                        <label class="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer select-none m-0">
+                            <input type="checkbox" id="audio-master-toggle" style="width: auto; padding: 0; margin: 0;" />
+                            Bedien afspelen op alle apparaten
+                        </label>
+                    </div>
+
                     <audio id="uploaded-audio-player" controls class="w-full"></audio>
+
+                    <div class="flex gap-2 flex-wrap mt-3">
+                        <button type="button" id="play-all-audio-btn" class="btn bg-green-600 hover:bg-green-700 text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-play"></i> Speel af op alle apparaten
+                        </button>
+                        <button type="button" id="pause-all-audio-btn" class="btn btn-secondary text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-pause"></i> Pauzeer overal
+                        </button>
+                        <button type="button" id="stop-all-audio-btn" class="btn btn-reset text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-stop"></i> Stop / Begin
+                        </button>
+                    </div>
+
+                    <button type="button" id="audio-unlock-btn" class="btn bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-bold mt-3 mb-0 hidden">
+                        <i class="fa-solid fa-volume-high"></i> Klik hier om het gekozen .m4a bestand mee te luisteren
+                    </button>
                 </div>
             </div>
 
@@ -807,7 +837,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getDatabase, ref, set, onValue, remove, push, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
         import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Firebase Configuration
@@ -1852,7 +1882,7 @@
             });
         }
 
-        // ===== AUDIO UPLOAD & MEDIA =====
+        // ===== AUDIO UPLOAD & MEDIA (M4A BROWSER + GESYNCHRONISEERDE PLAYER) =====
         let audioInitDone = false;
         function initAudioFeatures() {
             if (audioInitDone) return;
@@ -1860,58 +1890,365 @@
             audioInitDone = true;
 
             const audioInput = document.getElementById('audio-file-input');
-            const uploadBtn = document.getElementById('upload-audio-btn');
+            const browseBtn = document.getElementById('browse-audio-btn');
+            const selectedNameEl = document.getElementById('selected-audio-name');
             const statusDiv = document.getElementById('audio-upload-status');
+            const activeFilenameEl = document.getElementById('active-audio-filename');
+            const masterToggle = document.getElementById('audio-master-toggle');
             const audioPlayer = document.getElementById('uploaded-audio-player');
+            const playAllBtn = document.getElementById('play-all-audio-btn');
+            const pauseAllBtn = document.getElementById('pause-all-audio-btn');
+            const stopAllBtn = document.getElementById('stop-all-audio-btn');
+            const unlockBtn = document.getElementById('audio-unlock-btn');
 
-            if (!audioInput || !uploadBtn || !statusDiv || !audioPlayer) return;
+            if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
+
+            const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+            let serverTimeOffset = 0;
+            let currentTrackId = null;
+            let currentAudioData = null;
+            let isRemoteSyncing = false;
+            let pendingRemoteState = null;
+            let lastAppliedCommandId = null;
+            let syncPublishTimer = null;
+
+            onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
+                serverTimeOffset = snap.val() || 0;
+            });
+
+            function showStatus(msg, color = '#0c5460') {
+                statusDiv.textContent = msg;
+                statusDiv.classList.remove('hidden');
+                statusDiv.style.color = color;
+            }
+
+            function setControlsEnabled(enabled) {
+                if (playAllBtn) playAllBtn.disabled = !enabled;
+                if (pauseAllBtn) pauseAllBtn.disabled = !enabled;
+                if (stopAllBtn) stopAllBtn.disabled = !enabled;
+            }
+
+            function showUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.remove('hidden');
+            }
+
+            function hideUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.add('hidden');
+            }
+
+            function getEstimatedServerNow() {
+                return Date.now() + serverTimeOffset;
+            }
+
+            function computeTargetTime(data) {
+                const basePos = Number(data?.position) || 0;
+                if (!data?.isPlaying || !data?.updatedAt) return basePos;
+                const elapsed = Math.max(0, (getEstimatedServerNow() - data.updatedAt) / 1000);
+                if (elapsed > 7200) return basePos;
+                return basePos + elapsed;
+            }
+
+            function applyRemotePlayback(shouldPlay, targetTime) {
+                isRemoteSyncing = true;
+                try {
+                    if (Number.isFinite(targetTime) && targetTime >= 0) {
+                        const dur = audioPlayer.duration;
+                        const clamped = (Number.isFinite(dur) && dur > 0)
+                            ? Math.min(targetTime, Math.max(0, dur - 0.1))
+                            : targetTime;
+                        if (Math.abs((audioPlayer.currentTime || 0) - clamped) > 0.6) {
+                            audioPlayer.currentTime = clamped;
+                        }
+                    }
+                    if (shouldPlay) {
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.then(() => {
+                                hideUnlockBtn();
+                            }).catch((err) => {
+                                console.warn('Autoplay geblokkeerd op dit apparaat:', err);
+                                showUnlockBtn();
+                            });
+                        }
+                    } else {
+                        audioPlayer.pause();
+                        hideUnlockBtn();
+                    }
+                } finally {
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+                }
+            }
 
             const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
-            onValue(currentAudioRef, (snap) => {
-                const url = snap.val();
-                if (url && typeof url === 'string') {
-                    audioPlayer.src = url;
-                    statusDiv.textContent = 'Audio geladen van klas-server.';
-                    statusDiv.classList.remove('hidden');
-                    statusDiv.style.color = '#155724';
-                } else {
-                    audioPlayer.src = '';
-                    statusDiv.textContent = 'Nog geen geüploade audio gevonden voor deze klas.';
-                    statusDiv.classList.remove('hidden');
-                    statusDiv.style.color = '#6c757d';
+
+            function broadcastPlaybackState(isPlaying, position) {
+                if (!uClass || !currentAudioData) return;
+                const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                lastAppliedCommandId = cmdId;
+                update(currentAudioRef, {
+                    isPlaying: !!isPlaying,
+                    position: Number(position) || 0,
+                    updatedAt: serverTimestamp(),
+                    sender: clientId,
+                    commandId: cmdId
+                }).catch(err => console.error('Audio-sync update mislukt:', err));
+            }
+
+            function scheduleMasterBroadcast() {
+                if (!masterToggle || !masterToggle.checked || isRemoteSyncing || !currentAudioData) return;
+                clearTimeout(syncPublishTimer);
+                syncPublishTimer = setTimeout(() => {
+                    broadcastPlaybackState(!audioPlayer.paused, audioPlayer.currentTime || 0);
+                }, 80);
+            }
+
+            function readFileAsDataURL(file, mimeType) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        let result = reader.result;
+                        if (typeof result === 'string' && result.startsWith('data:')) {
+                            const commaIdx = result.indexOf(',');
+                            if (commaIdx !== -1) {
+                                result = `data:${mimeType};base64,` + result.slice(commaIdx + 1);
+                            }
+                        }
+                        resolve(result);
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                if (pendingRemoteState) {
+                    const targetTime = computeTargetTime(pendingRemoteState);
+                    const shouldPlay = !!pendingRemoteState.isPlaying;
+                    pendingRemoteState = null;
+                    applyRemotePlayback(shouldPlay, targetTime);
                 }
             });
 
-            uploadBtn.addEventListener('click', async () => {
-                const file = audioInput.files[0];
-                if (!file) {
-                    window.customModal({ title: "Geen bestand", message: "Selecteer eerst een audiobestand om te uploaden." });
+            audioPlayer.addEventListener('play', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('pause', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('seeked', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('ended', () => {
+                if (masterToggle && masterToggle.checked && !isRemoteSyncing && currentAudioData) {
+                    broadcastPlaybackState(false, 0);
+                }
+            });
+
+            if (playAllBtn) {
+                playAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        if (audioPlayer.ended || (Number.isFinite(audioPlayer.duration) && audioPlayer.currentTime >= audioPlayer.duration - 0.5)) {
+                            audioPlayer.currentTime = 0;
+                        }
+                        const pos = audioPlayer.currentTime || 0;
+                        audioPlayer.play().catch(err => console.warn('Afspelen mislukt:', err));
+                        broadcastPlaybackState(true, pos);
+                        hideUnlockBtn();
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (pauseAllBtn) {
+                pauseAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        broadcastPlaybackState(false, audioPlayer.currentTime || 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (stopAllBtn) {
+                stopAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        audioPlayer.currentTime = 0;
+                        broadcastPlaybackState(false, 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    const targetTime = computeTargetTime(currentAudioData);
+                    applyRemotePlayback(true, targetTime);
+                });
+            }
+
+            onValue(currentAudioRef, (snap) => {
+                const raw = snap.val();
+                let data = null;
+
+                if (typeof raw === 'string' && raw.trim()) {
+                    data = {
+                        url: raw,
+                        fileName: 'Geüpload audiobestand',
+                        trackId: raw,
+                        isPlaying: false,
+                        position: 0
+                    };
+                } else if (raw && typeof raw === 'object' && raw.url) {
+                    data = raw;
+                }
+
+                if (!data) {
+                    currentAudioData = null;
+                    currentTrackId = null;
+                    pendingRemoteState = null;
+                    audioPlayer.pause();
+                    audioPlayer.removeAttribute('src');
+                    audioPlayer.removeAttribute('data-loaded-url');
+                    audioPlayer.load();
+                    if (activeFilenameEl) activeFilenameEl.textContent = 'Geen bestand geladen';
+                    setControlsEnabled(false);
+                    hideUnlockBtn();
+                    showStatus('Nog geen .m4a bestand gekozen voor deze klas.', '#6c757d');
                     return;
                 }
-                if (!uClass) return;
 
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = 'Uploaden...';
-                statusDiv.textContent = 'Bezig met uploaden naar Firebase Storage...';
-                statusDiv.classList.remove('hidden');
-                statusDiv.style.color = '#0c5460';
+                currentAudioData = data;
+                setControlsEnabled(true);
+                if (activeFilenameEl) activeFilenameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
+
+                const incomingTrackId = data.trackId || data.url;
+                const isNewTrack = incomingTrackId !== currentTrackId || audioPlayer.getAttribute('data-loaded-url') !== data.url;
+
+                if (isNewTrack) {
+                    currentTrackId = incomingTrackId;
+                    lastAppliedCommandId = data.commandId || null;
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                    isRemoteSyncing = true;
+                    audioPlayer.pause();
+                    audioPlayer.src = data.url;
+                    audioPlayer.setAttribute('data-loaded-url', data.url);
+                    audioPlayer.load();
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+
+                    showStatus(`✅ '${data.fileName || 'audiobestand'}' geladen voor klas ${uClass}.`, '#155724');
+                    return;
+                }
+
+                if (data.sender === clientId) {
+                    if (data.isPlaying) {
+                        showStatus(`▶ '${data.fileName || 'audio'}' speelt af op alle apparaten.`, '#155724');
+                    } else {
+                        showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                    }
+                    return;
+                }
+
+                if (data.commandId && data.commandId === lastAppliedCommandId) return;
+                lastAppliedCommandId = data.commandId || null;
+
+                if (data.isPlaying) {
+                    showStatus(`▶ '${data.fileName || 'audio'}' wordt afgespeeld door klas-bediening.`, '#155724');
+                } else {
+                    showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                }
+
+                if (audioPlayer.readyState >= 1) {
+                    const targetTime = computeTargetTime(data);
+                    applyRemotePlayback(!!data.isPlaying, targetTime);
+                } else {
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                }
+            });
+
+            browseBtn.addEventListener('click', () => {
+                audioInput.click();
+            });
+
+            audioInput.addEventListener('change', async () => {
+                const file = audioInput.files[0];
+                if (!file) return;
+                if (!uClass) {
+                    window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                const lowerName = file.name.toLowerCase();
+                const isAudio = lowerName.endsWith('.m4a') || lowerName.endsWith('.mp4') || lowerName.endsWith('.mp3') || lowerName.endsWith('.wav') || lowerName.endsWith('.aac') || lowerName.endsWith('.ogg') || (file.type && file.type.startsWith('audio/'));
+                if (!isAudio) {
+                    window.customModal({ title: "Ongeldig bestand", message: "Kies a.u.b. een geldig .m4a audiobestand vanaf je computer of memorystick." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                if (selectedNameEl) selectedNameEl.textContent = file.name;
+                browseBtn.disabled = true;
+                showStatus(`Bezig met laden van '${file.name}' naar alle ingelogde apparaten...`, '#0c5460');
 
                 try {
-                    const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
-                    const fileRef = storageRef(storage, path);
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
-                    await set(currentAudioRef, url);
-                    statusDiv.textContent = 'Audio succesvol geüpload voor de klas!';
-                    statusDiv.style.color = '#155724';
-                    audioInput.value = '';
+                    const mimeType = lowerName.endsWith('.m4a')
+                        ? 'audio/mp4'
+                        : (file.type || 'audio/mp4');
+
+                    let url = null;
+                    try {
+                        const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
+                        const fileRef = storageRef(storage, path);
+                        await uploadBytes(fileRef, file, { contentType: mimeType });
+                        url = await getDownloadURL(fileRef);
+                    } catch (storageErr) {
+                        console.warn('Firebase Storage upload mislukt, probeer RTDB fallback:', storageErr);
+                        if (file.size <= 10 * 1024 * 1024) {
+                            url = await readFileAsDataURL(file, mimeType);
+                        } else {
+                            throw storageErr;
+                        }
+                    }
+
+                    if (masterToggle) masterToggle.checked = true;
+                    const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                    const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+                    await set(currentAudioRef, {
+                        url: url,
+                        fileName: file.name,
+                        uploadedBy: uName || 'onbekend',
+                        trackId: trackId,
+                        isPlaying: false,
+                        position: 0,
+                        updatedAt: serverTimestamp(),
+                        sender: clientId,
+                        commandId: cmdId
+                    });
+
+                    showStatus(`✅ '${file.name}' klaar op alle apparaten! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
                 } catch (err) {
-                    console.error('Audio upload mislukt:', err);
-                    statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
-                    statusDiv.style.color = '#721c24';
+                    console.error('M4A laden mislukt:', err);
+                    showStatus(`Fout bij laden van '${file.name}': ${err.message}`, '#721c24');
                 } finally {
-                    uploadBtn.disabled = false;
-                    uploadBtn.textContent = 'Upload audio';
+                    browseBtn.disabled = false;
+                    audioInput.value = '';
                 }
             });
         }
