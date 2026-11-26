@@ -1,12 +1,3 @@
-Top dat het werkt! Ik heb nu ook een knop **Verwijder bestand** toegevoegd (en gezorgd dat de speler en bestandsnaam op alle apparaten weer volledig leeg worden gemaakt), zodat je het huidige `.m4a`-bestand kunt verwijderen en direct een nieuw bestand kunt inladen.
-
-Wat er is toegevoegd (verder is er niets aan je werkende code veranderd):
-- **Knop `Verwijder bestand`** naast `Blader naar .m4a (PC / USB)`: vraagt even om bevestiging (zodat niemand er per ongeluk op klikt), verwijdert het bestand uit de klas-database (en eventueel Firebase Storage) en reset de speler op alle ingelogde apparaten terug naar `0:00 / 0:00`.
-- **Direct een nieuw bestand kiezen** blijft ook werken: als je een nieuw `.m4a`-bestand selecteert zonder eerst te verwijderen, wordt het vorige automatisch vervangen en opgeruimd.
-
-Hier is de volledige bijgewerkte code:
-
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
