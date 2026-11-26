@@ -765,7 +765,7 @@
                         </label>
                     </div>
 
-                    <audio id="uploaded-audio-player" controls class="w-full"></audio>
+                    <audio id="uploaded-audio-player" controls preload="auto" class="w-full"></audio>
 
                     <div class="flex gap-2 flex-wrap mt-3">
                         <button type="button" id="play-all-audio-btn" class="btn bg-green-600 hover:bg-green-700 text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
@@ -1903,9 +1903,15 @@
 
             if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
 
+            try {
+                storage.maxUploadRetryTime = 8000;
+                storage.maxOperationRetryTime = 8000;
+            } catch (e) {}
+
             const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
             let serverTimeOffset = 0;
-            let currentTrackId = null;
+            let loadedTrackId = null;
+            let currentObjectUrl = null;
             let currentAudioData = null;
             let isRemoteSyncing = false;
             let pendingRemoteState = null;
@@ -1934,6 +1940,50 @@
 
             function hideUnlockBtn() {
                 if (unlockBtn) unlockBtn.classList.add('hidden');
+            }
+
+            function formatDuration(sec) {
+                if (!Number.isFinite(sec) || sec < 0) return '0:00';
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+
+            function revokeCurrentObjectUrl() {
+                if (currentObjectUrl) {
+                    try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {}
+                    currentObjectUrl = null;
+                }
+            }
+
+            function base64ToBlobUrl(base64Input, mimeType) {
+                let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
+                const commaIdx = cleanB64.indexOf(',');
+                if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
+                cleanB64 = cleanB64.replace(/\s+/g, '');
+                const byteChars = atob(cleanB64);
+                const len = byteChars.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = byteChars.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mimeType || 'audio/mp4' });
+                return URL.createObjectURL(blob);
+            }
+
+            function resolvePlayableUrl(data) {
+                if (Array.isArray(data.chunks) && data.chunks.length > 0) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.chunks, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                if (typeof data.url === 'string' && data.url.startsWith('data:')) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.url, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                revokeCurrentObjectUrl();
+                return data.url;
             }
 
             function getEstimatedServerNow() {
@@ -1966,8 +2016,13 @@
                             playPromise.then(() => {
                                 hideUnlockBtn();
                             }).catch((err) => {
-                                console.warn('Autoplay geblokkeerd op dit apparaat:', err);
-                                showUnlockBtn();
+                                if (err && err.name === 'NotAllowedError') {
+                                    console.warn('Autoplay geblokkeerd op dit apparaat:', err);
+                                    showUnlockBtn();
+                                } else {
+                                    console.error('Afspelen mislukt:', err);
+                                    showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                                }
                             });
                         }
                     } else {
@@ -2002,25 +2057,60 @@
                 }, 80);
             }
 
-            function readFileAsDataURL(file, mimeType) {
+            function readFileAsBase64(file) {
                 return new Promise((resolve, reject) => {
                     const reader = new FileReader();
                     reader.onload = () => {
-                        let result = reader.result;
-                        if (typeof result === 'string' && result.startsWith('data:')) {
-                            const commaIdx = result.indexOf(',');
-                            if (commaIdx !== -1) {
-                                result = `data:${mimeType};base64,` + result.slice(commaIdx + 1);
-                            }
+                        const res = reader.result;
+                        if (typeof res === 'string') {
+                            const commaIdx = res.indexOf(',');
+                            resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
+                        } else {
+                            reject(new Error('Ongeldig bestandsformaat'));
                         }
-                        resolve(result);
                     };
                     reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
                     reader.readAsDataURL(file);
                 });
             }
 
+            function splitIntoChunks(str, chunkSize = 512000) {
+                const chunks = [];
+                for (let i = 0; i < str.length; i += chunkSize) {
+                    chunks.push(str.slice(i, i + chunkSize));
+                }
+                return chunks;
+            }
+
+            async function tryStorageUpload(path, file, mimeType) {
+                const fileRef = storageRef(storage, path);
+                const uploadPromise = (async () => {
+                    await uploadBytes(fileRef, file, { contentType: mimeType });
+                    return await getDownloadURL(fileRef);
+                })();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Storage upload timeout')), 10000)
+                );
+                return await Promise.race([uploadPromise, timeoutPromise]);
+            }
+
+            audioPlayer.addEventListener('error', () => {
+                if (!loadedTrackId) return;
+                const err = audioPlayer.error;
+                let msg = 'Kan dit audiobestand niet afspelen in deze browser.';
+                if (err) {
+                    if (err.code === 1) msg = 'Laden van audio afgebroken.';
+                    else if (err.code === 2) msg = 'Netwerkfout bij laden van de audio.';
+                    else if (err.code === 3) msg = 'Fout bij decoderen van het .m4a bestand (mogelijk Apple Lossless of niet-ondersteunde codec).';
+                    else if (err.code === 4) msg = 'Audioformaat of codec wordt niet ondersteund door deze browser.';
+                }
+                showStatus('⚠️ ' + msg, '#721c24');
+            });
+
             audioPlayer.addEventListener('loadedmetadata', () => {
+                if (currentAudioData && Number.isFinite(audioPlayer.duration)) {
+                    showStatus(`✅ '${currentAudioData.fileName || 'audiobestand'}' gereed (${formatDuration(audioPlayer.duration)}) — druk op "Speel af op alle apparaten" of Play.`, '#155724');
+                }
                 if (pendingRemoteState) {
                     const targetTime = computeTargetTime(pendingRemoteState);
                     const shouldPlay = !!pendingRemoteState.isPlaying;
@@ -2048,7 +2138,13 @@
                             audioPlayer.currentTime = 0;
                         }
                         const pos = audioPlayer.currentTime || 0;
-                        audioPlayer.play().catch(err => console.warn('Afspelen mislukt:', err));
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.catch((err) => {
+                                console.error('Afspelen mislukt:', err);
+                                showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                            });
+                        }
                         broadcastPlaybackState(true, pos);
                         hideUnlockBtn();
                     } finally {
@@ -2106,18 +2202,17 @@
                         isPlaying: false,
                         position: 0
                     };
-                } else if (raw && typeof raw === 'object' && raw.url) {
+                } else if (raw && typeof raw === 'object' && (raw.url || (Array.isArray(raw.chunks) && raw.chunks.length > 0))) {
                     data = raw;
                 }
 
                 if (!data) {
                     currentAudioData = null;
-                    currentTrackId = null;
+                    loadedTrackId = null;
                     pendingRemoteState = null;
                     audioPlayer.pause();
                     audioPlayer.removeAttribute('src');
-                    audioPlayer.removeAttribute('data-loaded-url');
-                    audioPlayer.load();
+                    revokeCurrentObjectUrl();
                     if (activeFilenameEl) activeFilenameEl.textContent = 'Geen bestand geladen';
                     setControlsEnabled(false);
                     hideUnlockBtn();
@@ -2129,25 +2224,29 @@
                 setControlsEnabled(true);
                 if (activeFilenameEl) activeFilenameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
 
-                const incomingTrackId = data.trackId || data.url;
-                const isNewTrack = incomingTrackId !== currentTrackId || audioPlayer.getAttribute('data-loaded-url') !== data.url;
+                const incomingTrackId = data.trackId || data.url || '';
+                const isNewTrack = !loadedTrackId || incomingTrackId !== loadedTrackId;
 
                 if (isNewTrack) {
-                    currentTrackId = incomingTrackId;
+                    loadedTrackId = incomingTrackId;
                     lastAppliedCommandId = data.commandId || null;
                     pendingRemoteState = {
                         isPlaying: !!data.isPlaying,
                         position: Number(data.position) || 0,
                         updatedAt: data.updatedAt || null
                     };
-                    isRemoteSyncing = true;
-                    audioPlayer.pause();
-                    audioPlayer.src = data.url;
-                    audioPlayer.setAttribute('data-loaded-url', data.url);
-                    audioPlayer.load();
-                    setTimeout(() => { isRemoteSyncing = false; }, 250);
-
-                    showStatus(`✅ '${data.fileName || 'audiobestand'}' geladen voor klas ${uClass}.`, '#155724');
+                    try {
+                        const playableUrl = resolvePlayableUrl(data);
+                        isRemoteSyncing = true;
+                        audioPlayer.pause();
+                        audioPlayer.src = playableUrl;
+                        audioPlayer.load();
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                        showStatus(`Bezig met laden van '${data.fileName || 'audiobestand'}' voor klas ${uClass}...`, '#0c5460');
+                    } catch (decodeErr) {
+                        console.error('Audio decoderen mislukt:', decodeErr);
+                        showStatus(`⚠️ Fout bij laden van '${data.fileName}': ${decodeErr.message}`, '#721c24');
+                    }
                     return;
                 }
 
@@ -2212,17 +2311,18 @@
                         : (file.type || 'audio/mp4');
 
                     let url = null;
+                    let chunks = null;
+
                     try {
                         const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
-                        const fileRef = storageRef(storage, path);
-                        await uploadBytes(fileRef, file, { contentType: mimeType });
-                        url = await getDownloadURL(fileRef);
+                        url = await tryStorageUpload(path, file, mimeType);
                     } catch (storageErr) {
-                        console.warn('Firebase Storage upload mislukt, probeer RTDB fallback:', storageErr);
-                        if (file.size <= 10 * 1024 * 1024) {
-                            url = await readFileAsDataURL(file, mimeType);
+                        console.warn('Firebase Storage upload mislukt, probeer RTDB chunks fallback:', storageErr);
+                        if (file.size <= 11 * 1024 * 1024) {
+                            const b64 = await readFileAsBase64(file);
+                            chunks = splitIntoChunks(b64, 512000);
                         } else {
-                            throw storageErr;
+                            throw new Error('Storage upload mislukt en bestand is groter dan 11 MB.');
                         }
                     }
 
@@ -2230,9 +2330,9 @@
                     const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
                     const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
 
-                    await set(currentAudioRef, {
-                        url: url,
+                    const payload = {
                         fileName: file.name,
+                        mimeType: mimeType,
                         uploadedBy: uName || 'onbekend',
                         trackId: trackId,
                         isPlaying: false,
@@ -2240,9 +2340,17 @@
                         updatedAt: serverTimestamp(),
                         sender: clientId,
                         commandId: cmdId
-                    });
+                    };
 
-                    showStatus(`✅ '${file.name}' klaar op alle apparaten! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
+                    if (url) {
+                        payload.url = url;
+                    } else {
+                        payload.chunks = chunks;
+                    }
+
+                    await set(currentAudioRef, payload);
+
+                    showStatus(`✅ '${file.name}' geladen! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
                 } catch (err) {
                     console.error('M4A laden mislukt:', err);
                     showStatus(`Fout bij laden van '${file.name}': ${err.message}`, '#721c24');
