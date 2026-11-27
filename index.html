@@ -801,21 +801,27 @@
             </div>
 
             <div id="file-upload-area" class="my-6">
-                <div id="drop-zone">
+                <input type="file" id="file-input" multiple accept=".pdf,application/pdf" style="display:none;" />
+
+                <div id="drop-zone" role="button" tabindex="0" aria-label="Klik of sleep PDF-bestanden hierheen">
                     <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-800 mb-2"></i>
-                    <p class="text-lg font-semibold text-gray-800">📁 Sleep hier PDF-bestanden heen</p>
+                    <p id="drop-zone-label" class="text-lg font-semibold text-gray-800">📁 Sleep hier PDF-bestanden heen</p>
                     <p class="text-sm text-gray-500">of gebruik de knop hieronder om te bladeren</p>
-                    <input type="file" id="file-input" multiple accept=".pdf" />
                 </div>
-                
+
                 <div class="flex gap-3 flex-wrap mt-3">
-                    <button id="browse-btn" class="btn btn-browse">
+                    <button type="button" id="browse-btn" class="btn btn-browse">
                         <i class="fa-solid fa-folder-open"></i> Blader naar bestand
                     </button>
-                    <button id="upload-btn" class="btn btn-upload" disabled>
+                    <button type="button" id="upload-btn" class="btn btn-upload" disabled>
                         <i class="fa-solid fa-upload"></i> Upload Geselecteerde
                     </button>
+                    <button type="button" id="cancel-upload-btn" class="btn btn-reset" style="display:none;">
+                        <i class="fa-solid fa-xmark"></i> Annuleer upload
+                    </button>
                 </div>
+
+                <div id="selected-files-preview" class="mt-3"></div>
                 <div id="upload-status"></div>
             </div>
 
@@ -1296,51 +1302,51 @@
             {
                 title: 'Casus 1: Verwarde vrouw op de Laan 1914',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-                    '<strong>* Situatie:</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
-                    '<strong>* Toedracht:</strong> Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
-                    '<strong>* Maatregelen:</strong> Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
-                    '<strong>* Afhandeling:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
+                    'Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+                    'Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
+                    'Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
+                    'Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
+                    'Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
                 ]
             },
             {
                 title: 'Casus 2: Winkeldiefstal supermarkt',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort.',
-                    '<strong>* Situatie:</strong> Rond 15.35 uur kwam ik ter plaatse. Het was bewolkt met lichte regen. Voor de ingang stond een medewerker van de winkel met 1 verdachte: man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen.',
-                    '<strong>* Toedracht:</strong> Ik zag dat de verdachte door de medewerker werd tegengehouden nabij de kassa. Ik hoorde de medewerker verklaren dat hij de verdachte goederen in zijn jaszak zag stoppen zonder te betalen. Op camerabeelden zag ik dat verdachte blikjes energiedrank en koffie verstopte.',
-                    '<strong>* Maatregelen:</strong> Verdachte aangehouden ter zake diefstal en overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier en goederen in beslag genomen.',
-                    '<strong>* Afhandeling:</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
+                    'Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort.',
+                    'Rond 15.35 uur kwam ik ter plaatse. Het was bewolkt met lichte regen. Voor de ingang stond een medewerker van de winkel met 1 verdachte: man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen.',
+                    'Ik zag dat de verdachte door de medewerker werd tegengehouden nabij de kassa. Ik hoorde de medewerker verklaren dat hij de verdachte goederen in zijn jaszak zag stoppen zonder te betalen. Op camerabeelden zag ik dat verdachte blikjes energiedrank en koffie verstopte.',
+                    'Verdachte aangehouden ter zake diefstal en overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier en goederen in beslag genomen.',
+                    'Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
                 ]
             },
             {
                 title: 'Casus 3: Verkeersongeval met letsel',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein bezig met verkeerscontrole. Spoedmelding ontvangen van OC betreft ongeval N226.',
-                    '<strong>* Situatie:</strong> Rond 17.55 uur kwam ik ter plaatse op de voorrangsweg. Zicht was goed, druk verkeer. Aangetroffen: personenauto (VW Golf, zwart, 1-ABC-23) en omgevallen fiets. Slachtoffer: vrouw, ±55jr, liggend op fietspad.',
-                    '<strong>* Toedracht:</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde getuige verklaren dat automobilist rechtsaf sloeg en fietser over het hoofd zag. Ik zag dat bestuurder geschrokken was en zag bij slachtoffer hoofdwond en armletsel.',
-                    '<strong>* Maatregelen:</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet en EHBO verleend. Ademanalyse bij bestuurder afgenomen (0,0 ugl). Verkeer omgeleid.',
-                    '<strong>* Afhandeling:</strong> Slachtoffer overgebracht naar ziekenhuis. Auto geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie naar verkeerspolitie.'
+                    'Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein bezig met verkeerscontrole. Spoedmelding ontvangen van OC betreft ongeval N226.',
+                    'Rond 17.55 uur kwam ik ter plaatse op de voorrangsweg. Zicht was goed, druk verkeer. Aangetroffen: personenauto (VW Golf, zwart, 1-ABC-23) en omgevallen fiets. Slachtoffer: vrouw, ±55jr, liggend op fietspad.',
+                    'Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde getuige verklaren dat automobilist rechtsaf sloeg en fietser over het hoofd zag. Ik zag dat bestuurder geschrokken was en zag bij slachtoffer hoofdwond en armletsel.',
+                    'Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet en EHBO verleend. Ademanalyse bij bestuurder afgenomen (0,0 ugl). Verkeer omgeleid.',
+                    'Slachtoffer overgebracht naar ziekenhuis. Auto geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie naar verkeerspolitie.'
                 ]
             },
             {
                 title: 'Casus 4: Overlast jeugd / vernieling bushokje',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, bezig met surveillance op de Birkstraat. Melding OC ontvangen betreft overlast jeugd bij bushalte Groningerstraat.',
-                    '<strong>* Situatie:</strong> Ter plaatse rond 22.40 uur. Donker en droog. Aangetroffen: groep van 6 jongeren (mannelijk, ±14-17jr) in donkere kleding bij vernield bushokje met gebroken glas op de grond. Één jongen met honkbalknuppel.',
-                    '<strong>* Toedracht:</strong> Ik zag de groep opsplitsen en wegrennen bij mijn nadering. Ik zag dat de jongen met de knuppel deze in de bosjes gooide. Ik zag dat een tweede jongen bleef staan. Er hing een sterke henneplucht.',
-                    '<strong>* Maatregelen:</strong> Bleven staan jongen staande gehouden. Honkbalknuppel veiliggesteld. Identiteit vastgesteld en ouders gebeld. Melding gemaakt bij gemeente voor herstel abri.',
-                    '<strong>* Afhandeling:</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent t.b.v. dossieropbouw.'
+                    'Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, bezig met surveillance op de Birkstraat. Melding OC ontvangen betreft overlast jeugd bij bushalte Groningerstraat.',
+                    'Ter plaatse rond 22.40 uur. Donker en droog. Aangetroffen: groep van 6 jongeren (mannelijk, ±14-17jr) in donkere kleding bij vernield bushokje met gebroken glas op de grond. Één jongen met honkbalknuppel.',
+                    'Ik zag de groep opsplitsen en wegrennen bij mijn nadering. Ik zag dat de jongen met de knuppel deze in de bosjes gooide. Ik zag dat een tweede jongen bleef staan. Er hing een sterke henneplucht.',
+                    'Bleven staan jongen staande gehouden. Honkbalknuppel veiliggesteld. Identiteit vastgesteld en ouders gebeld. Melding gemaakt bij gemeente voor herstel abri.',
+                    'Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent t.b.v. dossieropbouw.'
                 ]
             },
             {
                 title: 'Casus 5: Vermissing demente bejaarde',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, op het bureau bezig met mutatieafhandeling. Melding OC ontvangen betreft vermissing demente man (82jr) uit zorgcentrum De Lichtenberg.',
-                    '<strong>* Situatie:</strong> Rond 20.30 uur ter plaatse bij het zorgcomplex. Het was donker en 8°C. Kamer van betrokkene was leeg, jas en schoenen weg. Signalement: man, 82jr, grijs haar, bruine bril, grijze jas.',
-                    '<strong>* Toedracht:</strong> Verzorgende verklaarde dat betrokkene rond 19.30 uur voor het laatst gezien was. Op camerabeelden zag ik dat hij om 19.45 uur de hoofdingang verliet richting het park.',
-                    '<strong>* Maatregelen:</strong> Burgernet opgestart. Speurhond ingezet in het park. Foto verspreid onder surveillance-eenheden. Buurtonderzoek in de omgeving opgestart.',
-                    '<strong>* Afhandeling:</strong> Betrokkene om 22.10 uur aangetroffen op bankje in het park, onderkoeld. Overgedragen aan ambulance. Mutatie gedeeld met wijkagent.'
+                    'Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, op het bureau bezig met mutatieafhandeling. Melding OC ontvangen betreft vermissing demente man (82jr) uit zorgcentrum De Lichtenberg.',
+                    'Rond 20.30 uur ter plaatse bij het zorgcomplex. Het was donker en 8°C. Kamer van betrokkene was leeg, jas en schoenen weg. Signalement: man, 82jr, grijs haar, bruine bril, grijze jas.',
+                    'Verzorgende verklaarde dat betrokkene rond 19.30 uur voor het laatst gezien was. Op camerabeelden zag ik dat hij om 19.45 uur de hoofdingang verliet richting het park.',
+                    'Burgernet opgestart. Speurhond ingezet in het park. Foto verspreid onder surveillance-eenheden. Buurtonderzoek in de omgeving opgestart.',
+                    'Betrokkene om 22.10 uur aangetroffen op bankje in het park, onderkoeld. Overgedragen aan ambulance. Mutatie gedeeld met wijkagent.'
                 ]
             }
         ];
@@ -1348,6 +1354,17 @@
         let currentCaseIndex = -1;
 
         // ===== HULP: PDF WEERGEVEN (Canvas rendering + RTDB chunks fallback) =====
+        // Extra state voor scherm 5 (PDF-engine)
+        let pdfSelectListenerBound = false;
+        let currentPdfLoadToken = 0;
+        let currentPdfAbortController = null;
+        let activePdfFileKey = null;
+        let lastFilesData = null;
+        let isUploading = false;
+        let cancelUploadRequested = false;
+        const PDF_MAX_SIZE_MB = 25;
+        const RTDB_CHUNK_SIZE = 262144;
+
         function readPdfFileAsBase64(file) {
             return new Promise((resolve, reject) => {
                 const reader = new FileReader();
@@ -1455,109 +1472,168 @@
 
         async function openPdfText(urlOrSource, sync = true) {
             if (!pdfViewer || !pdfPlaceholder) return;
+
+            if (currentPdfAbortController) {
+                try { currentPdfAbortController.abort(); } catch (e) {}
+                currentPdfAbortController = null;
+            }
+            const loadToken = ++currentPdfLoadToken;
+            const abortCtrl = new AbortController();
+            currentPdfAbortController = abortCtrl;
+
             if (!urlOrSource) {
                 pdfViewer.innerHTML = '';
                 pdfViewer.classList.add('hidden');
                 pdfPlaceholder.classList.remove('hidden');
                 return;
             }
-            try {
-                pdfViewer.textContent = 'Bezig met laden en renderen van de PDF...';
-                pdfViewer.classList.remove('hidden');
-                pdfPlaceholder.classList.add('hidden');
 
+            pdfPlaceholder.classList.add('hidden');
+            pdfViewer.classList.remove('hidden');
+            pdfViewer.innerHTML = `
+                <div class="flex flex-col items-center justify-center p-12 text-center">
+                    <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-800 mb-3"></i>
+                    <p class="text-gray-700 font-semibold">PDF wordt geladen…</p>
+                    <p class="text-sm text-gray-500 mt-1">Dit kan enkele seconden duren.</p>
+                </div>`;
+
+            try {
                 let pdfInput = urlOrSource;
                 let syncValue = urlOrSource;
 
                 if (typeof urlOrSource === 'object' && urlOrSource !== null) {
                     let chunks = urlOrSource.chunks;
+
                     if (!chunks && urlOrSource.fileKey && uClass) {
                         const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
                         const fileVal = fileSnap.val();
-                        if (fileVal && fileVal.chunks) {
-                            chunks = fileVal.chunks;
-                        } else if (fileVal && fileVal.url) {
-                            pdfInput = fileVal.url;
-                        } else {
-                            const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
-                            if (chunkSnap.exists()) chunks = chunkSnap.val();
+                        if (fileVal) {
+                            if (fileVal.chunks) chunks = fileVal.chunks;
+                            else if (fileVal.url) { pdfInput = fileVal.url; }
                         }
                     }
+
                     if (chunks) {
+                        pdfViewer.innerHTML = `
+                            <div class="flex flex-col items-center justify-center p-12 text-center">
+                                <i class="fa-solid fa-spinner fa-spin text-4xl text-blue-800 mb-3"></i>
+                                <p class="text-gray-700 font-semibold">PDF uit database decoderen…</p>
+                            </div>`;
                         pdfInput = { data: base64ChunksToUint8Array(chunks) };
                     }
-                    syncValue = urlOrSource.fileKey ? { type: 'rtdbFile', fileKey: urlOrSource.fileKey } : null;
+
+                    syncValue = urlOrSource.fileKey
+                        ? { type: 'rtdbFile', fileKey: urlOrSource.fileKey }
+                        : null;
                 }
-                
-                const pdf = await pdfjsLib.getDocument(pdfInput).promise;
+
+                const loadingTask = pdfjsLib.getDocument(pdfInput);
+                abortCtrl.signal.addEventListener('abort', () => {
+                    try { loadingTask.destroy(); } catch (_) {}
+                });
+
+                const pdf = await loadingTask.promise;
+                if (loadToken !== currentPdfLoadToken) return;
+
                 pdfViewer.innerHTML = '';
-                
-                const containerWidth = (pdfViewer.clientWidth || 800) - 40;
-                for (let i = 1; i <= pdf.numPages; i++) {
+
+                let containerWidth = pdfViewer.clientWidth;
+                if (!containerWidth || containerWidth < 200) containerWidth = 900;
+                const availableWidth = Math.max(320, containerWidth - 40);
+                const totalPages = pdf.numPages;
+
+                const wrapper = document.createElement('div');
+                pdfViewer.appendChild(wrapper);
+
+                const dpr = window.devicePixelRatio || 1;
+                for (let i = 1; i <= totalPages; i++) {
+                    if (loadToken !== currentPdfLoadToken) return;
+
                     const page = await pdf.getPage(i);
-                    const unscaledViewport = page.getViewport({ scale: 1 });
-                    const scale = Math.max(1, Math.min(2.5, containerWidth / unscaledViewport.width));
-                    const viewport = page.getViewport({ scale: scale });
-                    
+                    const unscaled = page.getViewport({ scale: 1 });
+                    const scale = Math.min(2.5, Math.max(1, availableWidth / unscaled.width));
+                    const viewport = page.getViewport({ scale });
+
                     const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
+                    const ctx = canvas.getContext('2d');
+                    canvas.width  = Math.floor(viewport.width  * dpr);
+                    canvas.height = Math.floor(viewport.height * dpr);
+                    canvas.style.width  = Math.floor(viewport.width)  + 'px';
+                    canvas.style.height = Math.floor(viewport.height) + 'px';
                     canvas.style.display = 'block';
-                    canvas.style.margin = '0 auto 15px auto';
+                    canvas.style.margin = '0 auto 10px auto';
                     canvas.style.maxWidth = '100%';
-                    canvas.style.height = 'auto';
                     canvas.style.border = '1px solid #cbd5e1';
                     canvas.style.borderRadius = '6px';
                     canvas.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
                     canvas.style.background = '#fff';
-                    
-                    pdfViewer.appendChild(canvas);
+                    wrapper.appendChild(canvas);
+
                     await page.render({
-                        canvasContext: context,
-                        viewport: viewport
+                        canvasContext: ctx,
+                        viewport,
+                        transform: dpr !== 1 ? [dpr, 0, 0, dpr, 0, 0] : null
                     }).promise;
+
+                    const label = document.createElement('div');
+                    label.className = 'text-center text-xs text-gray-500 mb-4';
+                    label.textContent = `Pagina ${i} van ${totalPages}`;
+                    wrapper.appendChild(label);
                 }
-                
-                if (sync && uClass && syncValue) {
-                    const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                    set(currentPdfRef, syncValue);
+
+                if (sync && uClass && syncValue && loadToken === currentPdfLoadToken) {
+                    try { await set(ref(db, `mutatieles/${uClass}/currentPdf`), syncValue); }
+                    catch (e) { console.warn('PDF sync mislukt:', e); }
                 }
             } catch (err) {
+                if (loadToken !== currentPdfLoadToken) return;
                 console.error('PDF laadfout:', err);
-                pdfViewer.textContent = 'Fout bij laden van PDF: ' + err.message;
+
+                let msg = 'Onbekende fout bij laden van PDF.';
+                if (err?.name === 'PasswordException') msg = 'Dit PDF-bestand is beveiligd met een wachtwoord.';
+                else if (err?.name === 'InvalidPDFException') msg = 'Het bestand is geen geldige PDF of is beschadigd.';
+                else if (err?.message) msg = err.message;
+
+                pdfViewer.innerHTML = `
+                    <div class="flex flex-col items-center justify-center p-12 text-center">
+                        <i class="fa-solid fa-circle-exclamation text-4xl text-red-600 mb-3"></i>
+                        <p class="text-red-800 font-semibold mb-1">PDF kon niet worden weergegeven</p>
+                        <p class="text-sm text-gray-600 max-w-md">${escapeHtml(msg)}</p>
+                        <p class="text-xs text-gray-500 mt-2">Probeer een ander bestand of upload de PDF opnieuw.</p>
+                    </div>`;
             }
         }
 
         function setStatus(msg, type = "info") {
-            if(!uploadStatus) return;
+            if (!uploadStatus) return;
             clearTimeout(uploadStatusTimer);
-            uploadStatus.textContent = msg;
-            uploadStatus.className = type;
-            uploadStatus.style.display = "block";
-            if(type === "success") {
-                uploadStatus.style.background = "#d4edda";
-                uploadStatus.style.color = "#155724";
+
+            const icons = {
+                info: 'fa-circle-info', success: 'fa-circle-check',
+                error: 'fa-circle-exclamation', warning: 'fa-triangle-exclamation'
+            };
+            const colors = {
+                info:    { bg: '#d1ecf1', color: '#0c5460' },
+                success: { bg: '#d4edda', color: '#155724' },
+                error:   { bg: '#f8d7da', color: '#721c24' },
+                warning: { bg: '#fff3cd', color: '#856404' }
+            };
+            const c = colors[type] || colors.info;
+            uploadStatus.innerHTML = `<i class="fa-solid ${icons[type] || icons.info} mr-2"></i>${escapeHtml(msg)}`;
+            uploadStatus.style.cssText =
+                `display:block; background:${c.bg}; color:${c.color}; ` +
+                `padding:12px; border-radius:6px; font-weight:600; text-align:center; margin-top:15px;`;
+            if (type === "success") {
                 uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 6000);
-            } else if (type === "error") {
-                uploadStatus.style.background = "#f8d7da";
-                uploadStatus.style.color = "#721c24";
-            } else {
-                uploadStatus.style.background = "#d1ecf1";
-                uploadStatus.style.color = "#0c5460";
             }
         }
 
-        // Render File List in Screen 5
         function renderFileList(files) {
-            if(!fileListItems) return;
+            if (!fileListItems) return;
+            lastFilesData = files;
             fileListItems.innerHTML = '';
-            if (!files || typeof files !== 'object') {
-                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
-                return;
-            }
-            
-            const entries = Object.entries(files)
+
+            const entries = Object.entries(files || {})
                 .filter(([, f]) => f && typeof f === 'object' && f.name)
                 .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
 
@@ -1567,14 +1643,24 @@
             }
 
             entries.forEach(([fileKey, fileData]) => {
+                const isActive = fileKey === activePdfFileKey;
                 const li = document.createElement('li');
+                li.style.cssText = isActive ? 'background:#eef4ff; border-color:#003082;' : '';
                 li.innerHTML = `
-                    <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
-                    <span class="file-delete" title="Verwijderen"><i class="fa-solid fa-trash-can"></i></span>
+                    <span class="font-medium text-gray-800 flex-1 min-w-0 truncate">
+                        <i class="fa-solid fa-file-pdf text-red-600 mr-2"></i>${escapeHtml(fileData.name)}
+                        ${fileData.size ? `<span class="text-xs text-gray-500 ml-2">(${(fileData.size/1024/1024).toFixed(2)} MB)</span>` : ''}
+                    </span>
+                    <span class="flex items-center gap-2">
+                        ${isActive ? '<span class="text-xs bg-blue-800 text-white px-2 py-0.5 rounded">actief</span>' : ''}
+                        <span class="file-delete" title="Verwijderen"><i class="fa-solid fa-trash-can"></i></span>
+                    </span>
                 `;
-                
+
                 li.addEventListener('click', (e) => {
                     if (e.target.closest('.file-delete')) return;
+                    activePdfFileKey = fileKey;
+                    renderFileList(lastFilesData);
                     if (fileData.url) {
                         openPdfText(fileData.url, true);
                     } else if (fileData.isRtdbFile || fileData.chunks) {
@@ -1582,8 +1668,7 @@
                     }
                 });
 
-                const deleteBtn = li.querySelector('.file-delete');
-                deleteBtn.addEventListener('click', (e) => {
+                li.querySelector('.file-delete').addEventListener('click', (e) => {
                     e.stopPropagation();
                     window.customModal({
                         title: "Bestand verwijderen",
@@ -1593,13 +1678,16 @@
                             try {
                                 if (fileData.storagePath) {
                                     try {
-                                        const fileRef = storageRef(storage, fileData.storagePath);
-                                        await deleteObject(fileRef);
+                                        await deleteObject(storageRef(storage, fileData.storagePath));
                                     } catch (storageErr) {
                                         console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
                                     }
                                 }
                                 await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
+                                if (activePdfFileKey === fileKey) {
+                                    activePdfFileKey = null;
+                                    openPdfText(null, false);
+                                }
                             } catch (err) {
                                 console.error("Verwijderen mislukt:", err);
                                 window.customModal({ title: "Fout", message: "Fout bij verwijderen: " + err.message });
@@ -1615,44 +1703,89 @@
             if (fileListenerSet) return;
             fileListenerSet = true;
 
-            const dropZone = document.getElementById('drop-zone');
+            const dropZone  = document.getElementById('drop-zone');
             const fileInput = document.getElementById('file-input');
             const uploadBtn = document.getElementById('upload-btn');
             const browseBtn = document.getElementById('browse-btn');
-            
-            if(browseBtn && fileInput) {
-                browseBtn.addEventListener('click', () => fileInput.click());
-            }
+            const cancelBtn = document.getElementById('cancel-upload-btn');
+            const previewEl = document.getElementById('selected-files-preview');
 
-            if(dropZone && fileInput) {
-                dropZone.addEventListener('click', (e) => {
-                    if (e.target !== browseBtn) fileInput.click();
-                });
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add('dragover');
-                });
-                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('dragover');
-                    if (e.dataTransfer.files.length) {
-                        fileInput.files = e.dataTransfer.files;
-                        selectedFiles = Array.from(fileInput.files);
+            const openDialog = (e) => { if (e) e.preventDefault(); fileInput.click(); };
+
+            const updatePreview = () => {
+                if (!previewEl) return;
+                if (!selectedFiles.length) { previewEl.innerHTML = ''; return; }
+                previewEl.innerHTML = selectedFiles.map((f, i) => `
+                    <div class="flex items-center justify-between bg-blue-50 border border-blue-200 rounded px-3 py-2 mb-1 text-sm">
+                        <span class="truncate"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i>${escapeHtml(f.name)} <span class="text-gray-500">(${(f.size/1024/1024).toFixed(2)} MB)</span></span>
+                        <button type="button" class="text-red-600 hover:text-red-800 font-bold ml-2" data-remove="${i}">&times;</button>
+                    </div>`).join('');
+                previewEl.querySelectorAll('[data-remove]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const idx = parseInt(btn.dataset.remove, 10);
+                        selectedFiles.splice(idx, 1);
+                        const dt = new DataTransfer();
+                        selectedFiles.forEach(f => dt.items.add(f));
+                        fileInput.files = dt.files;
+                        updatePreview();
                         updateUploadStatus();
-                    }
+                    });
                 });
-            }
+            };
 
-            if(fileInput) {
-                fileInput.addEventListener('change', () => {
-                    selectedFiles = Array.from(fileInput.files);
+            const updateUploadStatus = () => {
+                const dropZoneLabel = document.getElementById('drop-zone-label');
+                if (dropZoneLabel) {
+                    dropZoneLabel.innerHTML = selectedFiles.length
+                        ? `✅ ${selectedFiles.length} bestand(en) geselecteerd`
+                        : `📁 Sleep hier PDF-bestanden heen`;
+                }
+                if (uploadBtn) uploadBtn.disabled = !selectedFiles.length || isUploading;
+                if (cancelBtn) cancelBtn.style.display = isUploading ? 'inline-flex' : 'none';
+                updatePreview();
+            };
+
+            if (browseBtn) browseBtn.addEventListener('click', openDialog);
+
+            if (dropZone) {
+                dropZone.addEventListener('click', (e) => {
+                    if (e.target.closest('button, a, input')) return;
+                    openDialog(e);
+                });
+                dropZone.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openDialog(e); }
+                });
+                ['dragenter','dragover'].forEach(evt => dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation(); dropZone.classList.add('dragover');
+                }));
+                ['dragleave','drop'].forEach(evt => dropZone.addEventListener(evt, (e) => {
+                    e.preventDefault(); e.stopPropagation(); dropZone.classList.remove('dragover');
+                }));
+                dropZone.addEventListener('drop', (e) => {
+                    const files = Array.from(e.dataTransfer?.files || []).filter(
+                        f => f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')
+                    );
+                    if (!files.length) {
+                        window.customModal({ title: "Ongeldig bestand", message: "Sleep alleen PDF-bestanden." });
+                        return;
+                    }
+                    selectedFiles = files;
+                    const dt = new DataTransfer(); files.forEach(f => dt.items.add(f));
+                    fileInput.files = dt.files;
                     updateUploadStatus();
                 });
             }
 
-            if(uploadBtn) {
+            if (fileInput) {
+                fileInput.addEventListener('change', () => {
+                    selectedFiles = Array.from(fileInput.files || []);
+                    updateUploadStatus();
+                });
+            }
+
+            if (uploadBtn) {
                 uploadBtn.addEventListener('click', async () => {
+                    if (isUploading) return;
                     if (selectedFiles.length === 0) {
                         window.customModal({ title: "Attentie", message: "Selecteer eerst een of meer PDF-bestanden." });
                         return;
@@ -1661,97 +1794,133 @@
                         window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
                         return;
                     }
+
+                    for (const f of selectedFiles) {
+                        const sizeMB = f.size / 1024 / 1024;
+                        if (sizeMB > PDF_MAX_SIZE_MB) {
+                            window.customModal({ title: "Bestand te groot",
+                                message: `"${f.name}" is ${sizeMB.toFixed(1)} MB. Maximaal ${PDF_MAX_SIZE_MB} MB.` });
+                            return;
+                        }
+                        if (f.size === 0) {
+                            window.customModal({ title: "Leeg bestand", message: `"${f.name}" is leeg.` });
+                            return;
+                        }
+                    }
+
+                    isUploading = true;
+                    cancelUploadRequested = false;
+                    updateUploadStatus();
                     uploadBtn.disabled = true;
-                    uploadBtn.textContent = 'Uploaden...';
-                    setStatus("Bezig met uploaden naar Firebase...", "info");
-                    
-                    let successCount = 0;
+                    uploadBtn.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Uploaden…';
+
+                    let successCount = 0, failCount = 0;
                     let lastUploadedSource = null;
 
                     for (const file of selectedFiles) {
+                        if (cancelUploadRequested) break;
                         try {
-                            const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                            setStatus(`Uploaden: ${file.name}…`, "info");
+
                             try {
+                                const path = `classes/${uClass}/files/${Date.now()}_${Math.random().toString(36).slice(2,7)}_${file.name}`;
                                 const url = await uploadPdfViaStorage(file, path, (pct) => {
-                                    setStatus(`Bezig met uploaden van ${file.name} (${pct}%)...`, "info");
+                                    setStatus(`Uploaden ${file.name} (${pct}%)…`, "info");
                                 });
                                 const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
                                 await set(newFileRef, {
-                                    name: file.name,
-                                    url: url,
-                                    storagePath: path,
+                                    name: file.name, url, storagePath: path,
                                     uploadedBy: uName || 'onbekend',
-                                    timestamp: Date.now()
+                                    timestamp: Date.now(), size: file.size
                                 });
                                 lastUploadedSource = url;
                                 successCount++;
                             } catch (storageErr) {
                                 console.warn("Storage upload mislukt, schakel over naar Realtime Database:", storageErr);
-                                setStatus(`Storage reageert niet — bezig met opslaan van ${file.name} via database...`, "info");
+                                setStatus(`Storage reageert niet — bezig met opslaan van ${file.name} via database…`, "warning");
+
                                 const b64 = await readPdfFileAsBase64(file);
-                                const chunks = splitPdfIntoChunks(b64, 262144);
+                                const chunks = splitPdfIntoChunks(b64, RTDB_CHUNK_SIZE);
+
+                                if (b64.length > 7 * 1024 * 1024) {
+                                    throw new Error(
+                                        `PDF te groot voor database-fallback (${(b64.length/1024/1024).toFixed(1)} MB). ` +
+                                        `Probeer Firebase Storage of verklein het bestand.`
+                                    );
+                                }
+
                                 const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
                                 const fileKey = newFileRef.key;
                                 for (let c = 0; c < chunks.length; c++) {
+                                    if (cancelUploadRequested) throw new Error('Geannuleerd door gebruiker');
                                     await set(ref(db, `mutatieles/${uClass}/files/${fileKey}/chunks/${c}`), chunks[c]);
                                     const pct = Math.round(((c + 1) / chunks.length) * 100);
-                                    setStatus(`Bezig met opslaan via database: ${file.name} (${pct}%)...`, "info");
+                                    setStatus(`Opslaan in database ${file.name} (${pct}%)…`, "info");
                                 }
                                 await update(newFileRef, {
                                     name: file.name,
                                     isRtdbFile: true,
                                     chunkCount: chunks.length,
                                     uploadedBy: uName || 'onbekend',
-                                    timestamp: Date.now()
+                                    timestamp: Date.now(),
+                                    size: file.size
                                 });
                                 lastUploadedSource = { type: 'rtdbFile', fileKey: fileKey, chunks: chunks };
                                 successCount++;
                             }
                         } catch (err) {
                             console.error("Upload mislukt:", err);
-                            setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
+                            failCount++;
+                            setStatus(`Fout bij "${file.name}": ${err.message}`, "error");
                         }
                     }
+
+                    isUploading = false;
                     selectedFiles = [];
-                    if(fileInput) fileInput.value = '';
+                    if (fileInput) fileInput.value = '';
                     updateUploadStatus();
-                    uploadBtn.disabled = false;
                     uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Geselecteerde';
+                    uploadBtn.disabled = true;
+
                     if (successCount > 0) {
-                        setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                        if (lastUploadedSource) {
-                            await openPdfText(lastUploadedSource, true);
-                        }
+                        setStatus(`${successCount} bestand(en) succesvol geüpload${failCount ? `, ${failCount} mislukt` : ''}.`, "success");
+                        if (lastUploadedSource) await openPdfText(lastUploadedSource, true);
+                    } else if (failCount > 0) {
+                        setStatus(`Upload mislukt voor ${failCount} bestand(en).`, "error");
                     }
                 });
             }
 
-            // Realtime listener for uploaded files
+            if (cancelBtn) {
+                cancelBtn.addEventListener('click', () => {
+                    cancelUploadRequested = true;
+                    setStatus('Upload geannuleerd. Laatst voltooide chunks blijven staan.', "warning");
+                });
+            }
+
             const filesRef = ref(db, `mutatieles/${uClass}/files`);
             onValue(filesRef, (snap) => {
                 renderFileList(snap.val());
             });
 
-            // Feedback listener
             const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
             onValue(feedbackRef, (snap) => {
                 const feed = document.getElementById('feedback-feed');
-                if(!feed) return;
+                if (!feed) return;
                 feed.innerHTML = '';
                 const data = snap.val();
-                if(data) {
+                if (data) {
                     Object.values(data).reverse().forEach(item => {
                         const div = document.createElement('div');
                         div.className = 'feedback-msg';
-                        div.innerHTML = `<strong>${item.author}:</strong> ${item.text}`;
+                        div.innerHTML = `<strong>${escapeHtml(item.author)}:</strong> ${escapeHtml(item.text)}`;
                         feed.appendChild(div);
                     });
                 }
             });
 
-            // Feedback submit button
             const sendFeedbackBtn = document.getElementById('send-feedback-btn');
-            const feedbackInput = document.getElementById('feedback-input');
+            const feedbackInput   = document.getElementById('feedback-input');
             if (sendFeedbackBtn && feedbackInput && !sendFeedbackBtn.dataset.bound) {
                 sendFeedbackBtn.dataset.bound = '1';
                 sendFeedbackBtn.addEventListener('click', async () => {
@@ -1778,17 +1947,7 @@
                 });
             }
 
-            function updateUploadStatus() {
-                const dropZoneText = document.querySelector('#drop-zone p');
-                if(!dropZoneText || !uploadBtn) return;
-                if (selectedFiles.length) {
-                    dropZoneText.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload Geselecteerde".`;
-                    uploadBtn.disabled = false;
-                } else {
-                    dropZoneText.innerHTML = `📁 Sleep hier PDF-bestanden heen`;
-                    uploadBtn.disabled = true;
-                }
-            }
+            updateUploadStatus();
         }
 
         // ===== SLEEPOPDRACHT – POINTER EVENTS (MUIS + TOUCH) =====
@@ -2300,10 +2459,13 @@
         }
 
         function initPdfSync() {
-            if (pdfSelect) {
+            if (pdfSelect && !pdfSelectListenerBound) {
+                pdfSelectListenerBound = true;
                 pdfSelect.addEventListener('change', (e) => {
                     const url = e.target.value;
                     if (url) {
+                        activePdfFileKey = null;
+                        renderFileList(lastFilesData);
                         openPdfText(url, true);
                     } else {
                         if (pdfViewer && pdfPlaceholder) {
@@ -2323,6 +2485,8 @@
                 pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
                     const val = snap.val();
                     if (val && typeof val === 'string') {
+                        activePdfFileKey = null;
+                        renderFileList(lastFilesData);
                         openPdfText(val, false);
                         if (pdfSelect) {
                             const options = pdfSelect.options;
@@ -2334,6 +2498,8 @@
                             }
                         }
                     } else if (val && typeof val === 'object' && val.type === 'rtdbFile' && val.fileKey) {
+                        activePdfFileKey = val.fileKey;
+                        renderFileList(lastFilesData);
                         openPdfText(val, false);
                     }
                 });
