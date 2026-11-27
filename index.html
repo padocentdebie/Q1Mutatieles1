@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+F<!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8" />
@@ -188,6 +188,19 @@
             border-radius: 8px;
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        /* Kennischeck (Scherm 4) */
+        #quiz-container input[type="radio"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0;
+            accent-color: var(--police-blue);
+        }
+        #quiz-container textarea {
+            min-height: 90px;
+            margin-bottom: 0;
+            resize: vertical;
         }
         .audio-player-container {
             background: #f1f5f9;
@@ -400,6 +413,104 @@
             border: 0;
             display: block;
         }
+        /* Digibord Pro (Scherm 2 & Scherm 5) */
+        #board-container, #board-container-5 {
+            position: relative;
+            width: 100%;
+            height: 65vh;
+            background: #ffffff;
+            margin: 15px auto 12px auto;
+            border: 2px solid var(--police-blue);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            touch-action: none;
+            overflow: hidden;
+        }
+        #whiteboard, #whiteboard-5 {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+            border-radius: 10px;
+            touch-action: none;
+        }
+        #board-container #status, #board-container-5 #status-5 {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #eee;
+            border: 1px solid #ccc;
+            z-index: 10;
+        }
+        #board-container #status.online, #board-container-5 #status-5.online {
+            background: #ebffed;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        #trash-zone, #trash-zone-5 {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 55px;
+            height: 55px;
+            background: #fee2e2;
+            border: 2px dashed #f87171;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            opacity: 0.6;
+            transition: 0.2s;
+            z-index: 10;
+            user-select: none;
+        }
+        #trash-zone.active, #trash-zone-5.active {
+            transform: scale(1.2);
+            background: #ef4444;
+            opacity: 1;
+            border-style: solid;
+        }
+        .board-toolbar {
+            width: 100%;
+            background: #ffffff;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .board-toolbar input {
+            padding: 12px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+        .board-toolbar .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            width: auto;
+            margin-bottom: 0;
+        }
+        #addBtn, #addBtn-5 { background: #003082; }
+        #addBtn:hover, #addBtn-5:hover { background: #002360; }
+        #clearBtn, #clearBtn-5 { background: #d32f2f; }
+        #clearBtn:hover, #clearBtn-5:hover { background: #b71c1c; }
         /* Navigation Steps Bar */
         .step-nav {
             display: flex;
@@ -500,19 +611,17 @@
                 <h1 class="text-2xl font-bold">Digibord (Klas: <span id="current-class-label-2" class="text-yellow-600"></span>)</h1>
             </div>
             
-            <div class="board-iframe-wrapper">
-                <iframe
-                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                    title="Whiteboard.team bord"
-                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy"
-                ></iframe>
+            <div id="board-container">
+                <canvas id="whiteboard" width="1200" height="800"></canvas>
+                <div id="status">Status: Laden...</div>
+                <div id="trash-zone">🗑️</div>
             </div>
-            <p class="text-xs text-gray-500 mb-6 flex items-center gap-1">
-                <i class="fa-solid fa-circle-info"></i> Werkt het bord niet direct? Open het in een nieuw tabblad:
-                <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold ml-1">whiteboard.team/app/board/xmpgfKFx</a>
-            </p>
+
+            <div class="board-toolbar">
+                <input type="text" id="wordInput" placeholder="Woord invoeren..." />
+                <button type="button" id="addBtn" class="btn">Toevoegen</button>
+                <button type="button" id="clearBtn" class="btn">Wis Bord</button>
+            </div>
 
             <h1 class="text-2xl font-bold mt-8 border-t pt-6">Lesdoelen &amp; Werkwijze</h1>
             <div class="grid-2">
@@ -636,8 +745,31 @@
 
         <!-- SCREEN 4: KENNISCHECK -->
         <div id="screen-4" class="hidden">
-            <h1 class="text-2xl font-bold mb-4">Kennischeck Mutatieleer</h1>
+            <h1 class="text-2xl font-bold mb-2">Kennischeck Mutatieleer</h1>
+            <p class="text-gray-600 text-sm mb-4">Beantwoord onderstaande 10 vragen en lever ze in. Alle antwoorden verschijnen daarna direct in de klassen-livefeed zodat we ze samen kunnen bespreken.</p>
             <div id="quiz-container"></div>
+
+            <div class="live-feed mt-8">
+                <div class="flex justify-between items-center flex-wrap gap-3 mb-3 border-b pb-2">
+                    <h3 class="text-lg font-bold"><i class="fa-solid fa-tower-broadcast text-red-600 animate-pulse mr-2"></i>Live Antwoorden Klas: <span id="kennischeck-class-label" class="text-yellow-600"></span> <span id="kennischeck-count" class="text-xs font-semibold text-gray-500 ml-2">(0 ingeleverd)</span></h3>
+                    <select id="kc-filter-question" class="w-auto mb-0 text-sm py-1.5 px-3">
+                        <option value="all">Alle 10 vragen tonen</option>
+                        <option value="q1">Filter: Vraag 1 (Aanhef)</option>
+                        <option value="q2">Filter: Vraag 2 (Situatie)</option>
+                        <option value="q3">Filter: Vraag 3 (Filmisch schrijven)</option>
+                        <option value="q4">Filter: Vraag 4 (Maatregelen vs. Afhandeling)</option>
+                        <option value="q5">Filter: Vraag 5 (Telegramstijl &amp; doel)</option>
+                        <option value="q6">Filter: Vraag 6 (Status mutatie)</option>
+                        <option value="q7">Filter: Vraag 7 (Alinea weersomstandigheden/voertuig)</option>
+                        <option value="q8">Filter: Vraag 8 (Filmisch waarnemen)</option>
+                        <option value="q9">Filter: Vraag 9 (Gouden W's)</option>
+                        <option value="q10">Filter: Vraag 10 (Maatregelen vs. Afhandeling praktijk)</option>
+                    </select>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Hier verschijnen alle ingeleverde antwoorden realtime. Studenten die nog typen worden hier niet door gestoord.</p>
+                <div id="kennischeck-feed" class="feed-container"></div>
+            </div>
+
             <div class="mt-6 flex justify-end">
                 <button class="btn btn-secondary w-auto px-8" onclick="showScreen(5)">
                     Naar PDF &amp; Digibord <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -704,14 +836,16 @@
             <div id="feedback-feed" class="feedback-feed"></div>
 
             <h3 class="text-lg font-bold mt-8 mb-2"><i class="fa-solid fa-chalkboard mr-2"></i>Digibord (multi‑user)</h3>
-            <div class="board-iframe-wrapper">
-                <iframe
-                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                    title="Whiteboard.team bord"
-                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy"
-                ></iframe>
+            <div id="board-container-5">
+                <canvas id="whiteboard-5" width="1200" height="800"></canvas>
+                <div id="status-5">Status: Laden...</div>
+                <div id="trash-zone-5">🗑️</div>
+            </div>
+
+            <div class="board-toolbar">
+                <input type="text" id="wordInput-5" placeholder="Woord invoeren..." />
+                <button type="button" id="addBtn-5" class="btn">Toevoegen</button>
+                <button type="button" id="clearBtn-5" class="btn">Wis Bord</button>
             </div>
 
             <div class="mt-6 flex justify-end">
@@ -741,17 +875,50 @@
             </div>
 
             <div class="my-6 border-t pt-4 bg-gray-50 p-4 rounded-lg border border-gray-200">
-                <h3 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-cloud-arrow-up mr-2"></i>Upload eigen audiobestand naar klas</h3>
+                <h3 class="font-bold text-blue-900 mb-2"><i class="fa-solid fa-folder-open mr-2"></i>M4A-bestand kiezen &amp; afspelen op alle apparaten</h3>
+                <p class="text-xs text-gray-600 mb-3">Kies een <strong>.m4a</strong> bestand vanaf je computer of memorystick. Het gekozen bestand wordt gedeeld en afgespeeld op alle ingelogde apparaten van de studenten in deze klas.</p>
+
                 <div class="flex gap-3 flex-wrap items-center">
-                    <input type="file" id="audio-file-input" accept="audio/*" class="w-auto flex-1 mb-0" />
-                    <button id="upload-audio-btn" class="btn btn-upload mb-0">
-                        <i class="fa-solid fa-file-audio"></i> Upload audio
+                    <input type="file" id="audio-file-input" accept=".m4a,audio/mp4,audio/x-m4a" class="hidden" />
+                    <button type="button" id="browse-audio-btn" class="btn btn-browse mb-0">
+                        <i class="fa-solid fa-hard-drive"></i> Blader naar .m4a (PC / USB)
                     </button>
+                    <button type="button" id="remove-audio-btn" class="btn btn-reset text-xs py-2.5 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                        <i class="fa-solid fa-trash-can"></i> Verwijder bestand
+                    </button>
+                    <span id="selected-audio-name" class="text-sm text-gray-700 font-medium flex-1 min-w-[180px]">Geen .m4a bestand gekozen</span>
                 </div>
+
                 <div id="audio-upload-status" class="mt-2 text-sm font-semibold hidden"></div>
-                <div class="mt-3">
-                    <p class="text-xs text-gray-500 mb-1">Actueel geüploade klas-audio:</p>
-                    <audio id="uploaded-audio-player" controls class="w-full"></audio>
+
+                <div class="mt-4 bg-white p-3 rounded border border-gray-200">
+                    <div class="flex justify-between items-center flex-wrap gap-2 mb-2">
+                        <p class="text-xs font-bold text-blue-900 uppercase m-0">
+                            <i class="fa-solid fa-music mr-1"></i> M4A Player (Klas): <span id="active-audio-filename" class="font-normal text-gray-700">Geen bestand geladen</span>
+                        </p>
+                        <label class="flex items-center gap-2 text-xs font-semibold text-gray-700 cursor-pointer select-none m-0">
+                            <input type="checkbox" id="audio-master-toggle" style="width: auto; padding: 0; margin: 0;" />
+                            Bedien afspelen op alle apparaten
+                        </label>
+                    </div>
+
+                    <audio id="uploaded-audio-player" controls preload="auto" class="w-full"></audio>
+
+                    <div class="flex gap-2 flex-wrap mt-3">
+                        <button type="button" id="play-all-audio-btn" class="btn bg-green-600 hover:bg-green-700 text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-play"></i> Speel af op alle apparaten
+                        </button>
+                        <button type="button" id="pause-all-audio-btn" class="btn btn-secondary text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-pause"></i> Pauzeer overal
+                        </button>
+                        <button type="button" id="stop-all-audio-btn" class="btn bg-slate-600 hover:bg-slate-700 text-xs py-2 px-4" style="width: auto; margin-bottom: 0;" disabled>
+                            <i class="fa-solid fa-stop"></i> Stop / Begin
+                        </button>
+                    </div>
+
+                    <button type="button" id="audio-unlock-btn" class="btn bg-yellow-400 hover:bg-yellow-500 text-blue-950 font-bold mt-3 mb-0 hidden">
+                        <i class="fa-solid fa-volume-high"></i> Klik hier om het gekozen .m4a bestand mee te luisteren
+                    </button>
                 </div>
             </div>
 
@@ -807,8 +974,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getDatabase, ref, set, onValue, remove, push, update, get } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getDatabase, ref, set, onValue, remove, push, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+        import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -832,6 +999,7 @@
         let fileListenerSet = false;
         let dragListener = null;
         let pdfListener = null;
+        let uploadStatusTimer = null;
 
         // Draft storage to prevent keystroke loss during live updates
         const draftReplyTexts = {};
@@ -881,13 +1049,255 @@
             btnCancel.onclick = handleCancel;
         };
 
+        // ===== DIGIBORD PRO - TOUCH & MULTI-USER (SCHERM 2 & SCHERM 5) =====
+        let digibordInitDone = false;
+        let boardDataListener = null;
+        let boardConnListener = null;
+        let boardObjects = {};
+        let boardEntries = [];
+        const boardRenderers = [];
+        const boardStatusUpdaters = [];
+
+        function renderSingleBoard(canvas, draggedId) {
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            boardEntries.forEach(([key, obj]) => {
+                if (!obj) return;
+                const isSel = key === draggedId;
+                if (obj.type === 'text') {
+                    ctx.font = "bold 24px Arial";
+                    ctx.fillStyle = isSel ? "#003082" : "#333";
+                    ctx.fillText(obj.text, obj.x, obj.y);
+                    if (isSel) {
+                        ctx.strokeStyle = "#003082";
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(obj.x - 5, obj.y - 30, ctx.measureText(obj.text).width + 10, 40);
+                    }
+                } else if (obj.type === 'path' && obj.points && obj.points.length > 0) {
+                    ctx.strokeStyle = "#4b5563";
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(obj.points[0].x, obj.points[0].y);
+                    obj.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function redrawAllBoards() {
+            boardRenderers.forEach(fn => fn());
+        }
+
+        function setupBoardInstance({ canvasId, statusId, trashId, inputId, addBtnId, clearBtnId }) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const statusLabel = document.getElementById(statusId);
+            const trashZone = document.getElementById(trashId);
+            const wordInput = document.getElementById(inputId);
+            const addBtn = document.getElementById(addBtnId);
+            const clearBtn = document.getElementById(clearBtnId);
+
+            let isDrawing = false, isDragging = false;
+            let draggedId = null;
+            let currentPathId = null;
+            let offsetX = 0, offsetY = 0;
+
+            boardRenderers.push(() => renderSingleBoard(canvas, draggedId));
+
+            const updateStatusUI = (isOnline) => {
+                if (!statusLabel) return;
+                if (isOnline) {
+                    statusLabel.innerText = "● LIVE";
+                    statusLabel.classList.add('online');
+                } else {
+                    statusLabel.innerText = "Status: Verbinden...";
+                    statusLabel.classList.remove('online');
+                }
+            };
+
+            // Universele positie berekening (Muis & Touch)
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+                const clientX = touch ? touch.clientX : e.clientX;
+                const clientY = touch ? touch.clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height),
+                    rawX: clientX,
+                    rawY: clientY
+                };
+            };
+
+            const startAction = (e) => {
+                if (!uClass) return;
+                const { x, y } = getPos(e);
+                draggedId = null;
+                isDragging = false;
+
+                const entries = boardEntries.slice().reverse();
+                for (const [id, obj] of entries) {
+                    if (obj && obj.type === 'text') {
+                        ctx.font = "bold 24px Arial";
+                        const w = ctx.measureText(obj.text).width;
+                        if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
+                            draggedId = id;
+                            isDragging = true;
+                            offsetX = x - obj.x;
+                            offsetY = y - obj.y;
+                            renderSingleBoard(canvas, draggedId);
+                            return;
+                        }
+                    }
+                }
+                isDrawing = true;
+                const newPathRef = push(ref(db, `mutatieles/${uClass}/board`));
+                currentPathId = newPathRef.key;
+                set(newPathRef, { type: 'path', points: [{ x, y }] });
+            };
+
+            const moveAction = (e) => {
+                if (!isDragging && !isDrawing) return;
+                if (!uClass) return;
+                const { x, y, rawX, rawY } = getPos(e);
+
+                if (isDragging && draggedId) {
+                    update(ref(db, `mutatieles/${uClass}/board/${draggedId}`), { x: x - offsetX, y: y - offsetY });
+                    const tRect = trashZone.getBoundingClientRect();
+                    trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
+                } else if (isDrawing && currentPathId) {
+                    const path = boardObjects[currentPathId];
+                    if (path && path.points) {
+                        const lastP = path.points[path.points.length - 1];
+                        if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
+                            update(ref(db, `mutatieles/${uClass}/board/${currentPathId}`), {
+                                points: [...path.points, { x, y }]
+                            });
+                        }
+                    }
+                }
+            };
+
+            const stopAction = () => {
+                if (isDragging && draggedId && trashZone.classList.contains('active') && uClass) {
+                    remove(ref(db, `mutatieles/${uClass}/board/${draggedId}`));
+                }
+                const wasDragging = isDragging;
+                isDrawing = isDragging = false;
+                draggedId = currentPathId = null;
+                trashZone.classList.remove('active');
+                if (wasDragging) renderSingleBoard(canvas, null);
+            };
+
+            // Event Listeners voor Muis
+            canvas.addEventListener('mousedown', startAction);
+            window.addEventListener('mousemove', moveAction);
+            window.addEventListener('mouseup', stopAction);
+
+            // Event Listeners voor Touch (Mobiel/Tablet)
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startAction(e);
+            }, { passive: false });
+            window.addEventListener('touchmove', (e) => {
+                if (!isDragging && !isDrawing) return;
+                e.preventDefault();
+                moveAction(e);
+            }, { passive: false });
+            window.addEventListener('touchend', stopAction);
+            window.addEventListener('touchcancel', stopAction);
+
+            // Knoppen
+            if (addBtn && wordInput) {
+                const addWord = () => {
+                    const val = wordInput.value.trim();
+                    if (val && uClass) {
+                        push(ref(db, `mutatieles/${uClass}/board`), { type: 'text', text: val, x: 150, y: 150 });
+                        wordInput.value = '';
+                    }
+                };
+                addBtn.onclick = addWord;
+                wordInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addWord();
+                    }
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    if (!uClass) return;
+                    window.customModal({
+                        title: "Bord wissen",
+                        message: "Hele bord wissen?",
+                        isConfirm: true,
+                        onConfirm: () => {
+                            remove(ref(db, `mutatieles/${uClass}/board`));
+                        }
+                    });
+                };
+            }
+
+            return updateStatusUI;
+        }
+
+        function initDigibord() {
+            if (!uClass) return;
+
+            if (!digibordInitDone) {
+                digibordInitDone = true;
+
+                const update2 = setupBoardInstance({
+                    canvasId: 'whiteboard',
+                    statusId: 'status',
+                    trashId: 'trash-zone',
+                    inputId: 'wordInput',
+                    addBtnId: 'addBtn',
+                    clearBtnId: 'clearBtn'
+                });
+                if (update2) boardStatusUpdaters.push(update2);
+
+                const update5 = setupBoardInstance({
+                    canvasId: 'whiteboard-5',
+                    statusId: 'status-5',
+                    trashId: 'trash-zone-5',
+                    inputId: 'wordInput-5',
+                    addBtnId: 'addBtn-5',
+                    clearBtnId: 'clearBtn-5'
+                });
+                if (update5) boardStatusUpdaters.push(update5);
+
+                // Status sync
+                if (boardConnListener) boardConnListener();
+                boardConnListener = onValue(ref(db, ".info/connected"), (snap) => {
+                    const isOnline = !!snap.val();
+                    boardStatusUpdaters.forEach(fn => fn(isOnline));
+                });
+            }
+
+            // Renderen
+            if (boardDataListener) boardDataListener();
+            boardDataListener = onValue(ref(db, `mutatieles/${uClass}/board`), (snap) => {
+                boardObjects = snap.val() || {};
+                boardEntries = [];
+                snap.forEach((child) => {
+                    boardEntries.push([child.key, child.val()]);
+                });
+                redrawAllBoards();
+            });
+        }
+
         // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) =====
         const allCases = [
             {
                 title: 'Casus 1: Verwarde vrouw op de Laan 1914',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
-                    '<strong>* Situatie:</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
+                    '<strong>*:</strong> Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
+                    '<strong>*:</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
                     '<strong>* Toedracht:</strong> Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
                     '<strong>* Maatregelen:</strong> Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
                     '<strong>* Afhandeling:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
@@ -937,10 +1347,115 @@
 
         let currentCaseIndex = -1;
 
-        // ===== HULP: PDF WEERGEVEN (Canvas rendering) =====
-        async function openPdfText(url, sync = true) {
+        // ===== HULP: PDF WEERGEVEN (Canvas rendering + RTDB chunks fallback) =====
+        function readPdfFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const res = reader.result;
+                    if (typeof res === 'string') {
+                        const commaIdx = res.indexOf(',');
+                        resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
+                    } else {
+                        reject(new Error('Ongeldig bestandsformaat'));
+                    }
+                };
+                reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function splitPdfIntoChunks(str, chunkSize = 262144) {
+            const chunks = [];
+            for (let i = 0; i < str.length; i += chunkSize) {
+                chunks.push(str.slice(i, i + chunkSize));
+            }
+            return chunks;
+        }
+
+        function base64ChunksToUint8Array(base64Input) {
+            let cleanB64 = '';
+            if (Array.isArray(base64Input)) {
+                cleanB64 = base64Input.join('');
+            } else if (base64Input && typeof base64Input === 'object') {
+                cleanB64 = Object.keys(base64Input)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(k => base64Input[k])
+                    .join('');
+            } else {
+                cleanB64 = String(base64Input || '');
+            }
+            const commaIdx = cleanB64.indexOf(',');
+            if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
+            cleanB64 = cleanB64.replace(/\s+/g, '');
+            const byteChars = atob(cleanB64);
+            const len = byteChars.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = byteChars.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        function uploadPdfViaStorage(file, path, onProgress) {
+            return new Promise((resolve, reject) => {
+                const fileRef = storageRef(storage, path);
+                const uploadTask = uploadBytesResumable(fileRef, file);
+                let settled = false;
+                let lastBytes = 0;
+
+                let stallTimer = setTimeout(() => {
+                    if (!settled) {
+                        settled = true;
+                        try { uploadTask.cancel(); } catch (e) {}
+                        reject(new Error('Storage reageert niet (timeout)'));
+                    }
+                }, 8000);
+
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        if (settled) return;
+                        if (snapshot.bytesTransferred > lastBytes) {
+                            lastBytes = snapshot.bytesTransferred;
+                            clearTimeout(stallTimer);
+                            stallTimer = setTimeout(() => {
+                                if (!settled) {
+                                    settled = true;
+                                    try { uploadTask.cancel(); } catch (e) {}
+                                    reject(new Error('Storage upload vastgelopen'));
+                                }
+                            }, 8000);
+                        }
+                        if (onProgress && snapshot.totalBytes > 0) {
+                            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                            onProgress(pct);
+                        }
+                    },
+                    (error) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(stallTimer);
+                        reject(error);
+                    },
+                    async () => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(stallTimer);
+                        try {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(url);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    }
+                );
+            });
+        }
+
+        async function openPdfText(urlOrSource, sync = true) {
             if (!pdfViewer || !pdfPlaceholder) return;
-            if (!url) {
+            if (!urlOrSource) {
                 pdfViewer.innerHTML = '';
                 pdfViewer.classList.add('hidden');
                 pdfPlaceholder.classList.remove('hidden');
@@ -950,8 +1465,31 @@
                 pdfViewer.textContent = 'Bezig met laden en renderen van de PDF...';
                 pdfViewer.classList.remove('hidden');
                 pdfPlaceholder.classList.add('hidden');
+
+                let pdfInput = urlOrSource;
+                let syncValue = urlOrSource;
+
+                if (typeof urlOrSource === 'object' && urlOrSource !== null) {
+                    let chunks = urlOrSource.chunks;
+                    if (!chunks && urlOrSource.fileKey && uClass) {
+                        const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
+                        const fileVal = fileSnap.val();
+                        if (fileVal && fileVal.chunks) {
+                            chunks = fileVal.chunks;
+                        } else if (fileVal && fileVal.url) {
+                            pdfInput = fileVal.url;
+                        } else {
+                            const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
+                            if (chunkSnap.exists()) chunks = chunkSnap.val();
+                        }
+                    }
+                    if (chunks) {
+                        pdfInput = { data: base64ChunksToUint8Array(chunks) };
+                    }
+                    syncValue = urlOrSource.fileKey ? { type: 'rtdbFile', fileKey: urlOrSource.fileKey } : null;
+                }
                 
-                const pdf = await pdfjsLib.getDocument(url).promise;
+                const pdf = await pdfjsLib.getDocument(pdfInput).promise;
                 pdfViewer.innerHTML = '';
                 
                 const containerWidth = (pdfViewer.clientWidth || 800) - 40;
@@ -981,9 +1519,9 @@
                     }).promise;
                 }
                 
-                if (sync && uClass) {
+                if (sync && uClass && syncValue) {
                     const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                    set(currentPdfRef, url);
+                    set(currentPdfRef, syncValue);
                 }
             } catch (err) {
                 console.error('PDF laadfout:', err);
@@ -993,12 +1531,14 @@
 
         function setStatus(msg, type = "info") {
             if(!uploadStatus) return;
+            clearTimeout(uploadStatusTimer);
             uploadStatus.textContent = msg;
             uploadStatus.className = type;
             uploadStatus.style.display = "block";
             if(type === "success") {
                 uploadStatus.style.background = "#d4edda";
                 uploadStatus.style.color = "#155724";
+                uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 6000);
             } else if (type === "error") {
                 uploadStatus.style.background = "#f8d7da";
                 uploadStatus.style.color = "#721c24";
@@ -1006,20 +1546,27 @@
                 uploadStatus.style.background = "#d1ecf1";
                 uploadStatus.style.color = "#0c5460";
             }
-            setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
         }
 
         // Render File List in Screen 5
         function renderFileList(files) {
             if(!fileListItems) return;
             fileListItems.innerHTML = '';
-            if (!files || Object.keys(files).length === 0) {
+            if (!files || typeof files !== 'object') {
                 fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
                 return;
             }
             
-            const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
-            entries.forEach((fileData) => {
+            const entries = Object.entries(files)
+                .filter(([, f]) => f && typeof f === 'object' && f.name)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            if (entries.length === 0) {
+                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
+                return;
+            }
+
+            entries.forEach(([fileKey, fileData]) => {
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
@@ -1028,7 +1575,11 @@
                 
                 li.addEventListener('click', (e) => {
                     if (e.target.closest('.file-delete')) return;
-                    openPdfText(fileData.url, true);
+                    if (fileData.url) {
+                        openPdfText(fileData.url, true);
+                    } else if (fileData.isRtdbFile || fileData.chunks) {
+                        openPdfText({ type: 'rtdbFile', fileKey: fileKey, chunks: fileData.chunks }, true);
+                    }
                 });
 
                 const deleteBtn = li.querySelector('.file-delete');
@@ -1041,20 +1592,14 @@
                         onConfirm: async () => {
                             try {
                                 if (fileData.storagePath) {
-                                    const fileRef = storageRef(storage, fileData.storagePath);
-                                    await deleteObject(fileRef);
-                                }
-                                const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
-                                if (snapshot.exists()) {
-                                    const allFiles = snapshot.val();
-                                    for (let key in allFiles) {
-                                        const f = allFiles[key];
-                                        if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
-                                            await remove(ref(db, `mutatieles/uClass/files/{key}`));
-                                            break;
-                                        }
+                                    try {
+                                        const fileRef = storageRef(storage, fileData.storagePath);
+                                        await deleteObject(fileRef);
+                                    } catch (storageErr) {
+                                        console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
                                     }
                                 }
+                                await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
                             } catch (err) {
                                 console.error("Verwijderen mislukt:", err);
                                 window.customModal({ title: "Fout", message: "Fout bij verwijderen: " + err.message });
@@ -1121,21 +1666,47 @@
                     setStatus("Bezig met uploaden naar Firebase...", "info");
                     
                     let successCount = 0;
+                    let lastUploadedSource = null;
+
                     for (const file of selectedFiles) {
                         try {
-                            const path = `classes/uClass/files/{Date.now()}_${file.name}`;
-                            const fileRef = storageRef(storage, path);
-                            await uploadBytes(fileRef, file);
-                            const url = await getDownloadURL(fileRef);
-                            const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                            await set(newFileRef, {
-                                name: file.name,
-                                url: url,
-                                storagePath: path,
-                                uploadedBy: uName || 'onbekend',
-                                timestamp: Date.now()
-                            });
-                            successCount++;
+                            const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
+                            try {
+                                const url = await uploadPdfViaStorage(file, path, (pct) => {
+                                    setStatus(`Bezig met uploaden van ${file.name} (${pct}%)...`, "info");
+                                });
+                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                                await set(newFileRef, {
+                                    name: file.name,
+                                    url: url,
+                                    storagePath: path,
+                                    uploadedBy: uName || 'onbekend',
+                                    timestamp: Date.now()
+                                });
+                                lastUploadedSource = url;
+                                successCount++;
+                            } catch (storageErr) {
+                                console.warn("Storage upload mislukt, schakel over naar Realtime Database:", storageErr);
+                                setStatus(`Storage reageert niet — bezig met opslaan van ${file.name} via database...`, "info");
+                                const b64 = await readPdfFileAsBase64(file);
+                                const chunks = splitPdfIntoChunks(b64, 262144);
+                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                                const fileKey = newFileRef.key;
+                                for (let c = 0; c < chunks.length; c++) {
+                                    await set(ref(db, `mutatieles/${uClass}/files/${fileKey}/chunks/${c}`), chunks[c]);
+                                    const pct = Math.round(((c + 1) / chunks.length) * 100);
+                                    setStatus(`Bezig met opslaan via database: ${file.name} (${pct}%)...`, "info");
+                                }
+                                await update(newFileRef, {
+                                    name: file.name,
+                                    isRtdbFile: true,
+                                    chunkCount: chunks.length,
+                                    uploadedBy: uName || 'onbekend',
+                                    timestamp: Date.now()
+                                });
+                                lastUploadedSource = { type: 'rtdbFile', fileKey: fileKey, chunks: chunks };
+                                successCount++;
+                            }
                         } catch (err) {
                             console.error("Upload mislukt:", err);
                             setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
@@ -1145,9 +1716,12 @@
                     if(fileInput) fileInput.value = '';
                     updateUploadStatus();
                     uploadBtn.disabled = false;
-                    uploadBtn.textContent = 'Upload Geselecteerde';
+                    uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Geselecteerde';
                     if (successCount > 0) {
                         setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                        if (lastUploadedSource) {
+                            await openPdfText(lastUploadedSource, true);
+                        }
                     }
                 });
             }
@@ -1428,106 +2002,301 @@
         };
 
         // ===== KENNISCHECK (SCHERM 4) =====
-        const quizData = [
+        const kennischeckQuestions = [
             {
-                vraag: "Wat is de juiste volgorde van het ASTMA-model?",
-                opties: [
-                    "Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling",
-                    "Aanleiding, Toedracht, Situatie, Maatregelen, Afhandeling",
-                    "Situatie, Aanleiding, Toedracht, Maatregelen, Afhandeling"
-                ],
-                correct: 0
+                id: 'q1',
+                type: 'open',
+                vraag: "Welke informatie zou jij in de alinea 'Aanhef' plaatsen?",
+                placeholder: "Noteer welke gegevens je in de Aanhef (Aanleiding) opneemt..."
             },
             {
-                vraag: "Wat betekent de afkorting OVT in het kader van verslaglegging?",
-                opties: [
-                    "Onvoltooid Verleden Tijd",
-                    "Onvoltooid Toekomende Tijd",
-                    "Overleg Verleden Tijd"
-                ],
-                correct: 0
+                id: 'q2',
+                type: 'open',
+                vraag: "Stel: je komt ter plaatse bij een melding van een verdachte situatie op straat. Welke concrete gegevens over de omgeving, personen en voertuigen noteer je in de alinea 'Situatie'?",
+                placeholder: "Beschrijf welke concrete gegevens je bij Situatie vastlegt..."
             },
             {
-                vraag: "Welke vragen behoren tot de Gouden W's?",
-                opties: [
-                    "Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
-                    "Wie, wat, waar, wanneer, waarom, hoe, waarmee",
-                    "Wie, wat, waar, wanneer, waarom, hoe, wat"
-                ],
-                correct: 0
+                id: 'q3',
+                type: 'open',
+                vraag: "Wat betekent 'filmisch schrijven' in de alinea 'Toedracht', en hoe verwerk je daarin zintuiglijke waarnemingen? Geef zelf een kort voorbeeld van 2 à 3 zinnen in de OVT.",
+                placeholder: "Leg uit wat filmisch schrijven is en geef een kort voorbeeld in de OVT..."
             },
             {
-                vraag: "Waar wordt een politiemutatie NIET voor gebruikt?",
+                id: 'q4',
+                type: 'open',
+                vraag: "Leg in eigen woorden het verschil uit tussen de alinea 'Maatregelen' en de alinea 'Afhandeling', en geef bij beide één concreet praktijkvoorbeeld.",
+                placeholder: "Beschrijf het verschil en geef bij beide een praktijkvoorbeeld..."
+            },
+            {
+                id: 'q5',
+                type: 'open',
+                vraag: "Waarom mag je in een mutatie wél telegramstijl en afkortingen gebruiken, terwijl een mutatie niet als rechtstreeks wettig bewijsmiddel voor strafvervolging dient? Wat is dan wél het doel van de mutatie?",
+                placeholder: "Geef je antwoord in eigen woorden..."
+            },
+            {
+                id: 'q6',
+                type: 'mc',
+                vraag: "Welke uitspraak over het doel en de status van een politiemutatie is juist?",
                 opties: [
-                    "Voor opsporing en informatieopbouw",
-                    "Voor statistieken en bijzondere opdrachten",
-                    "Als rechtstreeks wettig bewijsmiddel voor strafvervolging"
-                ],
-                correct: 2
+                    "A) Een mutatie dient rechtstreeks als wettig bewijsmiddel voor strafvervolging.",
+                    "B) Een mutatie wordt opgenomen voor opsporing, statistieken en bijzondere opdrachten en vormt de basis voor verslaglegging.",
+                    "C) In een mutatie zijn afkortingen en onvolledige zinnen verboden.",
+                    "D) Een mutatie mag alleen worden opgemaakt bij een aanhouding."
+                ]
+            },
+            {
+                id: 'q7',
+                type: 'mc',
+                vraag: "In welke alinea van het ASTMA-model noteer je de weersomstandigheden, het zicht, de verkeersdrukte en het kenteken van een aangetroffen auto?",
+                opties: [
+                    "A) Aanleiding",
+                    "B) Situatie",
+                    "C) Toedracht",
+                    "D) Afhandeling"
+                ]
+            },
+            {
+                id: 'q8',
+                type: 'mc',
+                vraag: "Welke zin past het best bij objectief en 'filmisch' waarnemen in de Toedracht (OVT)?",
+                opties: [
+                    "A) \"De man was duidelijk agressief en zocht ruzie.\"",
+                    "B) \"Ik zag dat de man met gebalde vuisten op de voorbijganger afliep, hoorde hem hard schreeuwen en rook een sterke alcohollucht.\"",
+                    "C) \"Ik heb de man aangehouden en overgebracht naar het bureau.\"",
+                    "D) \"Betrokkene gedraagt zich altijd verward op deze locatie.\""
+                ]
+            },
+            {
+                id: 'q9',
+                type: 'mc',
+                vraag: "Welke reeks hoort bij de vragen die je in de alinea 'Toedracht' beantwoordt?",
+                opties: [
+                    "A) Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
+                    "B) Wie, wat, waar, welk kenteken, welk weer",
+                    "C) Waarom, waarmee, welke basiseenheid, welke zorgopvolging",
+                    "D) Alleen wie, wat en waar, vanwege de telegramstijl"
+                ]
+            },
+            {
+                id: 'q10',
+                type: 'mc',
+                vraag: "Je verleent ter plaatse EHBO, neemt een ademanalyse af en draagt daarna de mutatie over aan de wijkagent t.b.v. zorgopvolging. Hoe verdeel je dit over ASTMA?",
+                opties: [
+                    "A) Alles hoort in de Situatie.",
+                    "B) EHBO en ademanalyse horen bij Afhandeling; overdragen aan de wijkagent hoort bij Toedracht.",
+                    "C) EHBO en ademanalyse horen bij Maatregelen; overdragen aan de wijkagent t.b.v. zorgopvolging hoort bij Afhandeling.",
+                    "D) Alles hoort in de Aanleiding omdat het de start van de afhandeling is."
+                ]
             }
         ];
 
+        let kennischeckListener = null;
+        let latestKennischeckData = {};
+
+        function makeSafeKey(name) {
+            return String(name || 'onbekend').trim().replace(/[.#$\[\]\/]/g, '_') || 'onbekend';
+        }
+
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
-            if(!container) return;
+            if (!container) return;
+            if (container.dataset.rendered === '1') return;
+            container.dataset.rendered = '1';
             container.innerHTML = '';
-            
-            quizData.forEach((q, index) => {
+
+            kennischeckQuestions.forEach((q, index) => {
                 const div = document.createElement('div');
                 div.className = 'quiz-item';
-                div.innerHTML = `<p class="font-bold text-gray-800 mb-3"><span class="text-blue-800">Vraag ${index+1}:</span> ${q.vraag}</p>`;
-                
-                q.opties.forEach((opt, i) => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 p-2 rounded hover:bg-gray-100 cursor-pointer text-sm my-1 border border-gray-100';
-                    const radio = document.createElement('input');
-                    radio.type = 'radio';
-                    radio.name = `quiz${index}`;
-                    radio.value = i;
-                    label.appendChild(radio);
-                    label.appendChild(document.createTextNode(opt));
-                    div.appendChild(label);
-                });
+                const badge = q.type === 'open'
+                    ? '<span class="text-xs font-semibold bg-blue-100 text-blue-900 px-2 py-0.5 rounded ml-2">Open vraag</span>'
+                    : '<span class="text-xs font-semibold bg-yellow-100 text-yellow-900 px-2 py-0.5 rounded ml-2">Meerkeuze</span>';
+
+                div.innerHTML = `<p class="font-bold text-gray-800 mb-3"><span class="text-blue-800">Vraag ${index + 1}:</span> ${escapeHtml(q.vraag)} ${badge}</p>`;
+
+                if (q.type === 'open') {
+                    const ta = document.createElement('textarea');
+                    ta.id = `kc-input-${q.id}`;
+                    ta.placeholder = q.placeholder || 'Typ hier je antwoord...';
+                    div.appendChild(ta);
+                } else {
+                    q.opties.forEach((opt, i) => {
+                        const label = document.createElement('label');
+                        label.className = 'flex items-center gap-2 p-2.5 rounded hover:bg-gray-100 cursor-pointer text-sm my-1 border border-gray-100';
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `quiz_${q.id}`;
+                        radio.value = i;
+                        label.appendChild(radio);
+                        const span = document.createElement('span');
+                        span.textContent = opt;
+                        label.appendChild(span);
+                        div.appendChild(label);
+                    });
+                }
+
                 container.appendChild(div);
             });
 
-            const checkBtn = document.createElement('button');
-            checkBtn.className = 'btn mt-4';
-            checkBtn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Controleer antwoorden';
-            checkBtn.onclick = checkQuiz;
-            container.appendChild(checkBtn);
+            const submitBtn = document.createElement('button');
+            submitBtn.type = 'button';
+            submitBtn.id = 'kc-submit-btn';
+            submitBtn.className = 'btn bg-green-600 hover:bg-green-700 mt-4 py-3 text-base';
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Antwoorden inleveren (delen met klas)';
+            submitBtn.onclick = submitKennischeck;
+            container.appendChild(submitBtn);
 
-            const resultDiv = document.createElement('div');
-            resultDiv.id = 'quiz-result';
-            resultDiv.className = 'mt-4 font-bold text-lg p-3 rounded text-center hidden';
-            container.appendChild(resultDiv);
+            const statusMsg = document.createElement('div');
+            statusMsg.id = 'kc-submit-status';
+            statusMsg.className = 'mt-3 text-sm font-semibold text-center hidden p-2.5 rounded';
+            container.appendChild(statusMsg);
         }
 
-        function checkQuiz() {
-            let score = 0;
-            quizData.forEach((q, index) => {
-                const radios = document.getElementsByName(`quiz${index}`);
-                let selected = null;
-                for (let r of radios) {
-                    if (r.checked) {
-                        selected = parseInt(r.value);
-                        break;
+        async function submitKennischeck() {
+            if (!uClass || !uName) {
+                window.customModal({ title: "Inloggen vereist", message: "Log eerst in met je naam en klas." });
+                return;
+            }
+
+            const answers = {};
+            let hasAnyAnswer = false;
+
+            kennischeckQuestions.forEach((q) => {
+                if (q.type === 'open') {
+                    const val = (document.getElementById(`kc-input-${q.id}`)?.value || '').trim();
+                    answers[q.id] = val;
+                    if (val) hasAnyAnswer = true;
+                } else {
+                    const radios = document.getElementsByName(`quiz_${q.id}`);
+                    let selected = null;
+                    for (const r of radios) {
+                        if (r.checked) {
+                            selected = parseInt(r.value, 10);
+                            break;
+                        }
+                    }
+                    if (selected !== null) {
+                        answers[q.id] = selected;
+                        hasAnyAnswer = true;
                     }
                 }
-                if (selected === q.correct) score++;
             });
 
-            const resultDiv = document.getElementById('quiz-result');
-            if(resultDiv) {
-                resultDiv.classList.remove('hidden');
-                if(score === quizData.length) {
-                    resultDiv.textContent = `🎉 Gefeliciteerd! Alle ${quizData.length} vragen zijn correct!`;
-                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-green-100 text-green-800 border border-green-300';
-                } else {
-                    resultDiv.textContent = `Je hebt ${score} van de ${quizData.length} vragen goed. Probeer het opnieuw.`;
-                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-red-100 text-red-800 border border-red-300';
-                }
+            if (!hasAnyAnswer) {
+                window.customModal({ title: "Geen invoer", message: "Vul eerst ten minste één antwoord in voordat je inlevert." });
+                return;
             }
+
+            const btn = document.getElementById('kc-submit-btn');
+            const statusMsg = document.getElementById('kc-submit-status');
+            if (btn) btn.disabled = true;
+
+            try {
+                const safeKey = makeSafeKey(uName);
+                await set(ref(db, `mutatieles/${uClass}/kennischeck/${safeKey}`), {
+                    name: uName,
+                    answers: answers,
+                    timestamp: Date.now()
+                });
+
+                if (statusMsg) {
+                    statusMsg.textContent = '✅ Je antwoorden zijn ingeleverd en staan nu in de klassen-livefeed hieronder!';
+                    statusMsg.className = 'mt-3 text-sm font-semibold text-center p-2.5 rounded bg-green-100 text-green-800 border border-green-300';
+                }
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Ingeleverd! (Klik opnieuw om bij te werken)';
+                }
+            } catch (err) {
+                console.error('Inleveren mislukt:', err);
+                window.customModal({ title: "Fout", message: "Inleveren mislukt: " + err.message });
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function renderKennischeckFeed() {
+            const feed = document.getElementById('kennischeck-feed');
+            const countEl = document.getElementById('kennischeck-count');
+            const filterEl = document.getElementById('kc-filter-question');
+            if (!feed) return;
+
+            const prevScrollTop = feed.scrollTop;
+            const filterVal = filterEl ? filterEl.value : 'all';
+            const entries = Object.values(latestKennischeckData || {})
+                .filter(v => v && typeof v === 'object')
+                .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            if (countEl) {
+                countEl.textContent = `(${entries.length} ${entries.length === 1 ? 'student' : 'studenten'} ingeleverd)`;
+            }
+
+            feed.innerHTML = '';
+
+            if (entries.length === 0) {
+                feed.innerHTML = '<p class="text-sm text-gray-500 italic p-3 text-center">Nog geen antwoorden ingeleverd in deze klas.</p>';
+                return;
+            }
+
+            const questionsToShow = filterVal === 'all'
+                ? kennischeckQuestions
+                : kennischeckQuestions.filter(q => q.id === filterVal);
+
+            entries.forEach((entry) => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+
+                const timeStr = entry.timestamp
+                    ? new Date(entry.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+                    : 'Live';
+
+                let html = `<div class="feed-name">
+                    <span><i class="fa-solid fa-user text-blue-800 mr-1.5"></i> ${escapeHtml(entry.name || 'Student')}</span>
+                    <span class="text-xs text-gray-400 font-normal"><i class="fa-regular fa-clock mr-1"></i> ${escapeHtml(timeStr)}</span>
+                </div>`;
+
+                const ansMap = entry.answers || {};
+                questionsToShow.forEach((q) => {
+                    const qIndex = kennischeckQuestions.findIndex(item => item.id === q.id) + 1;
+                    let answerHtml = '<span class="text-gray-400 italic">(niet ingevuld)</span>';
+
+                    if (q.type === 'open') {
+                        const rawText = (ansMap[q.id] || '').trim();
+                        if (rawText) {
+                            answerHtml = escapeHtml(rawText).replace(/\n/g, '<br />');
+                        }
+                    } else {
+                        const idx = ansMap[q.id];
+                        if (Number.isInteger(idx) && q.opties[idx] !== undefined) {
+                            answerHtml = escapeHtml(q.opties[idx]);
+                        }
+                    }
+
+                    html += `<div class="text-sm py-1.5 border-b border-gray-100 last:border-b-0">
+                        <div class="font-semibold text-blue-900 text-xs mb-0.5">Vraag ${qIndex}: ${escapeHtml(q.vraag)}</div>
+                        <div class="text-gray-800 pl-2 border-l-2 border-yellow-400">${answerHtml}</div>
+                    </div>`;
+                });
+
+                card.innerHTML = html;
+                feed.appendChild(card);
+            });
+
+            feed.scrollTop = prevScrollTop;
+        }
+
+        function listenKennischeckFeed() {
+            if (!uClass) return;
+
+            const filterEl = document.getElementById('kc-filter-question');
+            if (filterEl && !filterEl.dataset.bound) {
+                filterEl.dataset.bound = '1';
+                filterEl.addEventListener('change', renderKennischeckFeed);
+            }
+
+            if (kennischeckListener) kennischeckListener();
+            kennischeckListener = onValue(ref(db, `mutatieles/${uClass}/kennischeck`), (snap) => {
+                latestKennischeckData = snap.val() || {};
+                renderKennischeckFeed();
+            });
         }
 
         function initPdfSync() {
@@ -1552,18 +2321,20 @@
             if (uClass) {
                 if (pdfListener) pdfListener();
                 pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
-                    const url = snap.val();
-                    if (url && typeof url === 'string') {
-                        openPdfText(url, false);
+                    const val = snap.val();
+                    if (val && typeof val === 'string') {
+                        openPdfText(val, false);
                         if (pdfSelect) {
                             const options = pdfSelect.options;
                             for (let i = 0; i < options.length; i++) {
-                                if (options[i].value === url) {
+                                if (options[i].value === val) {
                                     pdfSelect.selectedIndex = i;
                                     break;
                                 }
                             }
                         }
+                    } else if (val && typeof val === 'object' && val.type === 'rtdbFile' && val.fileKey) {
+                        openPdfText(val, false);
                     }
                 });
             }
@@ -1588,8 +2359,12 @@
             document.getElementById('current-class-label').textContent = uClass;
             const label2 = document.getElementById('current-class-label-2');
             if (label2) label2.textContent = uClass;
+            const kcLabel = document.getElementById('kennischeck-class-label');
+            if (kcLabel) kcLabel.textContent = uClass;
 
             showScreen(2);
+            initDigibord();
+            listenKennischeckFeed();
             listenClassFeed();
             initClassFeedInteractions();
             initSubmitMutation();
@@ -1610,6 +2385,8 @@
             document.querySelectorAll('.container > div:not(#nav-bar)').forEach(d => d.classList.add('hidden'));
             const el = document.getElementById('screen-' + n);
             if (el) el.classList.remove('hidden');
+
+            if (n === 2 || n === 5) redrawAllBoards();
 
             if (n === 3) {
                 const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
@@ -1690,7 +2467,7 @@
                 btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Bezig met versturen...';
 
                 try {
-                    await update(ref(db, `mutatieles/uClass/live/{uName}`), {
+                    await update(ref(db, `mutatieles/${uClass}/live/${uName}`), {
                         name: uName,
                         text: finalText,
                         mutation1: m1,
@@ -1778,7 +2555,7 @@
                     const draftVal = draftReplyTexts[student] || '';
 
                     html += `<div class="feed-reply">
-                        <input type="text" placeholder="Reageer op escapeHtml(student)..."data-reply-inputdata-student-key="{escapeHtml(student)}" value="${escapeHtml(draftVal)}" />
+                        <input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input data-student-key="${escapeHtml(student)}" value="${escapeHtml(draftVal)}" />
                         <button type="button" data-reply-btn data-student-key="${escapeHtml(student)}">Reageer</button>
                     </div></div>`;
 
@@ -1827,7 +2604,7 @@
 
                 btn.disabled = true;
                 try {
-                    const newRef = push(ref(db, `mutatieles/uClass/live/{student}/reactions`));
+                    const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
                     await set(newRef, {
                         author: uName,
                         text: text,
@@ -1852,7 +2629,7 @@
             });
         }
 
-        // ===== AUDIO UPLOAD & MEDIA =====
+        // ===== AUDIO UPLOAD & MEDIA (M4A BROWSER + GESYNCHRONISEERDE PLAYER) =====
         let audioInitDone = false;
         function initAudioFeatures() {
             if (audioInitDone) return;
@@ -1860,62 +2637,524 @@
             audioInitDone = true;
 
             const audioInput = document.getElementById('audio-file-input');
-            const uploadBtn = document.getElementById('upload-audio-btn');
+            const browseBtn = document.getElementById('browse-audio-btn');
+            const removeBtn = document.getElementById('remove-audio-btn');
+            const selectedNameEl = document.getElementById('selected-audio-name');
             const statusDiv = document.getElementById('audio-upload-status');
+            const activeFilenameEl = document.getElementById('active-audio-filename');
+            const masterToggle = document.getElementById('audio-master-toggle');
             const audioPlayer = document.getElementById('uploaded-audio-player');
+            const playAllBtn = document.getElementById('play-all-audio-btn');
+            const pauseAllBtn = document.getElementById('pause-all-audio-btn');
+            const stopAllBtn = document.getElementById('stop-all-audio-btn');
+            const unlockBtn = document.getElementById('audio-unlock-btn');
 
-            if (!audioInput || !uploadBtn || !statusDiv || !audioPlayer) return;
+            if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
+
+            const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+            let serverTimeOffset = 0;
+            let loadedTrackId = null;
+            let currentObjectUrl = null;
+            let currentAudioData = null;
+            let isRemoteSyncing = false;
+            let pendingRemoteState = null;
+            let lastAppliedCommandId = null;
+            let syncPublishTimer = null;
+
+            onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
+                serverTimeOffset = snap.val() || 0;
+            });
+
+            function showStatus(msg, color = '#0c5460') {
+                statusDiv.textContent = msg;
+                statusDiv.classList.remove('hidden');
+                statusDiv.style.color = color;
+            }
+
+            function setControlsEnabled(enabled) {
+                if (playAllBtn) playAllBtn.disabled = !enabled;
+                if (pauseAllBtn) pauseAllBtn.disabled = !enabled;
+                if (stopAllBtn) stopAllBtn.disabled = !enabled;
+                if (removeBtn) removeBtn.disabled = !enabled;
+            }
+
+            function showUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.remove('hidden');
+            }
+
+            function hideUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.add('hidden');
+            }
+
+            function formatDuration(sec) {
+                if (!Number.isFinite(sec) || sec < 0) return '0:00';
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+
+            function revokeCurrentObjectUrl() {
+                if (currentObjectUrl) {
+                    try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {}
+                    currentObjectUrl = null;
+                }
+            }
+
+            function base64ToBlobUrl(base64Input, mimeType) {
+                let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
+                const commaIdx = cleanB64.indexOf(',');
+                if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
+                cleanB64 = cleanB64.replace(/\s+/g, '');
+                const byteChars = atob(cleanB64);
+                const len = byteChars.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = byteChars.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mimeType || 'audio/mp4' });
+                return URL.createObjectURL(blob);
+            }
+
+            function resolvePlayableUrl(data) {
+                if (Array.isArray(data.chunks) && data.chunks.length > 0) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.chunks, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                if (typeof data.url === 'string' && data.url.startsWith('data:')) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.url, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                revokeCurrentObjectUrl();
+                return data.url;
+            }
+
+            function getEstimatedServerNow() {
+                return Date.now() + serverTimeOffset;
+            }
+
+            function computeTargetTime(data) {
+                const basePos = Number(data?.position) || 0;
+                if (!data?.isPlaying || !data?.updatedAt) return basePos;
+                const elapsed = Math.max(0, (getEstimatedServerNow() - data.updatedAt) / 1000);
+                if (elapsed > 7200) return basePos;
+                return basePos + elapsed;
+            }
+
+            function applyRemotePlayback(shouldPlay, targetTime) {
+                isRemoteSyncing = true;
+                try {
+                    if (Number.isFinite(targetTime) && targetTime >= 0) {
+                        const dur = audioPlayer.duration;
+                        const clamped = (Number.isFinite(dur) && dur > 0)
+                            ? Math.min(targetTime, Math.max(0, dur - 0.1))
+                            : targetTime;
+                        if (Math.abs((audioPlayer.currentTime || 0) - clamped) > 0.6) {
+                            audioPlayer.currentTime = clamped;
+                        }
+                    }
+                    if (shouldPlay) {
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.then(() => {
+                                hideUnlockBtn();
+                            }).catch((err) => {
+                                if (err && err.name === 'NotAllowedError') {
+                                    console.warn('Autoplay geblokkeerd op dit apparaat:', err);
+                                    showUnlockBtn();
+                                } else {
+                                    console.error('Afspelen mislukt:', err);
+                                    showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                                }
+                            });
+                        }
+                    } else {
+                        audioPlayer.pause();
+                        hideUnlockBtn();
+                    }
+                } finally {
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+                }
+            }
 
             const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
-            onValue(currentAudioRef, (snap) => {
-                const url = snap.val();
-                if (url && typeof url === 'string') {
-                    audioPlayer.src = url;
-                    statusDiv.textContent = 'Audio geladen van klas-server.';
-                    statusDiv.classList.remove('hidden');
-                    statusDiv.style.color = '#155724';
-                } else {
-                    audioPlayer.src = '';
-                    statusDiv.textContent = 'Nog geen geüploade audio gevonden voor deze klas.';
-                    statusDiv.classList.remove('hidden');
-                    statusDiv.style.color = '#6c757d';
+
+            function broadcastPlaybackState(isPlaying, position) {
+                if (!uClass || !currentAudioData) return;
+                const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                lastAppliedCommandId = cmdId;
+                update(currentAudioRef, {
+                    isPlaying: !!isPlaying,
+                    position: Number(position) || 0,
+                    updatedAt: serverTimestamp(),
+                    sender: clientId,
+                    commandId: cmdId
+                }).catch(err => console.error('Audio-sync update mislukt:', err));
+            }
+
+            function scheduleMasterBroadcast() {
+                if (!masterToggle || !masterToggle.checked || isRemoteSyncing || !currentAudioData) return;
+                clearTimeout(syncPublishTimer);
+                syncPublishTimer = setTimeout(() => {
+                    broadcastPlaybackState(!audioPlayer.paused, audioPlayer.currentTime || 0);
+                }, 80);
+            }
+
+            function readFileAsBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const res = reader.result;
+                        if (typeof res === 'string') {
+                            const commaIdx = res.indexOf(',');
+                            resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
+                        } else {
+                            reject(new Error('Ongeldig bestandsformaat'));
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            function splitIntoChunks(str, chunkSize = 512000) {
+                const chunks = [];
+                for (let i = 0; i < str.length; i += chunkSize) {
+                    chunks.push(str.slice(i, i + chunkSize));
+                }
+                return chunks;
+            }
+
+            async function tryStorageUpload(path, file, mimeType) {
+                const fileRef = storageRef(storage, path);
+                const uploadPromise = (async () => {
+                    await uploadBytes(fileRef, file, { contentType: mimeType });
+                    return await getDownloadURL(fileRef);
+                })();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Storage upload timeout')), 15000)
+                );
+                return await Promise.race([uploadPromise, timeoutPromise]);
+            }
+
+            audioPlayer.addEventListener('error', () => {
+                if (!loadedTrackId) return;
+                const err = audioPlayer.error;
+                let msg = 'Kan dit audiobestand niet afspelen in deze browser.';
+                if (err) {
+                    if (err.code === 1) msg = 'Laden van audio afgebroken.';
+                    else if (err.code === 2) msg = 'Netwerkfout bij laden van de audio.';
+                    else if (err.code === 3) msg = 'Fout bij decoderen van het .m4a bestand (mogelijk Apple Lossless of niet-ondersteunde codec).';
+                    else if (err.code === 4) msg = 'Audioformaat of codec wordt niet ondersteund door deze browser.';
+                }
+                showStatus('⚠️ ' + msg, '#721c24');
+            });
+
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                if (currentAudioData && Number.isFinite(audioPlayer.duration)) {
+                    showStatus(`✅ '${currentAudioData.fileName || 'audiobestand'}' gereed (${formatDuration(audioPlayer.duration)}) — druk op "Speel af op alle apparaten" of Play.`, '#155724');
+                }
+                if (pendingRemoteState) {
+                    const targetTime = computeTargetTime(pendingRemoteState);
+                    const shouldPlay = !!pendingRemoteState.isPlaying;
+                    pendingRemoteState = null;
+                    applyRemotePlayback(shouldPlay, targetTime);
                 }
             });
 
-            uploadBtn.addEventListener('click', async () => {
-                const file = audioInput.files[0];
-                if (!file) {
-                    window.customModal({ title: "Geen bestand", message: "Selecteer eerst een audiobestand om te uploaden." });
+            audioPlayer.addEventListener('play', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('pause', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('seeked', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('ended', () => {
+                if (masterToggle && masterToggle.checked && !isRemoteSyncing && currentAudioData) {
+                    broadcastPlaybackState(false, 0);
+                }
+            });
+
+            if (playAllBtn) {
+                playAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        if (audioPlayer.ended || (Number.isFinite(audioPlayer.duration) && audioPlayer.currentTime >= audioPlayer.duration - 0.5)) {
+                            audioPlayer.currentTime = 0;
+                        }
+                        const pos = audioPlayer.currentTime || 0;
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.catch((err) => {
+                                console.error('Afspelen mislukt:', err);
+                                showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                            });
+                        }
+                        broadcastPlaybackState(true, pos);
+                        hideUnlockBtn();
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (pauseAllBtn) {
+                pauseAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        broadcastPlaybackState(false, audioPlayer.currentTime || 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (stopAllBtn) {
+                stopAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        audioPlayer.currentTime = 0;
+                        broadcastPlaybackState(false, 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    if (!currentAudioData || !uClass) return;
+                    const fileName = currentAudioData.fileName || 'dit audiobestand';
+                    window.customModal({
+                        title: "Bestand verwijderen",
+                        message: `Weet je zeker dat je "${fileName}" wilt verwijderen voor de klas?`,
+                        isConfirm: true,
+                        onConfirm: async () => {
+                            removeBtn.disabled = true;
+                            const oldStoragePath = currentAudioData?.storagePath;
+                            try {
+                                isRemoteSyncing = true;
+                                audioPlayer.pause();
+                                if (oldStoragePath) {
+                                    try {
+                                        await deleteObject(storageRef(storage, oldStoragePath));
+                                    } catch (storageErr) {
+                                        console.warn('Storage bestand verwijderen overgeslagen:', storageErr);
+                                    }
+                                }
+                                await remove(currentAudioRef);
+                                audioInput.value = '';
+                            } catch (err) {
+                                console.error('Verwijderen mislukt:', err);
+                                showStatus(`Fout bij verwijderen: ${err.message}`, '#721c24');
+                            } finally {
+                                setTimeout(() => { isRemoteSyncing = false; }, 250);
+                            }
+                        }
+                    });
+                });
+            }
+
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    const targetTime = computeTargetTime(currentAudioData);
+                    applyRemotePlayback(true, targetTime);
+                });
+            }
+
+            onValue(currentAudioRef, (snap) => {
+                const raw = snap.val();
+                let data = null;
+
+                if (typeof raw === 'string' && raw.trim()) {
+                    data = {
+                        url: raw,
+                        fileName: 'Geüpload audiobestand',
+                        trackId: raw,
+                        isPlaying: false,
+                        position: 0
+                    };
+                } else if (raw && typeof raw === 'object' && (raw.url || (Array.isArray(raw.chunks) && raw.chunks.length > 0))) {
+                    data = raw;
+                }
+
+                if (!data) {
+                    currentAudioData = null;
+                    loadedTrackId = null;
+                    pendingRemoteState = null;
+                    isRemoteSyncing = true;
+                    audioPlayer.pause();
+                    audioPlayer.removeAttribute('src');
+                    audioPlayer.load();
+                    revokeCurrentObjectUrl();
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    if (activeFilenameEl) activeFilenameEl.textContent = 'Geen bestand geladen';
+                    if (selectedNameEl) selectedNameEl.textContent = 'Geen .m4a bestand gekozen';
+                    setControlsEnabled(false);
+                    hideUnlockBtn();
+                    showStatus('Nog geen .m4a bestand gekozen voor deze klas.', '#6c757d');
                     return;
                 }
-                if (!uClass) return;
 
-                uploadBtn.disabled = true;
-                uploadBtn.textContent = 'Uploaden...';
-                statusDiv.textContent = 'Bezig met uploaden naar Firebase Storage...';
-                statusDiv.classList.remove('hidden');
-                statusDiv.style.color = '#0c5460';
+                currentAudioData = data;
+                setControlsEnabled(true);
+                if (activeFilenameEl) activeFilenameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
+                if (selectedNameEl) selectedNameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
+
+                const incomingTrackId = data.trackId || data.url || '';
+                const isNewTrack = !loadedTrackId || incomingTrackId !== loadedTrackId;
+
+                if (isNewTrack) {
+                    loadedTrackId = incomingTrackId;
+                    lastAppliedCommandId = data.commandId || null;
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                    try {
+                        const playableUrl = resolvePlayableUrl(data);
+                        isRemoteSyncing = true;
+                        audioPlayer.pause();
+                        audioPlayer.src = playableUrl;
+                        audioPlayer.load();
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                        showStatus(`Bezig met laden van '${data.fileName || 'audiobestand'}' voor klas ${uClass}...`, '#0c5460');
+                    } catch (decodeErr) {
+                        console.error('Audio decoderen mislukt:', decodeErr);
+                        showStatus(`⚠️ Fout bij laden van '${data.fileName}': ${decodeErr.message}`, '#721c24');
+                    }
+                    return;
+                }
+
+                if (data.sender === clientId) {
+                    if (data.isPlaying) {
+                        showStatus(`▶ '${data.fileName || 'audio'}' speelt af op alle apparaten.`, '#155724');
+                    } else {
+                        showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                    }
+                    return;
+                }
+
+                if (data.commandId && data.commandId === lastAppliedCommandId) return;
+                lastAppliedCommandId = data.commandId || null;
+
+                if (data.isPlaying) {
+                    showStatus(`▶ '${data.fileName || 'audio'}' wordt afgespeeld door klas-bediening.`, '#155724');
+                } else {
+                    showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                }
+
+                if (audioPlayer.readyState >= 1) {
+                    const targetTime = computeTargetTime(data);
+                    applyRemotePlayback(!!data.isPlaying, targetTime);
+                } else {
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                }
+            });
+
+            browseBtn.addEventListener('click', () => {
+                audioInput.click();
+            });
+
+            audioInput.addEventListener('change', async () => {
+                const file = audioInput.files[0];
+                if (!file) return;
+                if (!uClass) {
+                    window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                const lowerName = file.name.toLowerCase();
+                const isAudio = lowerName.endsWith('.m4a') || lowerName.endsWith('.mp4') || lowerName.endsWith('.mp3') || lowerName.endsWith('.wav') || lowerName.endsWith('.aac') || lowerName.endsWith('.ogg') || (file.type && file.type.startsWith('audio/'));
+                if (!isAudio) {
+                    window.customModal({ title: "Ongeldig bestand", message: "Kies a.u.b. een geldig .m4a audiobestand vanaf je computer of memorystick." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                if (selectedNameEl) selectedNameEl.textContent = file.name;
+                browseBtn.disabled = true;
+                showStatus(`Bezig met laden van '${file.name}' naar alle ingelogde apparaten...`, '#0c5460');
+
+                const oldStoragePath = currentAudioData?.storagePath || null;
 
                 try {
-                    const path = `classes/uClass/audio/{Date.now()}_${file.name}`;
-                    const fileRef = storageRef(storage, path);
-                    await uploadBytes(fileRef, file);
-                    const url = await getDownloadURL(fileRef);
-                    await set(currentAudioRef, url);
-                    statusDiv.textContent = 'Audio succesvol geüpload voor de klas!';
-                    statusDiv.style.color = '#155724';
-                    audioInput.value = '';
+                    const mimeType = lowerName.endsWith('.m4a')
+                        ? 'audio/mp4'
+                        : (file.type || 'audio/mp4');
+
+                    let url = null;
+                    let chunks = null;
+                    let newStoragePath = null;
+
+                    try {
+                        const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
+                        url = await tryStorageUpload(path, file, mimeType);
+                        newStoragePath = path;
+                    } catch (storageErr) {
+                        console.warn('Firebase Storage upload mislukt, probeer RTDB chunks fallback:', storageErr);
+                        if (file.size <= 10 * 1024 * 1024) {
+                            const b64 = await readFileAsBase64(file);
+                            chunks = splitIntoChunks(b64, 512000);
+                        } else {
+                            throw new Error('Storage upload mislukt en bestand is groter dan 10 MB.');
+                        }
+                    }
+
+                    if (masterToggle) masterToggle.checked = true;
+                    const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                    const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+                    const payload = {
+                        fileName: file.name,
+                        mimeType: mimeType,
+                        uploadedBy: uName || 'onbekend',
+                        trackId: trackId,
+                        isPlaying: false,
+                        position: 0,
+                        updatedAt: serverTimestamp(),
+                        sender: clientId,
+                        commandId: cmdId
+                    };
+
+                    if (url) {
+                        payload.url = url;
+                        payload.storagePath = newStoragePath;
+                    } else {
+                        payload.chunks = chunks;
+                    }
+
+                    await set(currentAudioRef, payload);
+
+                    if (oldStoragePath && oldStoragePath !== newStoragePath) {
+                        deleteObject(storageRef(storage, oldStoragePath)).catch(() => {});
+                    }
+
+                    showStatus(`✅ '${file.name}' geladen! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
                 } catch (err) {
-                    console.error('Audio upload mislukt:', err);
-                    statusDiv.textContent = 'Fout bij uploaden: ' + err.message;
-                    statusDiv.style.color = '#721c24';
+                    console.error('M4A laden mislukt:', err);
+                    showStatus(`Fout bij laden van '${file.name}': ${err.message}`, '#721c24');
                 } finally {
-                    uploadBtn.disabled = false;
-                    uploadBtn.textContent = 'Upload audio';
+                    browseBtn.disabled = false;
+                    audioInput.value = '';
                 }
             });
         }
     </script>
 </body>
 </html>
+
+
 
