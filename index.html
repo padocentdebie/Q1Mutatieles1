@@ -400,8 +400,8 @@
             border: 0;
             display: block;
         }
-        /* Digibord Pro (Scherm 2) */
-        #board-container {
+        /* Digibord Pro (Scherm 2 & Scherm 5) */
+        #board-container, #board-container-5 {
             position: relative;
             width: 100%;
             height: 65vh;
@@ -413,7 +413,7 @@
             touch-action: none;
             overflow: hidden;
         }
-        #whiteboard {
+        #whiteboard, #whiteboard-5 {
             width: 100%;
             height: 100%;
             display: block;
@@ -421,7 +421,7 @@
             border-radius: 10px;
             touch-action: none;
         }
-        #board-container #status {
+        #board-container #status, #board-container-5 #status-5 {
             position: absolute;
             top: 10px;
             right: 15px;
@@ -433,12 +433,12 @@
             border: 1px solid #ccc;
             z-index: 10;
         }
-        #board-container #status.online {
+        #board-container #status.online, #board-container-5 #status-5.online {
             background: #ebffed;
             color: #2e7d32;
             border-color: #2e7d32;
         }
-        #trash-zone {
+        #trash-zone, #trash-zone-5 {
             position: absolute;
             top: 10px;
             left: 15px;
@@ -456,7 +456,7 @@
             z-index: 10;
             user-select: none;
         }
-        #trash-zone.active {
+        #trash-zone.active, #trash-zone-5.active {
             transform: scale(1.2);
             background: #ef4444;
             opacity: 1;
@@ -494,10 +494,10 @@
             width: auto;
             margin-bottom: 0;
         }
-        #addBtn { background: #003082; }
-        #addBtn:hover { background: #002360; }
-        #clearBtn { background: #d32f2f; }
-        #clearBtn:hover { background: #b71c1c; }
+        #addBtn, #addBtn-5 { background: #003082; }
+        #addBtn:hover, #addBtn-5:hover { background: #002360; }
+        #clearBtn, #clearBtn-5 { background: #d32f2f; }
+        #clearBtn:hover, #clearBtn-5:hover { background: #b71c1c; }
         /* Navigation Steps Bar */
         .step-nav {
             display: flex;
@@ -800,14 +800,16 @@
             <div id="feedback-feed" class="feedback-feed"></div>
 
             <h3 class="text-lg font-bold mt-8 mb-2"><i class="fa-solid fa-chalkboard mr-2"></i>Digibord (multi‑user)</h3>
-            <div class="board-iframe-wrapper">
-                <iframe
-                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                    title="Whiteboard.team bord"
-                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy"
-                ></iframe>
+            <div id="board-container-5">
+                <canvas id="whiteboard-5" width="1200" height="800"></canvas>
+                <div id="status-5">Status: Laden...</div>
+                <div id="trash-zone-5">🗑️</div>
+            </div>
+
+            <div class="board-toolbar">
+                <input type="text" id="wordInput-5" placeholder="Woord invoeren..." />
+                <button type="button" id="addBtn-5" class="btn">Toevoegen</button>
+                <button type="button" id="clearBtn-5" class="btn">Wis Bord</button>
             </div>
 
             <div class="mt-6 flex justify-end">
@@ -1010,193 +1012,245 @@
             btnCancel.onclick = handleCancel;
         };
 
-        // ===== DIGIBORD PRO - TOUCH & MULTI-USER (SCHERM 2) =====
+        // ===== DIGIBORD PRO - TOUCH & MULTI-USER (SCHERM 2 & SCHERM 5) =====
         let digibordInitDone = false;
         let boardDataListener = null;
         let boardConnListener = null;
         let boardObjects = {};
-        let boardDraggedId = null;
+        let boardEntries = [];
+        const boardRenderers = [];
+        const boardStatusUpdaters = [];
 
-        function initDigibord() {
-            const canvas = document.getElementById('whiteboard');
-            if (!canvas || !uClass) return;
+        function renderSingleBoard(canvas, draggedId) {
+            if (!canvas) return;
             const ctx = canvas.getContext('2d');
-            const statusLabel = document.getElementById('status');
-            const trashZone = document.getElementById('trash-zone');
-            const wordInput = document.getElementById('wordInput');
-            const addBtn = document.getElementById('addBtn');
-            const clearBtn = document.getElementById('clearBtn');
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            boardEntries.forEach(([key, obj]) => {
+                if (!obj) return;
+                const isSel = key === draggedId;
+                if (obj.type === 'text') {
+                    ctx.font = "bold 24px Arial";
+                    ctx.fillStyle = isSel ? "#003082" : "#333";
+                    ctx.fillText(obj.text, obj.x, obj.y);
+                    if (isSel) {
+                        ctx.strokeStyle = "#003082";
+                        ctx.lineWidth = 1.5;
+                        ctx.strokeRect(obj.x - 5, obj.y - 30, ctx.measureText(obj.text).width + 10, 40);
+                    }
+                } else if (obj.type === 'path' && obj.points && obj.points.length > 0) {
+                    ctx.strokeStyle = "#4b5563";
+                    ctx.lineWidth = 3;
+                    ctx.lineCap = "round";
+                    ctx.beginPath();
+                    ctx.moveTo(obj.points[0].x, obj.points[0].y);
+                    obj.points.forEach(p => ctx.lineTo(p.x, p.y));
+                    ctx.stroke();
+                }
+            });
+        }
+
+        function redrawAllBoards() {
+            boardRenderers.forEach(fn => fn());
+        }
+
+        function setupBoardInstance({ canvasId, statusId, trashId, inputId, addBtnId, clearBtnId }) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            const statusLabel = document.getElementById(statusId);
+            const trashZone = document.getElementById(trashId);
+            const wordInput = document.getElementById(inputId);
+            const addBtn = document.getElementById(addBtnId);
+            const clearBtn = document.getElementById(clearBtnId);
 
             let isDrawing = false, isDragging = false;
+            let draggedId = null;
             let currentPathId = null;
             let offsetX = 0, offsetY = 0;
+
+            boardRenderers.push(() => renderSingleBoard(canvas, draggedId));
+
+            const updateStatusUI = (isOnline) => {
+                if (!statusLabel) return;
+                if (isOnline) {
+                    statusLabel.innerText = "● LIVE";
+                    statusLabel.classList.add('online');
+                } else {
+                    statusLabel.innerText = "Status: Verbinden...";
+                    statusLabel.classList.remove('online');
+                }
+            };
+
+            // Universele positie berekening (Muis & Touch)
+            const getPos = (e) => {
+                const rect = canvas.getBoundingClientRect();
+                const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+                const clientX = touch ? touch.clientX : e.clientX;
+                const clientY = touch ? touch.clientY : e.clientY;
+                return {
+                    x: (clientX - rect.left) * (canvas.width / rect.width),
+                    y: (clientY - rect.top) * (canvas.height / rect.height),
+                    rawX: clientX,
+                    rawY: clientY
+                };
+            };
+
+            const startAction = (e) => {
+                if (!uClass) return;
+                const { x, y } = getPos(e);
+                draggedId = null;
+                isDragging = false;
+
+                const entries = boardEntries.slice().reverse();
+                for (const [id, obj] of entries) {
+                    if (obj && obj.type === 'text') {
+                        ctx.font = "bold 24px Arial";
+                        const w = ctx.measureText(obj.text).width;
+                        if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
+                            draggedId = id;
+                            isDragging = true;
+                            offsetX = x - obj.x;
+                            offsetY = y - obj.y;
+                            renderSingleBoard(canvas, draggedId);
+                            return;
+                        }
+                    }
+                }
+                isDrawing = true;
+                const newPathRef = push(ref(db, `mutatieles/${uClass}/board`));
+                currentPathId = newPathRef.key;
+                set(newPathRef, { type: 'path', points: [{ x, y }] });
+            };
+
+            const moveAction = (e) => {
+                if (!isDragging && !isDrawing) return;
+                if (!uClass) return;
+                const { x, y, rawX, rawY } = getPos(e);
+
+                if (isDragging && draggedId) {
+                    update(ref(db, `mutatieles/${uClass}/board/${draggedId}`), { x: x - offsetX, y: y - offsetY });
+                    const tRect = trashZone.getBoundingClientRect();
+                    trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
+                } else if (isDrawing && currentPathId) {
+                    const path = boardObjects[currentPathId];
+                    if (path && path.points) {
+                        const lastP = path.points[path.points.length - 1];
+                        if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
+                            update(ref(db, `mutatieles/${uClass}/board/${currentPathId}`), {
+                                points: [...path.points, { x, y }]
+                            });
+                        }
+                    }
+                }
+            };
+
+            const stopAction = () => {
+                if (isDragging && draggedId && trashZone.classList.contains('active') && uClass) {
+                    remove(ref(db, `mutatieles/${uClass}/board/${draggedId}`));
+                }
+                const wasDragging = isDragging;
+                isDrawing = isDragging = false;
+                draggedId = currentPathId = null;
+                trashZone.classList.remove('active');
+                if (wasDragging) renderSingleBoard(canvas, null);
+            };
+
+            // Event Listeners voor Muis
+            canvas.addEventListener('mousedown', startAction);
+            window.addEventListener('mousemove', moveAction);
+            window.addEventListener('mouseup', stopAction);
+
+            // Event Listeners voor Touch (Mobiel/Tablet)
+            canvas.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                startAction(e);
+            }, { passive: false });
+            window.addEventListener('touchmove', (e) => {
+                if (!isDragging && !isDrawing) return;
+                e.preventDefault();
+                moveAction(e);
+            }, { passive: false });
+            window.addEventListener('touchend', stopAction);
+            window.addEventListener('touchcancel', stopAction);
+
+            // Knoppen
+            if (addBtn && wordInput) {
+                const addWord = () => {
+                    const val = wordInput.value.trim();
+                    if (val && uClass) {
+                        push(ref(db, `mutatieles/${uClass}/board`), { type: 'text', text: val, x: 150, y: 150 });
+                        wordInput.value = '';
+                    }
+                };
+                addBtn.onclick = addWord;
+                wordInput.addEventListener('keydown', (e) => {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addWord();
+                    }
+                });
+            }
+
+            if (clearBtn) {
+                clearBtn.onclick = () => {
+                    if (!uClass) return;
+                    window.customModal({
+                        title: "Bord wissen",
+                        message: "Hele bord wissen?",
+                        isConfirm: true,
+                        onConfirm: () => {
+                            remove(ref(db, `mutatieles/${uClass}/board`));
+                        }
+                    });
+                };
+            }
+
+            return updateStatusUI;
+        }
+
+        function initDigibord() {
+            if (!uClass) return;
 
             if (!digibordInitDone) {
                 digibordInitDone = true;
 
+                const update2 = setupBoardInstance({
+                    canvasId: 'whiteboard',
+                    statusId: 'status',
+                    trashId: 'trash-zone',
+                    inputId: 'wordInput',
+                    addBtnId: 'addBtn',
+                    clearBtnId: 'clearBtn'
+                });
+                if (update2) boardStatusUpdaters.push(update2);
+
+                const update5 = setupBoardInstance({
+                    canvasId: 'whiteboard-5',
+                    statusId: 'status-5',
+                    trashId: 'trash-zone-5',
+                    inputId: 'wordInput-5',
+                    addBtnId: 'addBtn-5',
+                    clearBtnId: 'clearBtn-5'
+                });
+                if (update5) boardStatusUpdaters.push(update5);
+
                 // Status sync
                 if (boardConnListener) boardConnListener();
                 boardConnListener = onValue(ref(db, ".info/connected"), (snap) => {
-                    if (!statusLabel) return;
-                    if (snap.val()) {
-                        statusLabel.innerText = "● LIVE";
-                        statusLabel.classList.add('online');
-                    } else {
-                        statusLabel.innerText = "Status: Verbinden...";
-                        statusLabel.classList.remove('online');
-                    }
+                    const isOnline = !!snap.val();
+                    boardStatusUpdaters.forEach(fn => fn(isOnline));
                 });
-
-                // Universele positie berekening (Muis & Touch)
-                const getPos = (e) => {
-                    const rect = canvas.getBoundingClientRect();
-                    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
-                    const clientX = touch ? touch.clientX : e.clientX;
-                    const clientY = touch ? touch.clientY : e.clientY;
-                    return {
-                        x: (clientX - rect.left) * (canvas.width / rect.width),
-                        y: (clientY - rect.top) * (canvas.height / rect.height),
-                        rawX: clientX,
-                        rawY: clientY
-                    };
-                };
-
-                const startAction = (e) => {
-                    if (!uClass) return;
-                    const { x, y } = getPos(e);
-                    boardDraggedId = null;
-                    isDragging = false;
-
-                    const entries = Object.entries(boardObjects).reverse();
-                    for (const [id, obj] of entries) {
-                        if (obj && obj.type === 'text') {
-                            ctx.font = "bold 24px Arial";
-                            const w = ctx.measureText(obj.text).width;
-                            if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
-                                boardDraggedId = id;
-                                isDragging = true;
-                                offsetX = x - obj.x;
-                                offsetY = y - obj.y;
-                                return;
-                            }
-                        }
-                    }
-                    isDrawing = true;
-                    const newPathRef = push(ref(db, `mutatieles/${uClass}/board`));
-                    currentPathId = newPathRef.key;
-                    set(newPathRef, { type: 'path', points: [{ x, y }] });
-                };
-
-                const moveAction = (e) => {
-                    if (!isDragging && !isDrawing) return;
-                    if (!uClass) return;
-                    const { x, y, rawX, rawY } = getPos(e);
-
-                    if (isDragging && boardDraggedId) {
-                        update(ref(db, `mutatieles/${uClass}/board/${boardDraggedId}`), { x: x - offsetX, y: y - offsetY });
-                        const tRect = trashZone.getBoundingClientRect();
-                        trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
-                    } else if (isDrawing && currentPathId) {
-                        const path = boardObjects[currentPathId];
-                        if (path && path.points) {
-                            const lastP = path.points[path.points.length - 1];
-                            if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
-                                update(ref(db, `mutatieles/${uClass}/board/${currentPathId}`), {
-                                    points: [...path.points, { x, y }]
-                                });
-                            }
-                        }
-                    }
-                };
-
-                const stopAction = () => {
-                    if (isDragging && boardDraggedId && trashZone.classList.contains('active') && uClass) {
-                        remove(ref(db, `mutatieles/${uClass}/board/${boardDraggedId}`));
-                    }
-                    isDrawing = isDragging = false;
-                    boardDraggedId = currentPathId = null;
-                    trashZone.classList.remove('active');
-                };
-
-                // Event Listeners voor Muis
-                canvas.addEventListener('mousedown', startAction);
-                window.addEventListener('mousemove', moveAction);
-                window.addEventListener('mouseup', stopAction);
-
-                // Event Listeners voor Touch (Mobiel/Tablet)
-                canvas.addEventListener('touchstart', (e) => {
-                    e.preventDefault();
-                    startAction(e);
-                }, { passive: false });
-                window.addEventListener('touchmove', (e) => {
-                    if (!isDragging && !isDrawing) return;
-                    e.preventDefault();
-                    moveAction(e);
-                }, { passive: false });
-                window.addEventListener('touchend', stopAction);
-                window.addEventListener('touchcancel', stopAction);
-
-                // Knoppen
-                if (addBtn && wordInput) {
-                    const addWord = () => {
-                        const val = wordInput.value.trim();
-                        if (val && uClass) {
-                            push(ref(db, `mutatieles/${uClass}/board`), { type: 'text', text: val, x: 150, y: 150 });
-                            wordInput.value = '';
-                        }
-                    };
-                    addBtn.onclick = addWord;
-                    wordInput.addEventListener('keydown', (e) => {
-                        if (e.key === 'Enter') {
-                            e.preventDefault();
-                            addWord();
-                        }
-                    });
-                }
-
-                if (clearBtn) {
-                    clearBtn.onclick = () => {
-                        if (!uClass) return;
-                        window.customModal({
-                            title: "Bord wissen",
-                            message: "Hele bord wissen?",
-                            isConfirm: true,
-                            onConfirm: () => {
-                                remove(ref(db, `mutatieles/${uClass}/board`));
-                            }
-                        });
-                    };
-                }
             }
 
             // Renderen
             if (boardDataListener) boardDataListener();
             boardDataListener = onValue(ref(db, `mutatieles/${uClass}/board`), (snap) => {
-                ctx.clearRect(0, 0, canvas.width, canvas.height);
                 boardObjects = snap.val() || {};
+                boardEntries = [];
                 snap.forEach((child) => {
-                    const obj = child.val();
-                    if (!obj) return;
-                    const isSel = child.key === boardDraggedId;
-                    if (obj.type === 'text') {
-                        ctx.font = "bold 24px Arial";
-                        ctx.fillStyle = isSel ? "#003082" : "#333";
-                        ctx.fillText(obj.text, obj.x, obj.y);
-                        if (isSel) {
-                            ctx.strokeStyle = "#003082";
-                            ctx.lineWidth = 1.5;
-                            ctx.strokeRect(obj.x - 5, obj.y - 30, ctx.measureText(obj.text).width + 10, 40);
-                        }
-                    } else if (obj.type === 'path' && obj.points && obj.points.length > 0) {
-                        ctx.strokeStyle = "#4b5563";
-                        ctx.lineWidth = 3;
-                        ctx.lineCap = "round";
-                        ctx.beginPath();
-                        ctx.moveTo(obj.points[0].x, obj.points[0].y);
-                        obj.points.forEach(p => ctx.lineTo(p.x, p.y));
-                        ctx.stroke();
-                    }
+                    boardEntries.push([child.key, child.val()]);
                 });
+                redrawAllBoards();
             });
         }
 
@@ -1816,890 +1870,4 @@
             checkBtn.onclick = checkQuiz;
             container.appendChild(checkBtn);
 
-            const resultDiv = document.createElement('div');
-            resultDiv.id = 'quiz-result';
-            resultDiv.className = 'mt-4 font-bold text-lg p-3 rounded text-center hidden';
-            container.appendChild(resultDiv);
-        }
-
-        function checkQuiz() {
-            let score = 0;
-            quizData.forEach((q, index) => {
-                const radios = document.getElementsByName(`quiz${index}`);
-                let selected = null;
-                for (let r of radios) {
-                    if (r.checked) {
-                        selected = parseInt(r.value);
-                        break;
-                    }
-                }
-                if (selected === q.correct) score++;
-            });
-
-            const resultDiv = document.getElementById('quiz-result');
-            if(resultDiv) {
-                resultDiv.classList.remove('hidden');
-                if(score === quizData.length) {
-                    resultDiv.textContent = `🎉 Gefeliciteerd! Alle ${quizData.length} vragen zijn correct!`;
-                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-green-100 text-green-800 border border-green-300';
-                } else {
-                    resultDiv.textContent = `Je hebt ${score} van de ${quizData.length} vragen goed. Probeer het opnieuw.`;
-                    resultDiv.className = 'mt-4 font-bold text-base p-3 rounded text-center bg-red-100 text-red-800 border border-red-300';
-                }
-            }
-        }
-
-        function initPdfSync() {
-            if (pdfSelect) {
-                pdfSelect.addEventListener('change', (e) => {
-                    const url = e.target.value;
-                    if (url) {
-                        openPdfText(url, true);
-                    } else {
-                        if (pdfViewer && pdfPlaceholder) {
-                            pdfViewer.innerHTML = '';
-                            pdfViewer.classList.add('hidden');
-                            pdfPlaceholder.classList.remove('hidden');
-                        }
-                        if (uClass) {
-                            set(ref(db, `mutatieles/${uClass}/currentPdf`), null);
-                        }
-                    }
-                });
-            }
-
-            if (uClass) {
-                if (pdfListener) pdfListener();
-                pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
-                    const url = snap.val();
-                    if (url && typeof url === 'string') {
-                        openPdfText(url, false);
-                        if (pdfSelect) {
-                            const options = pdfSelect.options;
-                            for (let i = 0; i < options.length; i++) {
-                                if (options[i].value === url) {
-                                    pdfSelect.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                });
-            }
-        }
-
-        window.startSession = function() {
-            const nameInput = document.getElementById('user-name');
-            const classSelect = document.getElementById('user-class');
-            uName = nameInput.value.trim();
-            uClass = classSelect.value;
-            
-            if(!uName || !uClass) {
-                window.customModal({ title: "Inloggen mislukt", message: "Vul a.u.b. je naam in en kies een NATO-klas." });
-                return;
-            }
-            
-            document.getElementById('banner-user-name').textContent = uName;
-            document.getElementById('banner-user-class').textContent = uClass;
-            document.getElementById('user-info-banner').classList.remove('hidden');
-            document.getElementById('nav-bar').classList.remove('hidden');
-
-            document.getElementById('current-class-label').textContent = uClass;
-            const label2 = document.getElementById('current-class-label-2');
-            if (label2) label2.textContent = uClass;
-
-            showScreen(2);
-            initDigibord();
-            listenClassFeed();
-            initClassFeedInteractions();
-            initSubmitMutation();
-            initAudioFeatures();
-        };
-
-        window.showScreen = function(n) {
-            if (n !== 3 && dragListener) {
-                dragListener();
-                dragListener = null;
-                renderedCaseIndex = -1;
-            }
-
-            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
-            const activeNavBtn = document.getElementById('nav-btn-' + n);
-            if (activeNavBtn) activeNavBtn.classList.add('active');
-
-            document.querySelectorAll('.container > div:not(#nav-bar)').forEach(d => d.classList.add('hidden'));
-            const el = document.getElementById('screen-' + n);
-            if (el) el.classList.remove('hidden');
-
-            if (n === 3) {
-                const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
-                if (dragListener) dragListener();
-                dragListener = onValue(sleepRef, (snap) => {
-                    const data = snap.val();
-                    let caseIndex = data?.caseIndex;
-                    let order = data?.order;
-                    const validCaseIndex = Number.isInteger(caseIndex) && caseIndex >= 0 && caseIndex < allCases.length;
-                    const expectedLen = validCaseIndex ? allCases[caseIndex].blocks.length : 0;
-                    const validOrder = Array.isArray(order) && order.length === expectedLen && order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
-
-                    if (!validCaseIndex || !validOrder) {
-                        const newIdx = pickRandomCaseIndex();
-                        const newOrder = makeShuffledIndexes(newIdx);
-                        set(sleepRef, { caseIndex: newIdx, order: newOrder });
-                        return;
-                    }
-                    currentCaseIndex = caseIndex;
-                    if (!isDraggingLocally) renderDragItems(order, caseIndex);
-                });
-            }
-
-            if (n === 4) renderQuiz();
-            if (n === 5) {
-                initFileUpload(); 
-                initPdfSync();
-            }
-        };
-
-        window.confirmResetClassData = function() {
-            const c = document.getElementById('user-class').value;
-            if(!c) {
-                window.customModal({ title: "Attentie", message: "Selecteer eerst een klas om te resetten." });
-                return;
-            }
-            window.customModal({
-                title: "Reset klas-data",
-                message: `Weet je zeker dat je ALLE data voor klas ${c} wilt wissen? Dit kan niet ongedaan worden gemaakt.`,
-                isConfirm: true,
-                onConfirm: () => {
-                    remove(ref(db, `mutatieles/${c}`));
-                    window.customModal({ title: "Gereset", message: `Alle data voor klas ${c} is succesvol gewist.` });
-                }
-            });
-        };
-
-        // ===== MUTATIE VERSTUREN (scherm 6 → feed) =====
-        function escapeHtml(str) {
-            return String(str || '')
-                .replace(/&/g, '&amp;')
-                .replace(/</g, '&lt;')
-                .replace(/>/g, '&gt;')
-                .replace(/"/g, '&quot;')
-                .replace(/'/g, '&#39;');
-        }
-
-        function initSubmitMutation() {
-            const btn = document.getElementById('submit-mutation-btn');
-            if (!btn || btn.dataset.bound) return;
-            btn.dataset.bound = '1';
-
-            btn.addEventListener('click', async () => {
-                if (!uClass || !uName) return;
-                
-                const finalText = (document.getElementById('final-mutation')?.value || '').trim();
-                const m1 = (document.getElementById('mutation1')?.value || '').trim();
-                const m2 = (document.getElementById('mutation2')?.value || '').trim();
-                const m3 = (document.getElementById('mutation3')?.value || '').trim();
-
-                if (!finalText && !m1 && !m2 && !m3) {
-                    window.customModal({ title: "Geen invoer", message: "Vul ten minste één mutatieveld in voordat je verstuurt." });
-                    return;
-                }
-
-                btn.disabled = true;
-                const originalText = btn.innerHTML;
-                btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Bezig met versturen...';
-
-                try {
-                    await update(ref(db, `mutatieles/${uClass}/live/${uName}`), {
-                        name: uName,
-                        text: finalText,
-                        mutation1: m1,
-                        mutation2: m2,
-                        mutation3: m3,
-                        timestamp: Date.now()
-                    });
-                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Succesvol verstuurd!';
-                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
-                } catch (err) {
-                    console.error('Versturen mislukt:', err);
-                    window.customModal({ title: "Fout", message: "Versturen mislukt: " + err.message });
-                    btn.innerHTML = originalText;
-                    btn.disabled = false;
-                }
-            });
-        }
-
-        // Livefeed Non-Disruptive Reconciliation logic
-        function listenClassFeed() {
-            if (!uClass) return;
-            
-            onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
-                const feed = document.getElementById('class-feed');
-                if (!feed) return;
-
-                const data = snap.val() || {};
-
-                // 1. Capture current active element focus & selection range
-                const activeEl = document.activeElement;
-                let activeStudentKey = null;
-                let selStart = 0, selEnd = 0;
-
-                if (activeEl && activeEl.matches('[data-reply-input]')) {
-                    activeStudentKey = activeEl.dataset.studentKey;
-                    try {
-                        selStart = activeEl.selectionStart;
-                        selEnd = activeEl.selectionEnd;
-                    } catch (e) {}
-                }
-
-                // 2. Save draft inputs from DOM
-                feed.querySelectorAll('[data-reply-input]').forEach(input => {
-                    const key = input.dataset.studentKey;
-                    if (key) draftReplyTexts[key] = input.value;
-                });
-
-                // 3. Render feed cards gracefully
-                feed.innerHTML = '';
-                const entries = Object.entries(data);
-
-                if (entries.length === 0) {
-                    feed.innerHTML = '<p class="text-sm text-gray-500 italic p-3 text-center">Nog geen mutaties ingeleverd in deze klas.</p>';
-                    return;
-                }
-
-                entries.forEach(([student, val]) => {
-                    if (!val || typeof val !== 'object') return;
-
-                    const card = document.createElement('div');
-                    card.className = 'feed-card';
-                    card.dataset.student = student;
-
-                    let html = `<div class="feed-name">
-                        <span><i class="fa-solid fa-user text-blue-800 mr-1.5"></i> ${escapeHtml(student)}</span>
-                        <span class="text-xs text-gray-400 font-normal"><i class="fa-regular fa-clock mr-1"></i> Live</span>
-                    </div>`;
-
-                    if (val.text) html += `<div class="text-sm my-1"><strong class="text-blue-900">Hoofdmutatie:</strong> ${escapeHtml(val.text)}</div>`;
-                    if (val.mutation1) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 1:</strong> ${escapeHtml(val.mutation1)}</div>`;
-                    if (val.mutation2) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</div>`;
-                    if (val.mutation3) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</div>`;
-
-                    // Reactions section
-                    html += `<div class="feed-reactions">`;
-                    if (val.reactions) {
-                        Object.values(val.reactions)
-                            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
-                            .forEach(r => {
-                                html += `<div class="feed-reaction"><strong>${escapeHtml(r.author)}:</strong> ${escapeHtml(r.text)}</div>`;
-                            });
-                    }
-
-                    // Draft reply text preservation
-                    const draftVal = draftReplyTexts[student] || '';
-
-                    html += `<div class="feed-reply">
-                        <input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input data-student-key="${escapeHtml(student)}" value="${escapeHtml(draftVal)}" />
-                        <button type="button" data-reply-btn data-student-key="${escapeHtml(student)}">Reageer</button>
-                    </div></div>`;
-
-                    card.innerHTML = html;
-                    feed.appendChild(card);
-                });
-
-                // 4. Restore focus and cursor position
-                if (activeStudentKey) {
-                    const newInput = feed.querySelector(`[data-reply-input][data-student-key="${CSS.escape(activeStudentKey)}"]`);
-                    if (newInput) {
-                        newInput.focus();
-                        try { newInput.setSelectionRange(selStart, selEnd); } catch (e) {}
-                    }
-                }
-            });
-        }
-
-        function initClassFeedInteractions() {
-            const feed = document.getElementById('class-feed');
-            if (!feed || feed.dataset.bound) return;
-            feed.dataset.bound = '1';
-
-            // Track live draft changes
-            feed.addEventListener('input', (e) => {
-                if (e.target.matches('[data-reply-input]')) {
-                    const studentKey = e.target.dataset.studentKey;
-                    if (studentKey) draftReplyTexts[studentKey] = e.target.value;
-                }
-            });
-
-            feed.addEventListener('click', async (e) => {
-                const btn = e.target.closest('[data-reply-btn]');
-                if (!btn) return;
-
-                const student = btn.dataset.studentKey;
-                const card = btn.closest('.feed-card');
-                const input = card?.querySelector('[data-reply-input]');
-                const text = input?.value.trim();
-
-                if (!text) return;
-                if (!uName || !uClass) {
-                    window.customModal({ title: "Inloggen vereist", message: "Log eerst in met je naam en klas." });
-                    return;
-                }
-
-                btn.disabled = true;
-                try {
-                    const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
-                    await set(newRef, {
-                        author: uName,
-                        text: text,
-                        timestamp: Date.now()
-                    });
-                    delete draftReplyTexts[student];
-                    if (input) input.value = '';
-                } catch (err) {
-                    console.error('Reactie mislukt:', err);
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-
-            feed.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && e.target.matches('[data-reply-input]')) {
-                    e.preventDefault();
-                    const card = e.target.closest('.feed-card');
-                    const btn = card?.querySelector('[data-reply-btn]');
-                    if (btn) btn.click();
-                }
-            });
-        }
-
-        // ===== AUDIO UPLOAD & MEDIA (M4A BROWSER + GESYNCHRONISEERDE PLAYER) =====
-        let audioInitDone = false;
-        function initAudioFeatures() {
-            if (audioInitDone) return;
-            if (!uClass) return;
-            audioInitDone = true;
-
-            const audioInput = document.getElementById('audio-file-input');
-            const browseBtn = document.getElementById('browse-audio-btn');
-            const removeBtn = document.getElementById('remove-audio-btn');
-            const selectedNameEl = document.getElementById('selected-audio-name');
-            const statusDiv = document.getElementById('audio-upload-status');
-            const activeFilenameEl = document.getElementById('active-audio-filename');
-            const masterToggle = document.getElementById('audio-master-toggle');
-            const audioPlayer = document.getElementById('uploaded-audio-player');
-            const playAllBtn = document.getElementById('play-all-audio-btn');
-            const pauseAllBtn = document.getElementById('pause-all-audio-btn');
-            const stopAllBtn = document.getElementById('stop-all-audio-btn');
-            const unlockBtn = document.getElementById('audio-unlock-btn');
-
-            if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
-
-            try {
-                storage.maxUploadRetryTime = 5000;
-                storage.maxOperationRetryTime = 5000;
-            } catch (e) {}
-
-            const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
-            let serverTimeOffset = 0;
-            let loadedTrackId = null;
-            let currentObjectUrl = null;
-            let currentAudioData = null;
-            let isRemoteSyncing = false;
-            let pendingRemoteState = null;
-            let lastAppliedCommandId = null;
-            let syncPublishTimer = null;
-
-            onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
-                serverTimeOffset = snap.val() || 0;
-            });
-
-            function showStatus(msg, color = '#0c5460') {
-                statusDiv.textContent = msg;
-                statusDiv.classList.remove('hidden');
-                statusDiv.style.color = color;
-            }
-
-            function setControlsEnabled(enabled) {
-                if (playAllBtn) playAllBtn.disabled = !enabled;
-                if (pauseAllBtn) pauseAllBtn.disabled = !enabled;
-                if (stopAllBtn) stopAllBtn.disabled = !enabled;
-                if (removeBtn) removeBtn.disabled = !enabled;
-            }
-
-            function showUnlockBtn() {
-                if (unlockBtn) unlockBtn.classList.remove('hidden');
-            }
-
-            function hideUnlockBtn() {
-                if (unlockBtn) unlockBtn.classList.add('hidden');
-            }
-
-            function formatDuration(sec) {
-                if (!Number.isFinite(sec) || sec < 0) return '0:00';
-                const m = Math.floor(sec / 60);
-                const s = Math.floor(sec % 60);
-                return `${m}:${String(s).padStart(2, '0')}`;
-            }
-
-            function revokeCurrentObjectUrl() {
-                if (currentObjectUrl) {
-                    try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {}
-                    currentObjectUrl = null;
-                }
-            }
-
-            function base64ToBlobUrl(base64Input, mimeType) {
-                let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
-                const commaIdx = cleanB64.indexOf(',');
-                if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
-                cleanB64 = cleanB64.replace(/\s+/g, '');
-                const byteChars = atob(cleanB64);
-                const len = byteChars.length;
-                const bytes = new Uint8Array(len);
-                for (let i = 0; i < len; i++) {
-                    bytes[i] = byteChars.charCodeAt(i);
-                }
-                const blob = new Blob([bytes], { type: mimeType || 'audio/mp4' });
-                return URL.createObjectURL(blob);
-            }
-
-            function resolvePlayableUrl(data) {
-                if (Array.isArray(data.chunks) && data.chunks.length > 0) {
-                    revokeCurrentObjectUrl();
-                    currentObjectUrl = base64ToBlobUrl(data.chunks, data.mimeType || 'audio/mp4');
-                    return currentObjectUrl;
-                }
-                if (typeof data.url === 'string' && data.url.startsWith('data:')) {
-                    revokeCurrentObjectUrl();
-                    currentObjectUrl = base64ToBlobUrl(data.url, data.mimeType || 'audio/mp4');
-                    return currentObjectUrl;
-                }
-                revokeCurrentObjectUrl();
-                return data.url;
-            }
-
-            function getEstimatedServerNow() {
-                return Date.now() + serverTimeOffset;
-            }
-
-            function computeTargetTime(data) {
-                const basePos = Number(data?.position) || 0;
-                if (!data?.isPlaying || !data?.updatedAt) return basePos;
-                const elapsed = Math.max(0, (getEstimatedServerNow() - data.updatedAt) / 1000);
-                if (elapsed > 7200) return basePos;
-                return basePos + elapsed;
-            }
-
-            function applyRemotePlayback(shouldPlay, targetTime) {
-                isRemoteSyncing = true;
-                try {
-                    if (Number.isFinite(targetTime) && targetTime >= 0) {
-                        const dur = audioPlayer.duration;
-                        const clamped = (Number.isFinite(dur) && dur > 0)
-                            ? Math.min(targetTime, Math.max(0, dur - 0.1))
-                            : targetTime;
-                        if (Math.abs((audioPlayer.currentTime || 0) - clamped) > 0.6) {
-                            audioPlayer.currentTime = clamped;
-                        }
-                    }
-                    if (shouldPlay) {
-                        const playPromise = audioPlayer.play();
-                        if (playPromise && typeof playPromise.then === 'function') {
-                            playPromise.then(() => {
-                                hideUnlockBtn();
-                            }).catch((err) => {
-                                if (err && err.name === 'NotAllowedError') {
-                                    console.warn('Autoplay geblokkeerd op dit apparaat:', err);
-                                    showUnlockBtn();
-                                } else {
-                                    console.error('Afspelen mislukt:', err);
-                                    showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
-                                }
-                            });
-                        }
-                    } else {
-                        audioPlayer.pause();
-                        hideUnlockBtn();
-                    }
-                } finally {
-                    setTimeout(() => { isRemoteSyncing = false; }, 250);
-                }
-            }
-
-            const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
-
-            function broadcastPlaybackState(isPlaying, position) {
-                if (!uClass || !currentAudioData) return;
-                const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-                lastAppliedCommandId = cmdId;
-                update(currentAudioRef, {
-                    isPlaying: !!isPlaying,
-                    position: Number(position) || 0,
-                    updatedAt: serverTimestamp(),
-                    sender: clientId,
-                    commandId: cmdId
-                }).catch(err => console.error('Audio-sync update mislukt:', err));
-            }
-
-            function scheduleMasterBroadcast() {
-                if (!masterToggle || !masterToggle.checked || isRemoteSyncing || !currentAudioData) return;
-                clearTimeout(syncPublishTimer);
-                syncPublishTimer = setTimeout(() => {
-                    broadcastPlaybackState(!audioPlayer.paused, audioPlayer.currentTime || 0);
-                }, 80);
-            }
-
-            function readFileAsBase64(file) {
-                return new Promise((resolve, reject) => {
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                        const res = reader.result;
-                        if (typeof res === 'string') {
-                            const commaIdx = res.indexOf(',');
-                            resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
-                        } else {
-                            reject(new Error('Ongeldig bestandsformaat'));
-                        }
-                    };
-                    reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
-                    reader.readAsDataURL(file);
-                });
-            }
-
-            function splitIntoChunks(str, chunkSize = 512000) {
-                const chunks = [];
-                for (let i = 0; i < str.length; i += chunkSize) {
-                    chunks.push(str.slice(i, i + chunkSize));
-                }
-                return chunks;
-            }
-
-            async function tryStorageUpload(path, file, mimeType) {
-                const fileRef = storageRef(storage, path);
-                const uploadPromise = (async () => {
-                    await uploadBytes(fileRef, file, { contentType: mimeType });
-                    return await getDownloadURL(fileRef);
-                })();
-                const timeoutPromise = new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Storage upload timeout')), 15000)
-                );
-                return await Promise.race([uploadPromise, timeoutPromise]);
-            }
-
-            audioPlayer.addEventListener('error', () => {
-                if (!loadedTrackId) return;
-                const err = audioPlayer.error;
-                let msg = 'Kan dit audiobestand niet afspelen in deze browser.';
-                if (err) {
-                    if (err.code === 1) msg = 'Laden van audio afgebroken.';
-                    else if (err.code === 2) msg = 'Netwerkfout bij laden van de audio.';
-                    else if (err.code === 3) msg = 'Fout bij decoderen van het .m4a bestand (mogelijk Apple Lossless of niet-ondersteunde codec).';
-                    else if (err.code === 4) msg = 'Audioformaat of codec wordt niet ondersteund door deze browser.';
-                }
-                showStatus('⚠️ ' + msg, '#721c24');
-            });
-
-            audioPlayer.addEventListener('loadedmetadata', () => {
-                if (currentAudioData && Number.isFinite(audioPlayer.duration)) {
-                    showStatus(`✅ '${currentAudioData.fileName || 'audiobestand'}' gereed (${formatDuration(audioPlayer.duration)}) — druk op "Speel af op alle apparaten" of Play.`, '#155724');
-                }
-                if (pendingRemoteState) {
-                    const targetTime = computeTargetTime(pendingRemoteState);
-                    const shouldPlay = !!pendingRemoteState.isPlaying;
-                    pendingRemoteState = null;
-                    applyRemotePlayback(shouldPlay, targetTime);
-                }
-            });
-
-            audioPlayer.addEventListener('play', scheduleMasterBroadcast);
-            audioPlayer.addEventListener('pause', scheduleMasterBroadcast);
-            audioPlayer.addEventListener('seeked', scheduleMasterBroadcast);
-            audioPlayer.addEventListener('ended', () => {
-                if (masterToggle && masterToggle.checked && !isRemoteSyncing && currentAudioData) {
-                    broadcastPlaybackState(false, 0);
-                }
-            });
-
-            if (playAllBtn) {
-                playAllBtn.addEventListener('click', () => {
-                    if (!currentAudioData) return;
-                    if (masterToggle) masterToggle.checked = true;
-                    isRemoteSyncing = true;
-                    try {
-                        if (audioPlayer.ended || (Number.isFinite(audioPlayer.duration) && audioPlayer.currentTime >= audioPlayer.duration - 0.5)) {
-                            audioPlayer.currentTime = 0;
-                        }
-                        const pos = audioPlayer.currentTime || 0;
-                        const playPromise = audioPlayer.play();
-                        if (playPromise && typeof playPromise.then === 'function') {
-                            playPromise.catch((err) => {
-                                console.error('Afspelen mislukt:', err);
-                                showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
-                            });
-                        }
-                        broadcastPlaybackState(true, pos);
-                        hideUnlockBtn();
-                    } finally {
-                        setTimeout(() => { isRemoteSyncing = false; }, 250);
-                    }
-                });
-            }
-
-            if (pauseAllBtn) {
-                pauseAllBtn.addEventListener('click', () => {
-                    if (!currentAudioData) return;
-                    if (masterToggle) masterToggle.checked = true;
-                    isRemoteSyncing = true;
-                    try {
-                        audioPlayer.pause();
-                        broadcastPlaybackState(false, audioPlayer.currentTime || 0);
-                    } finally {
-                        setTimeout(() => { isRemoteSyncing = false; }, 250);
-                    }
-                });
-            }
-
-            if (stopAllBtn) {
-                stopAllBtn.addEventListener('click', () => {
-                    if (!currentAudioData) return;
-                    if (masterToggle) masterToggle.checked = true;
-                    isRemoteSyncing = true;
-                    try {
-                        audioPlayer.pause();
-                        audioPlayer.currentTime = 0;
-                        broadcastPlaybackState(false, 0);
-                    } finally {
-                        setTimeout(() => { isRemoteSyncing = false; }, 250);
-                    }
-                });
-            }
-
-            if (removeBtn) {
-                removeBtn.addEventListener('click', () => {
-                    if (!currentAudioData || !uClass) return;
-                    const fileName = currentAudioData.fileName || 'dit audiobestand';
-                    window.customModal({
-                        title: "Bestand verwijderen",
-                        message: `Weet je zeker dat je "${fileName}" wilt verwijderen voor de klas?`,
-                        isConfirm: true,
-                        onConfirm: async () => {
-                            removeBtn.disabled = true;
-                            const oldStoragePath = currentAudioData?.storagePath;
-                            try {
-                                isRemoteSyncing = true;
-                                audioPlayer.pause();
-                                if (oldStoragePath) {
-                                    try {
-                                        await deleteObject(storageRef(storage, oldStoragePath));
-                                    } catch (storageErr) {
-                                        console.warn('Storage bestand verwijderen overgeslagen:', storageErr);
-                                    }
-                                }
-                                await remove(currentAudioRef);
-                                audioInput.value = '';
-                            } catch (err) {
-                                console.error('Verwijderen mislukt:', err);
-                                showStatus(`Fout bij verwijderen: ${err.message}`, '#721c24');
-                            } finally {
-                                setTimeout(() => { isRemoteSyncing = false; }, 250);
-                            }
-                        }
-                    });
-                });
-            }
-
-            if (unlockBtn) {
-                unlockBtn.addEventListener('click', () => {
-                    if (!currentAudioData) return;
-                    const targetTime = computeTargetTime(currentAudioData);
-                    applyRemotePlayback(true, targetTime);
-                });
-            }
-
-            onValue(currentAudioRef, (snap) => {
-                const raw = snap.val();
-                let data = null;
-
-                if (typeof raw === 'string' && raw.trim()) {
-                    data = {
-                        url: raw,
-                        fileName: 'Geüpload audiobestand',
-                        trackId: raw,
-                        isPlaying: false,
-                        position: 0
-                    };
-                } else if (raw && typeof raw === 'object' && (raw.url || (Array.isArray(raw.chunks) && raw.chunks.length > 0))) {
-                    data = raw;
-                }
-
-                if (!data) {
-                    currentAudioData = null;
-                    loadedTrackId = null;
-                    pendingRemoteState = null;
-                    isRemoteSyncing = true;
-                    audioPlayer.pause();
-                    audioPlayer.removeAttribute('src');
-                    audioPlayer.load();
-                    revokeCurrentObjectUrl();
-                    setTimeout(() => { isRemoteSyncing = false; }, 250);
-                    if (activeFilenameEl) activeFilenameEl.textContent = 'Geen bestand geladen';
-                    if (selectedNameEl) selectedNameEl.textContent = 'Geen .m4a bestand gekozen';
-                    setControlsEnabled(false);
-                    hideUnlockBtn();
-                    showStatus('Nog geen .m4a bestand gekozen voor deze klas.', '#6c757d');
-                    return;
-                }
-
-                currentAudioData = data;
-                setControlsEnabled(true);
-                if (activeFilenameEl) activeFilenameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
-                if (selectedNameEl) selectedNameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
-
-                const incomingTrackId = data.trackId || data.url || '';
-                const isNewTrack = !loadedTrackId || incomingTrackId !== loadedTrackId;
-
-                if (isNewTrack) {
-                    loadedTrackId = incomingTrackId;
-                    lastAppliedCommandId = data.commandId || null;
-                    pendingRemoteState = {
-                        isPlaying: !!data.isPlaying,
-                        position: Number(data.position) || 0,
-                        updatedAt: data.updatedAt || null
-                    };
-                    try {
-                        const playableUrl = resolvePlayableUrl(data);
-                        isRemoteSyncing = true;
-                        audioPlayer.pause();
-                        audioPlayer.src = playableUrl;
-                        audioPlayer.load();
-                        setTimeout(() => { isRemoteSyncing = false; }, 250);
-                        showStatus(`Bezig met laden van '${data.fileName || 'audiobestand'}' voor klas ${uClass}...`, '#0c5460');
-                    } catch (decodeErr) {
-                        console.error('Audio decoderen mislukt:', decodeErr);
-                        showStatus(`⚠️ Fout bij laden van '${data.fileName}': ${decodeErr.message}`, '#721c24');
-                    }
-                    return;
-                }
-
-                if (data.sender === clientId) {
-                    if (data.isPlaying) {
-                        showStatus(`▶ '${data.fileName || 'audio'}' speelt af op alle apparaten.`, '#155724');
-                    } else {
-                        showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
-                    }
-                    return;
-                }
-
-                if (data.commandId && data.commandId === lastAppliedCommandId) return;
-                lastAppliedCommandId = data.commandId || null;
-
-                if (data.isPlaying) {
-                    showStatus(`▶ '${data.fileName || 'audio'}' wordt afgespeeld door klas-bediening.`, '#155724');
-                } else {
-                    showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
-                }
-
-                if (audioPlayer.readyState >= 1) {
-                    const targetTime = computeTargetTime(data);
-                    applyRemotePlayback(!!data.isPlaying, targetTime);
-                } else {
-                    pendingRemoteState = {
-                        isPlaying: !!data.isPlaying,
-                        position: Number(data.position) || 0,
-                        updatedAt: data.updatedAt || null
-                    };
-                }
-            });
-
-            browseBtn.addEventListener('click', () => {
-                audioInput.click();
-            });
-
-            audioInput.addEventListener('change', async () => {
-                const file = audioInput.files[0];
-                if (!file) return;
-                if (!uClass) {
-                    window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
-                    audioInput.value = '';
-                    return;
-                }
-
-                const lowerName = file.name.toLowerCase();
-                const isAudio = lowerName.endsWith('.m4a') || lowerName.endsWith('.mp4') || lowerName.endsWith('.mp3') || lowerName.endsWith('.wav') || lowerName.endsWith('.aac') || lowerName.endsWith('.ogg') || (file.type && file.type.startsWith('audio/'));
-                if (!isAudio) {
-                    window.customModal({ title: "Ongeldig bestand", message: "Kies a.u.b. een geldig .m4a audiobestand vanaf je computer of memorystick." });
-                    audioInput.value = '';
-                    return;
-                }
-
-                if (selectedNameEl) selectedNameEl.textContent = file.name;
-                browseBtn.disabled = true;
-                showStatus(`Bezig met laden van '${file.name}' naar alle ingelogde apparaten...`, '#0c5460');
-
-                const oldStoragePath = currentAudioData?.storagePath || null;
-
-                try {
-                    const mimeType = lowerName.endsWith('.m4a')
-                        ? 'audio/mp4'
-                        : (file.type || 'audio/mp4');
-
-                    let url = null;
-                    let chunks = null;
-                    let newStoragePath = null;
-
-                    try {
-                        const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
-                        url = await tryStorageUpload(path, file, mimeType);
-                        newStoragePath = path;
-                    } catch (storageErr) {
-                        console.warn('Firebase Storage upload mislukt, probeer RTDB chunks fallback:', storageErr);
-                        if (file.size <= 10 * 1024 * 1024) {
-                            const b64 = await readFileAsBase64(file);
-                            chunks = splitIntoChunks(b64, 512000);
-                        } else {
-                            throw new Error('Storage upload mislukt en bestand is groter dan 10 MB.');
-                        }
-                    }
-
-                    if (masterToggle) masterToggle.checked = true;
-                    const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-                    const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
-
-                    const payload = {
-                        fileName: file.name,
-                        mimeType: mimeType,
-                        uploadedBy: uName || 'onbekend',
-                        trackId: trackId,
-                        isPlaying: false,
-                        position: 0,
-                        updatedAt: serverTimestamp(),
-                        sender: clientId,
-                        commandId: cmdId
-                    };
-
-                    if (url) {
-                        payload.url = url;
-                        payload.storagePath = newStoragePath;
-                    } else {
-                        payload.chunks = chunks;
-                    }
-
-                    await set(currentAudioRef, payload);
-
-                    if (oldStoragePath && oldStoragePath !== newStoragePath) {
-                        deleteObject(storageRef(storage, oldStoragePath)).catch(() => {});
-                    }
-
-                    showStatus(`✅ '${file.name}' geladen! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
-                } catch (err) {
-                    console.error('M4A laden mislukt:', err);
-                    showStatus(`Fout bij laden van '${file.name}': ${err.message}`, '#721c24');
-                } finally {
-                    browseBtn.disabled = false;
-                    audioInput.value = '';
-                }
-            });
-        }
-    </script>
-</body>
-</html>
+            co
