@@ -975,7 +975,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove, push, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
         // Firebase Configuration
         const firebaseConfig = {
@@ -999,6 +999,7 @@
         let fileListenerSet = false;
         let dragListener = null;
         let pdfListener = null;
+        let uploadStatusTimer = null;
 
         // Draft storage to prevent keystroke loss during live updates
         const draftReplyTexts = {};
@@ -1364,7 +1365,7 @@
             });
         }
 
-        function splitPdfIntoChunks(str, chunkSize = 512000) {
+        function splitPdfIntoChunks(str, chunkSize = 262144) {
             const chunks = [];
             for (let i = 0; i < str.length; i += chunkSize) {
                 chunks.push(str.slice(i, i + chunkSize));
@@ -1373,7 +1374,17 @@
         }
 
         function base64ChunksToUint8Array(base64Input) {
-            let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
+            let cleanB64 = '';
+            if (Array.isArray(base64Input)) {
+                cleanB64 = base64Input.join('');
+            } else if (base64Input && typeof base64Input === 'object') {
+                cleanB64 = Object.keys(base64Input)
+                    .sort((a, b) => Number(a) - Number(b))
+                    .map(k => base64Input[k])
+                    .join('');
+            } else {
+                cleanB64 = String(base64Input || '');
+            }
             const commaIdx = cleanB64.indexOf(',');
             if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
             cleanB64 = cleanB64.replace(/\s+/g, '');
@@ -1384,6 +1395,62 @@
                 bytes[i] = byteChars.charCodeAt(i);
             }
             return bytes;
+        }
+
+        function uploadPdfViaStorage(file, path, onProgress) {
+            return new Promise((resolve, reject) => {
+                const fileRef = storageRef(storage, path);
+                const uploadTask = uploadBytesResumable(fileRef, file);
+                let settled = false;
+                let lastBytes = 0;
+
+                let stallTimer = setTimeout(() => {
+                    if (!settled && lastBytes === 0) {
+                        settled = true;
+                        try { uploadTask.cancel(); } catch (e) {}
+                        reject(new Error('Storage reageert niet (timeout)'));
+                    }
+                }, 12000);
+
+                uploadTask.on(
+                    'state_changed',
+                    (snapshot) => {
+                        if (settled) return;
+                        if (snapshot.bytesTransferred > lastBytes) {
+                            lastBytes = snapshot.bytesTransferred;
+                            clearTimeout(stallTimer);
+                            stallTimer = setTimeout(() => {
+                                if (!settled) {
+                                    settled = true;
+                                    try { uploadTask.cancel(); } catch (e) {}
+                                    reject(new Error('Storage upload vastgelopen'));
+                                }
+                            }, 15000);
+                        }
+                        if (onProgress && snapshot.totalBytes > 0) {
+                            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
+                            onProgress(pct);
+                        }
+                    },
+                    (error) => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(stallTimer);
+                        reject(error);
+                    },
+                    async () => {
+                        if (settled) return;
+                        settled = true;
+                        clearTimeout(stallTimer);
+                        try {
+                            const url = await getDownloadURL(uploadTask.snapshot.ref);
+                            resolve(url);
+                        } catch (err) {
+                            reject(err);
+                        }
+                    }
+                );
+            });
         }
 
         async function openPdfText(urlOrSource, sync = true) {
@@ -1405,12 +1472,17 @@
                 if (typeof urlOrSource === 'object' && urlOrSource !== null) {
                     let chunks = urlOrSource.chunks;
                     if (!chunks && urlOrSource.fileKey && uClass) {
-                        const snap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
-                        const fileVal = snap.val();
-                        if (fileVal && fileVal.chunks) {
-                            chunks = fileVal.chunks;
-                        } else if (fileVal && fileVal.url) {
-                            pdfInput = fileVal.url;
+                        const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
+                        if (chunkSnap.exists()) {
+                            chunks = chunkSnap.val();
+                        } else {
+                            const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
+                            const fileVal = fileSnap.val();
+                            if (fileVal && fileVal.chunks) {
+                                chunks = fileVal.chunks;
+                            } else if (fileVal && fileVal.url) {
+                                pdfInput = fileVal.url;
+                            }
                         }
                     }
                     if (chunks) {
@@ -1461,6 +1533,7 @@
 
         function setStatus(msg, type = "info") {
             if(!uploadStatus) return;
+            clearTimeout(uploadStatusTimer);
             uploadStatus.textContent = msg;
             uploadStatus.className = type;
             uploadStatus.style.display = "block";
@@ -1474,7 +1547,7 @@
                 uploadStatus.style.background = "#d1ecf1";
                 uploadStatus.style.color = "#0c5460";
             }
-            setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
+            uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
         }
 
         // Render File List in Screen 5
@@ -1499,7 +1572,7 @@
                     if (e.target.closest('.file-delete')) return;
                     if (fileData.url) {
                         openPdfText(fileData.url, true);
-                    } else if (fileData.chunks) {
+                    } else if (fileData.isRtdbFile || fileData.chunks) {
                         openPdfText({ type: 'rtdbFile', fileKey: fileKey, chunks: fileData.chunks }, true);
                     }
                 });
@@ -1521,6 +1594,7 @@
                                         console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
                                     }
                                 }
+                                await remove(ref(db, `mutatieles/${uClass}/fileChunks/${fileKey}`));
                                 await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
                             } catch (err) {
                                 console.error("Verwijderen mislukt:", err);
@@ -1591,45 +1665,40 @@
                     for (const file of selectedFiles) {
                         try {
                             const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                            let url = null;
-                            let chunks = null;
-                            let usedStoragePath = null;
-
                             try {
-                                const fileRef = storageRef(storage, path);
-                                const uploadTask = (async () => {
-                                    await uploadBytes(fileRef, file, { contentType: file.type || 'application/pdf' });
-                                    return await getDownloadURL(fileRef);
-                                })();
-                                const timeoutTask = new Promise((_, reject) =>
-                                    setTimeout(() => reject(new Error('Storage upload timeout')), 15000)
-                                );
-                                url = await Promise.race([uploadTask, timeoutTask]);
-                                usedStoragePath = path;
+                                const url = await uploadPdfViaStorage(file, path, (pct) => {
+                                    setStatus(`Bezig met uploaden van ${file.name} (${pct}%)...`, "info");
+                                });
+                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                                await set(newFileRef, {
+                                    name: file.name,
+                                    url: url,
+                                    storagePath: path,
+                                    uploadedBy: uName || 'onbekend',
+                                    timestamp: Date.now()
+                                });
+                                successCount++;
                             } catch (storageErr) {
-                                console.warn("Firebase Storage PDF upload mislukt, probeer RTDB chunks fallback:", storageErr);
-                                if (file.size <= 10 * 1024 * 1024) {
-                                    const b64 = await readPdfFileAsBase64(file);
-                                    chunks = splitPdfIntoChunks(b64, 512000);
-                                } else {
-                                    throw new Error('Storage upload mislukt en bestand is groter dan 10 MB.');
+                                console.warn("Storage upload mislukt, schakel over naar Realtime Database:", storageErr);
+                                setStatus(`Alternatieve upload voor ${file.name}...`, "info");
+                                const b64 = await readPdfFileAsBase64(file);
+                                const chunks = splitPdfIntoChunks(b64, 262144);
+                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
+                                const fileKey = newFileRef.key;
+                                for (let c = 0; c < chunks.length; c++) {
+                                    await set(ref(db, `mutatieles/${uClass}/fileChunks/${fileKey}/${c}`), chunks[c]);
+                                    const pct = Math.round(((c + 1) / chunks.length) * 100);
+                                    setStatus(`Bezig met opslaan van ${file.name} (${pct}%)...`, "info");
                                 }
+                                await set(newFileRef, {
+                                    name: file.name,
+                                    isRtdbFile: true,
+                                    chunkCount: chunks.length,
+                                    uploadedBy: uName || 'onbekend',
+                                    timestamp: Date.now()
+                                });
+                                successCount++;
                             }
-
-                            const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                            const payload = {
-                                name: file.name,
-                                uploadedBy: uName || 'onbekend',
-                                timestamp: Date.now()
-                            };
-                            if (url) {
-                                payload.url = url;
-                                payload.storagePath = usedStoragePath;
-                            } else {
-                                payload.chunks = chunks;
-                            }
-                            await set(newFileRef, payload);
-                            successCount++;
                         } catch (err) {
                             console.error("Upload mislukt:", err);
                             setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
@@ -1641,7 +1710,7 @@
                     uploadBtn.disabled = false;
                     uploadBtn.textContent = 'Upload Geselecteerde';
                     if (successCount > 0) {
-                        setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                        setStatus(`${successCount} bestand(en) succesvol geüpload. Klik op het bestand in de lijst hieronder om te openen.`, "success");
                     }
                 });
             }
@@ -2570,11 +2639,6 @@
             const unlockBtn = document.getElementById('audio-unlock-btn');
 
             if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
-
-            try {
-                storage.maxUploadRetryTime = 20000;
-                storage.maxOperationRetryTime = 20000;
-            } catch (e) {}
 
             const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
             let serverTimeOffset = 0;
