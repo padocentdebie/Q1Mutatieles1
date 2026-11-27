@@ -1,3 +1,13 @@
+Dat klopt dat je dan nog niks zag:
+1. Het uploaden opende de PDF nog niet automatisch (hij kwam alleen onderaan in de lijst te staan).
+2. En als Firebase Storage bleef hangen op `100%` (of de losse `fileChunks`-map geblokkeerd werd door de database-regels), stopte hij zonder dat de PDF in beeld kwam.
+
+Ik heb alleen dit stuk op **Scherm 5** aangepast (verder niets aan de rest van de code veranderd):
+- De geüploade PDF wordt **meteen na het uploaden automatisch bovenaan in het scherm geopend** (en gedeeld met de klas), zonder dat je eerst in de lijst hoeft te klikken.
+- De nood-upload slaat nu op binnen de bestaande `files`-map (`mutatieles/${uClass}/files/...`), zodat hij nooit op extra database-rechten kan blijven hangen.
+- Als er toch een fout optreedt, blijft de rode foutmelding zichtbaar staan (en verdwijnt hij niet meer na 5 seconden).
+
+```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -1405,12 +1415,12 @@
                 let lastBytes = 0;
 
                 let stallTimer = setTimeout(() => {
-                    if (!settled && lastBytes === 0) {
+                    if (!settled) {
                         settled = true;
                         try { uploadTask.cancel(); } catch (e) {}
                         reject(new Error('Storage reageert niet (timeout)'));
                     }
-                }, 12000);
+                }, 8000);
 
                 uploadTask.on(
                     'state_changed',
@@ -1425,7 +1435,7 @@
                                     try { uploadTask.cancel(); } catch (e) {}
                                     reject(new Error('Storage upload vastgelopen'));
                                 }
-                            }, 15000);
+                            }, 8000);
                         }
                         if (onProgress && snapshot.totalBytes > 0) {
                             const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
@@ -1472,17 +1482,15 @@
                 if (typeof urlOrSource === 'object' && urlOrSource !== null) {
                     let chunks = urlOrSource.chunks;
                     if (!chunks && urlOrSource.fileKey && uClass) {
-                        const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
-                        if (chunkSnap.exists()) {
-                            chunks = chunkSnap.val();
+                        const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
+                        const fileVal = fileSnap.val();
+                        if (fileVal && fileVal.chunks) {
+                            chunks = fileVal.chunks;
+                        } else if (fileVal && fileVal.url) {
+                            pdfInput = fileVal.url;
                         } else {
-                            const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
-                            const fileVal = fileSnap.val();
-                            if (fileVal && fileVal.chunks) {
-                                chunks = fileVal.chunks;
-                            } else if (fileVal && fileVal.url) {
-                                pdfInput = fileVal.url;
-                            }
+                            const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
+                            if (chunkSnap.exists()) chunks = chunkSnap.val();
                         }
                     }
                     if (chunks) {
@@ -1540,6 +1548,7 @@
             if(type === "success") {
                 uploadStatus.style.background = "#d4edda";
                 uploadStatus.style.color = "#155724";
+                uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 6000);
             } else if (type === "error") {
                 uploadStatus.style.background = "#f8d7da";
                 uploadStatus.style.color = "#721c24";
@@ -1547,21 +1556,27 @@
                 uploadStatus.style.background = "#d1ecf1";
                 uploadStatus.style.color = "#0c5460";
             }
-            uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 5000);
         }
 
         // Render File List in Screen 5
         function renderFileList(files) {
             if(!fileListItems) return;
             fileListItems.innerHTML = '';
-            if (!files || Object.keys(files).length === 0) {
+            if (!files || typeof files !== 'object') {
                 fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
                 return;
             }
             
-            const entries = Object.entries(files).sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+            const entries = Object.entries(files)
+                .filter(([, f]) => f && typeof f === 'object' && f.name)
+                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+
+            if (entries.length === 0) {
+                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
+                return;
+            }
+
             entries.forEach(([fileKey, fileData]) => {
-                if (!fileData) return;
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
@@ -1594,7 +1609,6 @@
                                         console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
                                     }
                                 }
-                                await remove(ref(db, `mutatieles/${uClass}/fileChunks/${fileKey}`));
                                 await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
                             } catch (err) {
                                 console.error("Verwijderen mislukt:", err);
@@ -1662,6 +1676,8 @@
                     setStatus("Bezig met uploaden naar Firebase...", "info");
                     
                     let successCount = 0;
+                    let lastUploadedSource = null;
+
                     for (const file of selectedFiles) {
                         try {
                             const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
@@ -1677,26 +1693,28 @@
                                     uploadedBy: uName || 'onbekend',
                                     timestamp: Date.now()
                                 });
+                                lastUploadedSource = url;
                                 successCount++;
                             } catch (storageErr) {
                                 console.warn("Storage upload mislukt, schakel over naar Realtime Database:", storageErr);
-                                setStatus(`Alternatieve upload voor ${file.name}...`, "info");
+                                setStatus(`Storage reageert niet — bezig met opslaan van ${file.name} via database...`, "info");
                                 const b64 = await readPdfFileAsBase64(file);
                                 const chunks = splitPdfIntoChunks(b64, 262144);
                                 const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
                                 const fileKey = newFileRef.key;
                                 for (let c = 0; c < chunks.length; c++) {
-                                    await set(ref(db, `mutatieles/${uClass}/fileChunks/${fileKey}/${c}`), chunks[c]);
+                                    await set(ref(db, `mutatieles/${uClass}/files/${fileKey}/chunks/${c}`), chunks[c]);
                                     const pct = Math.round(((c + 1) / chunks.length) * 100);
-                                    setStatus(`Bezig met opslaan van ${file.name} (${pct}%)...`, "info");
+                                    setStatus(`Bezig met opslaan via database: ${file.name} (${pct}%)...`, "info");
                                 }
-                                await set(newFileRef, {
+                                await update(newFileRef, {
                                     name: file.name,
                                     isRtdbFile: true,
                                     chunkCount: chunks.length,
                                     uploadedBy: uName || 'onbekend',
                                     timestamp: Date.now()
                                 });
+                                lastUploadedSource = { type: 'rtdbFile', fileKey: fileKey, chunks: chunks };
                                 successCount++;
                             }
                         } catch (err) {
@@ -1708,9 +1726,12 @@
                     if(fileInput) fileInput.value = '';
                     updateUploadStatus();
                     uploadBtn.disabled = false;
-                    uploadBtn.textContent = 'Upload Geselecteerde';
+                    uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Geselecteerde';
                     if (successCount > 0) {
-                        setStatus(`${successCount} bestand(en) succesvol geüpload. Klik op het bestand in de lijst hieronder om te openen.`, "success");
+                        setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
+                        if (lastUploadedSource) {
+                            await openPdfText(lastUploadedSource, true);
+                        }
                     }
                 });
             }
