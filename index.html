@@ -1,3 +1,11 @@
+Hier is de volledige code met alleen de nieuwe **Kennischeck (Scherm 4)** uitgewerkt. Alle overige onderdelen van de code (inloggen, Digibord op Scherm 2 en Scherm 5, Kennisblok, Sleepopdracht, PDF & Feedback, en Eindopdracht + audio/livefeed) zijn ongewijzigd gebleven.
+
+Wat er op **Scherm 4** is aangepast:
+- De oude quiz met goed/fout-oordeel is vervangen door de 10 afgesproken vragen (5 open vragen incl. `'Aanhef'` + 5 meerkeuzevragen).
+- Studenten kunnen inleveren via **"Antwoorden inleveren (delen met klas)"**, waarna alle antwoorden realtime in **Live Antwoorden Klas** onder de vragen verschijnen (incl. een handige filter om tijdens de nabespreking per vraag te kijken).
+- Het vragenformulier en de livefeed staan los van elkaar en het formulier wordt niet opnieuw opgebouwd bij updates: studenten die nog typen merken niets als klasgenoten al inleveren.
+
+```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
@@ -188,6 +196,19 @@
             border-radius: 8px;
             margin-bottom: 15px;
             box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        /* Kennischeck (Scherm 4) */
+        #quiz-container input[type="radio"] {
+            width: auto;
+            margin: 0;
+            padding: 0;
+            flex-shrink: 0;
+            accent-color: var(--police-blue);
+        }
+        #quiz-container textarea {
+            min-height: 90px;
+            margin-bottom: 0;
+            resize: vertical;
         }
         .audio-player-container {
             background: #f1f5f9;
@@ -732,8 +753,31 @@
 
         <!-- SCREEN 4: KENNISCHECK -->
         <div id="screen-4" class="hidden">
-            <h1 class="text-2xl font-bold mb-4">Kennischeck Mutatieleer</h1>
+            <h1 class="text-2xl font-bold mb-2">Kennischeck Mutatieleer</h1>
+            <p class="text-gray-600 text-sm mb-4">Beantwoord onderstaande 10 vragen en lever ze in. Alle antwoorden verschijnen daarna direct in de klassen-livefeed zodat we ze samen kunnen bespreken.</p>
             <div id="quiz-container"></div>
+
+            <div class="live-feed mt-8">
+                <div class="flex justify-between items-center flex-wrap gap-3 mb-3 border-b pb-2">
+                    <h3 class="text-lg font-bold"><i class="fa-solid fa-tower-broadcast text-red-600 animate-pulse mr-2"></i>Live Antwoorden Klas: <span id="kennischeck-class-label" class="text-yellow-600"></span> <span id="kennischeck-count" class="text-xs font-semibold text-gray-500 ml-2">(0 ingeleverd)</span></h3>
+                    <select id="kc-filter-question" class="w-auto mb-0 text-sm py-1.5 px-3">
+                        <option value="all">Alle 10 vragen tonen</option>
+                        <option value="q1">Filter: Vraag 1 (Aanhef)</option>
+                        <option value="q2">Filter: Vraag 2 (Situatie)</option>
+                        <option value="q3">Filter: Vraag 3 (Filmisch schrijven)</option>
+                        <option value="q4">Filter: Vraag 4 (Maatregelen vs. Afhandeling)</option>
+                        <option value="q5">Filter: Vraag 5 (Telegramstijl &amp; doel)</option>
+                        <option value="q6">Filter: Vraag 6 (Status mutatie)</option>
+                        <option value="q7">Filter: Vraag 7 (Alinea weersomstandigheden/voertuig)</option>
+                        <option value="q8">Filter: Vraag 8 (Filmisch waarnemen)</option>
+                        <option value="q9">Filter: Vraag 9 (Gouden W's)</option>
+                        <option value="q10">Filter: Vraag 10 (Maatregelen vs. Afhandeling praktijk)</option>
+                    </select>
+                </div>
+                <p class="text-xs text-gray-500 mb-2">Hier verschijnen alle ingeleverde antwoorden realtime. Studenten die nog typen worden hier niet door gestoord.</p>
+                <div id="kennischeck-feed" class="feed-container"></div>
+            </div>
+
             <div class="mt-6 flex justify-end">
                 <button class="btn btn-secondary w-auto px-8" onclick="showScreen(5)">
                     Naar PDF &amp; Digibord <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -1801,73 +1845,1159 @@
         };
 
         // ===== KENNISCHECK (SCHERM 4) =====
-        const quizData = [
+        const kennischeckQuestions = [
             {
-                vraag: "Wat is de juiste volgorde van het ASTMA-model?",
-                opties: [
-                    "Aanleiding, Situatie, Toedracht, Maatregelen, Afhandeling",
-                    "Aanleiding, Toedracht, Situatie, Maatregelen, Afhandeling",
-                    "Situatie, Aanleiding, Toedracht, Maatregelen, Afhandeling"
-                ],
-                correct: 0
+                id: 'q1',
+                type: 'open',
+                vraag: "Welke informatie zou jij in de alinea 'Aanhef' plaatsen?",
+                placeholder: "Noteer welke gegevens je in de Aanhef (Aanleiding) opneemt..."
             },
             {
-                vraag: "Wat betekent de afkorting OVT in het kader van verslaglegging?",
-                opties: [
-                    "Onvoltooid Verleden Tijd",
-                    "Onvoltooid Toekomende Tijd",
-                    "Overleg Verleden Tijd"
-                ],
-                correct: 0
+                id: 'q2',
+                type: 'open',
+                vraag: "Stel: je komt ter plaatse bij een melding van een verdachte situatie op straat. Welke concrete gegevens over de omgeving, personen en voertuigen noteer je in de alinea 'Situatie'?",
+                placeholder: "Beschrijf welke concrete gegevens je bij Situatie vastlegt..."
             },
             {
-                vraag: "Welke vragen behoren tot de Gouden W's?",
-                opties: [
-                    "Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
-                    "Wie, wat, waar, wanneer, waarom, hoe, waarmee",
-                    "Wie, wat, waar, wanneer, waarom, hoe, wat"
-                ],
-                correct: 0
+                id: 'q3',
+                type: 'open',
+                vraag: "Wat betekent 'filmisch schrijven' in de alinea 'Toedracht', en hoe verwerk je daarin zintuiglijke waarnemingen? Geef zelf een kort voorbeeld van 2 à 3 zinnen in de OVT.",
+                placeholder: "Leg uit wat filmisch schrijven is en geef een kort voorbeeld in de OVT..."
             },
             {
-                vraag: "Waar wordt een politiemutatie NIET voor gebruikt?",
+                id: 'q4',
+                type: 'open',
+                vraag: "Leg in eigen woorden het verschil uit tussen de alinea 'Maatregelen' en de alinea 'Afhandeling', en geef bij beide één concreet praktijkvoorbeeld.",
+                placeholder: "Beschrijf het verschil en geef bij beide een praktijkvoorbeeld..."
+            },
+            {
+                id: 'q5',
+                type: 'open',
+                vraag: "Waarom mag je in een mutatie wél telegramstijl en afkortingen gebruiken, terwijl een mutatie niet als rechtstreeks wettig bewijsmiddel voor strafvervolging dient? Wat is dan wél het doel van de mutatie?",
+                placeholder: "Geef je antwoord in eigen woorden..."
+            },
+            {
+                id: 'q6',
+                type: 'mc',
+                vraag: "Welke uitspraak over het doel en de status van een politiemutatie is juist?",
                 opties: [
-                    "Voor opsporing en informatieopbouw",
-                    "Voor statistieken en bijzondere opdrachten",
-                    "Als rechtstreeks wettig bewijsmiddel voor strafvervolging"
-                ],
-                correct: 2
+                    "A) Een mutatie dient rechtstreeks als wettig bewijsmiddel voor strafvervolging.",
+                    "B) Een mutatie wordt opgenomen voor opsporing, statistieken en bijzondere opdrachten en vormt de basis voor verslaglegging.",
+                    "C) In een mutatie zijn afkortingen en onvolledige zinnen verboden.",
+                    "D) Een mutatie mag alleen worden opgemaakt bij een aanhouding."
+                ]
+            },
+            {
+                id: 'q7',
+                type: 'mc',
+                vraag: "In welke alinea van het ASTMA-model noteer je de weersomstandigheden, het zicht, de verkeersdrukte en het kenteken van een aangetroffen auto?",
+                opties: [
+                    "A) Aanleiding",
+                    "B) Situatie",
+                    "C) Toedracht",
+                    "D) Afhandeling"
+                ]
+            },
+            {
+                id: 'q8',
+                type: 'mc',
+                vraag: "Welke zin past het best bij objectief en 'filmisch' waarnemen in de Toedracht (OVT)?",
+                opties: [
+                    "A) \"De man was duidelijk agressief en zocht ruzie.\"",
+                    "B) \"Ik zag dat de man met gebalde vuisten op de voorbijganger afliep, hoorde hem hard schreeuwen en rook een sterke alcohollucht.\"",
+                    "C) \"Ik heb de man aangehouden en overgebracht naar het bureau.\"",
+                    "D) \"Betrokkene gedraagt zich altijd verward op deze locatie.\""
+                ]
+            },
+            {
+                id: 'q9',
+                type: 'mc',
+                vraag: "Welke reeks hoort bij de vragen die je in de alinea 'Toedracht' beantwoordt?",
+                opties: [
+                    "A) Wie, wat, waar, wanneer, waarom, waarmee, op welke wijze",
+                    "B) Wie, wat, waar, welk kenteken, welk weer",
+                    "C) Waarom, waarmee, welke basiseenheid, welke zorgopvolging",
+                    "D) Alleen wie, wat en waar, vanwege de telegramstijl"
+                ]
+            },
+            {
+                id: 'q10',
+                type: 'mc',
+                vraag: "Je verleent ter plaatse EHBO, neemt een ademanalyse af en draagt daarna de mutatie over aan de wijkagent t.b.v. zorgopvolging. Hoe verdeel je dit over ASTMA?",
+                opties: [
+                    "A) Alles hoort in de Situatie.",
+                    "B) EHBO en ademanalyse horen bij Afhandeling; overdragen aan de wijkagent hoort bij Toedracht.",
+                    "C) EHBO en ademanalyse horen bij Maatregelen; overdragen aan de wijkagent t.b.v. zorgopvolging hoort bij Afhandeling.",
+                    "D) Alles hoort in de Aanleiding omdat het de start van de afhandeling is."
+                ]
             }
         ];
 
+        let kennischeckListener = null;
+        let latestKennischeckData = {};
+
+        function makeSafeKey(name) {
+            return String(name || 'onbekend').trim().replace(/[.#$\[\]\/]/g, '_') || 'onbekend';
+        }
+
         function renderQuiz() {
             const container = document.getElementById('quiz-container');
-            if(!container) return;
+            if (!container) return;
+            if (container.dataset.rendered === '1') return;
+            container.dataset.rendered = '1';
             container.innerHTML = '';
-            
-            quizData.forEach((q, index) => {
+
+            kennischeckQuestions.forEach((q, index) => {
                 const div = document.createElement('div');
                 div.className = 'quiz-item';
-                div.innerHTML = `<p class="font-bold text-gray-800 mb-3"><span class="text-blue-800">Vraag ${index+1}:</span> ${q.vraag}</p>`;
-                
-                q.opties.forEach((opt, i) => {
-                    const label = document.createElement('label');
-                    label.className = 'flex items-center gap-2 p-2 rounded hover:bg-gray-100 cursor-pointer text-sm my-1 border border-gray-100';
-                    const radio = document.createElement('input');
-                    radio.type = 'radio';
-                    radio.name = `quiz${index}`;
-                    radio.value = i;
-                    label.appendChild(radio);
-                    label.appendChild(document.createTextNode(opt));
-                    div.appendChild(label);
-                });
+                const badge = q.type === 'open'
+                    ? '<span class="text-xs font-semibold bg-blue-100 text-blue-900 px-2 py-0.5 rounded ml-2">Open vraag</span>'
+                    : '<span class="text-xs font-semibold bg-yellow-100 text-yellow-900 px-2 py-0.5 rounded ml-2">Meerkeuze</span>';
+
+                div.innerHTML = `<p class="font-bold text-gray-800 mb-3"><span class="text-blue-800">Vraag ${index + 1}:</span> ${escapeHtml(q.vraag)} ${badge}</p>`;
+
+                if (q.type === 'open') {
+                    const ta = document.createElement('textarea');
+                    ta.id = `kc-input-${q.id}`;
+                    ta.placeholder = q.placeholder || 'Typ hier je antwoord...';
+                    div.appendChild(ta);
+                } else {
+                    q.opties.forEach((opt, i) => {
+                        const label = document.createElement('label');
+                        label.className = 'flex items-center gap-2 p-2.5 rounded hover:bg-gray-100 cursor-pointer text-sm my-1 border border-gray-100';
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `quiz_${q.id}`;
+                        radio.value = i;
+                        label.appendChild(radio);
+                        const span = document.createElement('span');
+                        span.textContent = opt;
+                        label.appendChild(span);
+                        div.appendChild(label);
+                    });
+                }
+
                 container.appendChild(div);
             });
 
-            const checkBtn = document.createElement('button');
-            checkBtn.className = 'btn mt-4';
-            checkBtn.innerHTML = '<i class="fa-solid fa-graduation-cap"></i> Controleer antwoorden';
-            checkBtn.onclick = checkQuiz;
-            container.appendChild(checkBtn);
+            const submitBtn = document.createElement('button');
+            submitBtn.type = 'button';
+            submitBtn.id = 'kc-submit-btn';
+            submitBtn.className = 'btn bg-green-600 hover:bg-green-700 mt-4 py-3 text-base';
+            submitBtn.innerHTML = '<i class="fa-solid fa-paper-plane"></i> Antwoorden inleveren (delen met klas)';
+            submitBtn.onclick = submitKennischeck;
+            container.appendChild(submitBtn);
 
-            co
+            const statusMsg = document.createElement('div');
+            statusMsg.id = 'kc-submit-status';
+            statusMsg.className = 'mt-3 text-sm font-semibold text-center hidden p-2.5 rounded';
+            container.appendChild(statusMsg);
+        }
+
+        async function submitKennischeck() {
+            if (!uClass || !uName) {
+                window.customModal({ title: "Inloggen vereist", message: "Log eerst in met je naam en klas." });
+                return;
+            }
+
+            const answers = {};
+            let hasAnyAnswer = false;
+
+            kennischeckQuestions.forEach((q) => {
+                if (q.type === 'open') {
+                    const val = (document.getElementById(`kc-input-${q.id}`)?.value || '').trim();
+                    answers[q.id] = val;
+                    if (val) hasAnyAnswer = true;
+                } else {
+                    const radios = document.getElementsByName(`quiz_${q.id}`);
+                    let selected = null;
+                    for (const r of radios) {
+                        if (r.checked) {
+                            selected = parseInt(r.value, 10);
+                            break;
+                        }
+                    }
+                    if (selected !== null) {
+                        answers[q.id] = selected;
+                        hasAnyAnswer = true;
+                    }
+                }
+            });
+
+            if (!hasAnyAnswer) {
+                window.customModal({ title: "Geen invoer", message: "Vul eerst ten minste één antwoord in voordat je inlevert." });
+                return;
+            }
+
+            const btn = document.getElementById('kc-submit-btn');
+            const statusMsg = document.getElementById('kc-submit-status');
+            if (btn) btn.disabled = true;
+
+            try {
+                const safeKey = makeSafeKey(uName);
+                await set(ref(db, `mutatieles/${uClass}/kennischeck/${safeKey}`), {
+                    name: uName,
+                    answers: answers,
+                    timestamp: Date.now()
+                });
+
+                if (statusMsg) {
+                    statusMsg.textContent = '✅ Je antwoorden zijn ingeleverd en staan nu in de klassen-livefeed hieronder!';
+                    statusMsg.className = 'mt-3 text-sm font-semibold text-center p-2.5 rounded bg-green-100 text-green-800 border border-green-300';
+                }
+                if (btn) {
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Ingeleverd! (Klik opnieuw om bij te werken)';
+                }
+            } catch (err) {
+                console.error('Inleveren mislukt:', err);
+                window.customModal({ title: "Fout", message: "Inleveren mislukt: " + err.message });
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        function renderKennischeckFeed() {
+            const feed = document.getElementById('kennischeck-feed');
+            const countEl = document.getElementById('kennischeck-count');
+            const filterEl = document.getElementById('kc-filter-question');
+            if (!feed) return;
+
+            const prevScrollTop = feed.scrollTop;
+            const filterVal = filterEl ? filterEl.value : 'all';
+            const entries = Object.values(latestKennischeckData || {})
+                .filter(v => v && typeof v === 'object')
+                .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+            if (countEl) {
+                countEl.textContent = `(${entries.length} ${entries.length === 1 ? 'student' : 'studenten'} ingeleverd)`;
+            }
+
+            feed.innerHTML = '';
+
+            if (entries.length === 0) {
+                feed.innerHTML = '<p class="text-sm text-gray-500 italic p-3 text-center">Nog geen antwoorden ingeleverd in deze klas.</p>';
+                return;
+            }
+
+            const questionsToShow = filterVal === 'all'
+                ? kennischeckQuestions
+                : kennischeckQuestions.filter(q => q.id === filterVal);
+
+            entries.forEach((entry) => {
+                const card = document.createElement('div');
+                card.className = 'feed-card';
+
+                const timeStr = entry.timestamp
+                    ? new Date(entry.timestamp).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+                    : 'Live';
+
+                let html = `<div class="feed-name">
+                    <span><i class="fa-solid fa-user text-blue-800 mr-1.5"></i> ${escapeHtml(entry.name || 'Student')}</span>
+                    <span class="text-xs text-gray-400 font-normal"><i class="fa-regular fa-clock mr-1"></i> ${escapeHtml(timeStr)}</span>
+                </div>`;
+
+                const ansMap = entry.answers || {};
+                questionsToShow.forEach((q) => {
+                    const qIndex = kennischeckQuestions.findIndex(item => item.id === q.id) + 1;
+                    let answerHtml = '<span class="text-gray-400 italic">(niet ingevuld)</span>';
+
+                    if (q.type === 'open') {
+                        const rawText = (ansMap[q.id] || '').trim();
+                        if (rawText) {
+                            answerHtml = escapeHtml(rawText).replace(/\n/g, '<br />');
+                        }
+                    } else {
+                        const idx = ansMap[q.id];
+                        if (Number.isInteger(idx) && q.opties[idx] !== undefined) {
+                            answerHtml = escapeHtml(q.opties[idx]);
+                        }
+                    }
+
+                    html += `<div class="text-sm py-1.5 border-b border-gray-100 last:border-b-0">
+                        <div class="font-semibold text-blue-900 text-xs mb-0.5">Vraag ${qIndex}: ${escapeHtml(q.vraag)}</div>
+                        <div class="text-gray-800 pl-2 border-l-2 border-yellow-400">${answerHtml}</div>
+                    </div>`;
+                });
+
+                card.innerHTML = html;
+                feed.appendChild(card);
+            });
+
+            feed.scrollTop = prevScrollTop;
+        }
+
+        function listenKennischeckFeed() {
+            if (!uClass) return;
+
+            const filterEl = document.getElementById('kc-filter-question');
+            if (filterEl && !filterEl.dataset.bound) {
+                filterEl.dataset.bound = '1';
+                filterEl.addEventListener('change', renderKennischeckFeed);
+            }
+
+            if (kennischeckListener) kennischeckListener();
+            kennischeckListener = onValue(ref(db, `mutatieles/${uClass}/kennischeck`), (snap) => {
+                latestKennischeckData = snap.val() || {};
+                renderKennischeckFeed();
+            });
+        }
+
+        function initPdfSync() {
+            if (pdfSelect) {
+                pdfSelect.addEventListener('change', (e) => {
+                    const url = e.target.value;
+                    if (url) {
+                        openPdfText(url, true);
+                    } else {
+                        if (pdfViewer && pdfPlaceholder) {
+                            pdfViewer.innerHTML = '';
+                            pdfViewer.classList.add('hidden');
+                            pdfPlaceholder.classList.remove('hidden');
+                        }
+                        if (uClass) {
+                            set(ref(db, `mutatieles/${uClass}/currentPdf`), null);
+                        }
+                    }
+                });
+            }
+
+            if (uClass) {
+                if (pdfListener) pdfListener();
+                pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
+                    const url = snap.val();
+                    if (url && typeof url === 'string') {
+                        openPdfText(url, false);
+                        if (pdfSelect) {
+                            const options = pdfSelect.options;
+                            for (let i = 0; i < options.length; i++) {
+                                if (options[i].value === url) {
+                                    pdfSelect.selectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        window.startSession = function() {
+            const nameInput = document.getElementById('user-name');
+            const classSelect = document.getElementById('user-class');
+            uName = nameInput.value.trim();
+            uClass = classSelect.value;
+            
+            if(!uName || !uClass) {
+                window.customModal({ title: "Inloggen mislukt", message: "Vul a.u.b. je naam in en kies een NATO-klas." });
+                return;
+            }
+            
+            document.getElementById('banner-user-name').textContent = uName;
+            document.getElementById('banner-user-class').textContent = uClass;
+            document.getElementById('user-info-banner').classList.remove('hidden');
+            document.getElementById('nav-bar').classList.remove('hidden');
+
+            document.getElementById('current-class-label').textContent = uClass;
+            const label2 = document.getElementById('current-class-label-2');
+            if (label2) label2.textContent = uClass;
+            const kcLabel = document.getElementById('kennischeck-class-label');
+            if (kcLabel) kcLabel.textContent = uClass;
+
+            showScreen(2);
+            initDigibord();
+            listenKennischeckFeed();
+            listenClassFeed();
+            initClassFeedInteractions();
+            initSubmitMutation();
+            initAudioFeatures();
+        };
+
+        window.showScreen = function(n) {
+            if (n !== 3 && dragListener) {
+                dragListener();
+                dragListener = null;
+                renderedCaseIndex = -1;
+            }
+
+            document.querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+            const activeNavBtn = document.getElementById('nav-btn-' + n);
+            if (activeNavBtn) activeNavBtn.classList.add('active');
+
+            document.querySelectorAll('.container > div:not(#nav-bar)').forEach(d => d.classList.add('hidden'));
+            const el = document.getElementById('screen-' + n);
+            if (el) el.classList.remove('hidden');
+
+            if (n === 2 || n === 5) redrawAllBoards();
+
+            if (n === 3) {
+                const sleepRef = ref(db, `mutatieles/${uClass}/sleepopdracht`);
+                if (dragListener) dragListener();
+                dragListener = onValue(sleepRef, (snap) => {
+                    const data = snap.val();
+                    let caseIndex = data?.caseIndex;
+                    let order = data?.order;
+                    const validCaseIndex = Number.isInteger(caseIndex) && caseIndex >= 0 && caseIndex < allCases.length;
+                    const expectedLen = validCaseIndex ? allCases[caseIndex].blocks.length : 0;
+                    const validOrder = Array.isArray(order) && order.length === expectedLen && order.every(x => Number.isInteger(x) && x >= 0 && x < expectedLen);
+
+                    if (!validCaseIndex || !validOrder) {
+                        const newIdx = pickRandomCaseIndex();
+                        const newOrder = makeShuffledIndexes(newIdx);
+                        set(sleepRef, { caseIndex: newIdx, order: newOrder });
+                        return;
+                    }
+                    currentCaseIndex = caseIndex;
+                    if (!isDraggingLocally) renderDragItems(order, caseIndex);
+                });
+            }
+
+            if (n === 4) renderQuiz();
+            if (n === 5) {
+                initFileUpload(); 
+                initPdfSync();
+            }
+        };
+
+        window.confirmResetClassData = function() {
+            const c = document.getElementById('user-class').value;
+            if(!c) {
+                window.customModal({ title: "Attentie", message: "Selecteer eerst een klas om te resetten." });
+                return;
+            }
+            window.customModal({
+                title: "Reset klas-data",
+                message: `Weet je zeker dat je ALLE data voor klas ${c} wilt wissen? Dit kan niet ongedaan worden gemaakt.`,
+                isConfirm: true,
+                onConfirm: () => {
+                    remove(ref(db, `mutatieles/${c}`));
+                    window.customModal({ title: "Gereset", message: `Alle data voor klas ${c} is succesvol gewist.` });
+                }
+            });
+        };
+
+        // ===== MUTATIE VERSTUREN (scherm 6 → feed) =====
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        function initSubmitMutation() {
+            const btn = document.getElementById('submit-mutation-btn');
+            if (!btn || btn.dataset.bound) return;
+            btn.dataset.bound = '1';
+
+            btn.addEventListener('click', async () => {
+                if (!uClass || !uName) return;
+                
+                const finalText = (document.getElementById('final-mutation')?.value || '').trim();
+                const m1 = (document.getElementById('mutation1')?.value || '').trim();
+                const m2 = (document.getElementById('mutation2')?.value || '').trim();
+                const m3 = (document.getElementById('mutation3')?.value || '').trim();
+
+                if (!finalText && !m1 && !m2 && !m3) {
+                    window.customModal({ title: "Geen invoer", message: "Vul ten minste één mutatieveld in voordat je verstuurt." });
+                    return;
+                }
+
+                btn.disabled = true;
+                const originalText = btn.innerHTML;
+                btn.innerHTML = '<i class="fa-solid fa-spinner animate-spin"></i> Bezig met versturen...';
+
+                try {
+                    await update(ref(db, `mutatieles/${uClass}/live/${uName}`), {
+                        name: uName,
+                        text: finalText,
+                        mutation1: m1,
+                        mutation2: m2,
+                        mutation3: m3,
+                        timestamp: Date.now()
+                    });
+                    btn.innerHTML = '<i class="fa-solid fa-check"></i> Succesvol verstuurd!';
+                    setTimeout(() => { btn.innerHTML = originalText; btn.disabled = false; }, 2000);
+                } catch (err) {
+                    console.error('Versturen mislukt:', err);
+                    window.customModal({ title: "Fout", message: "Versturen mislukt: " + err.message });
+                    btn.innerHTML = originalText;
+                    btn.disabled = false;
+                }
+            });
+        }
+
+        // Livefeed Non-Disruptive Reconciliation logic
+        function listenClassFeed() {
+            if (!uClass) return;
+            
+            onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
+                const feed = document.getElementById('class-feed');
+                if (!feed) return;
+
+                const data = snap.val() || {};
+
+                // 1. Capture current active element focus & selection range
+                const activeEl = document.activeElement;
+                let activeStudentKey = null;
+                let selStart = 0, selEnd = 0;
+
+                if (activeEl && activeEl.matches('[data-reply-input]')) {
+                    activeStudentKey = activeEl.dataset.studentKey;
+                    try {
+                        selStart = activeEl.selectionStart;
+                        selEnd = activeEl.selectionEnd;
+                    } catch (e) {}
+                }
+
+                // 2. Save draft inputs from DOM
+                feed.querySelectorAll('[data-reply-input]').forEach(input => {
+                    const key = input.dataset.studentKey;
+                    if (key) draftReplyTexts[key] = input.value;
+                });
+
+                // 3. Render feed cards gracefully
+                feed.innerHTML = '';
+                const entries = Object.entries(data);
+
+                if (entries.length === 0) {
+                    feed.innerHTML = '<p class="text-sm text-gray-500 italic p-3 text-center">Nog geen mutaties ingeleverd in deze klas.</p>';
+                    return;
+                }
+
+                entries.forEach(([student, val]) => {
+                    if (!val || typeof val !== 'object') return;
+
+                    const card = document.createElement('div');
+                    card.className = 'feed-card';
+                    card.dataset.student = student;
+
+                    let html = `<div class="feed-name">
+                        <span><i class="fa-solid fa-user text-blue-800 mr-1.5"></i> ${escapeHtml(student)}</span>
+                        <span class="text-xs text-gray-400 font-normal"><i class="fa-regular fa-clock mr-1"></i> Live</span>
+                    </div>`;
+
+                    if (val.text) html += `<div class="text-sm my-1"><strong class="text-blue-900">Hoofdmutatie:</strong> ${escapeHtml(val.text)}</div>`;
+                    if (val.mutation1) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 1:</strong> ${escapeHtml(val.mutation1)}</div>`;
+                    if (val.mutation2) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 2:</strong> ${escapeHtml(val.mutation2)}</div>`;
+                    if (val.mutation3) html += `<div class="text-xs text-gray-700 my-0.5"><strong class="text-gray-900">Mutatie 3:</strong> ${escapeHtml(val.mutation3)}</div>`;
+
+                    // Reactions section
+                    html += `<div class="feed-reactions">`;
+                    if (val.reactions) {
+                        Object.values(val.reactions)
+                            .sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0))
+                            .forEach(r => {
+                                html += `<div class="feed-reaction"><strong>${escapeHtml(r.author)}:</strong> ${escapeHtml(r.text)}</div>`;
+                            });
+                    }
+
+                    // Draft reply text preservation
+                    const draftVal = draftReplyTexts[student] || '';
+
+                    html += `<div class="feed-reply">
+                        <input type="text" placeholder="Reageer op ${escapeHtml(student)}..." data-reply-input data-student-key="${escapeHtml(student)}" value="${escapeHtml(draftVal)}" />
+                        <button type="button" data-reply-btn data-student-key="${escapeHtml(student)}">Reageer</button>
+                    </div></div>`;
+
+                    card.innerHTML = html;
+                    feed.appendChild(card);
+                });
+
+                // 4. Restore focus and cursor position
+                if (activeStudentKey) {
+                    const newInput = feed.querySelector(`[data-reply-input][data-student-key="${CSS.escape(activeStudentKey)}"]`);
+                    if (newInput) {
+                        newInput.focus();
+                        try { newInput.setSelectionRange(selStart, selEnd); } catch (e) {}
+                    }
+                }
+            });
+        }
+
+        function initClassFeedInteractions() {
+            const feed = document.getElementById('class-feed');
+            if (!feed || feed.dataset.bound) return;
+            feed.dataset.bound = '1';
+
+            // Track live draft changes
+            feed.addEventListener('input', (e) => {
+                if (e.target.matches('[data-reply-input]')) {
+                    const studentKey = e.target.dataset.studentKey;
+                    if (studentKey) draftReplyTexts[studentKey] = e.target.value;
+                }
+            });
+
+            feed.addEventListener('click', async (e) => {
+                const btn = e.target.closest('[data-reply-btn]');
+                if (!btn) return;
+
+                const student = btn.dataset.studentKey;
+                const card = btn.closest('.feed-card');
+                const input = card?.querySelector('[data-reply-input]');
+                const text = input?.value.trim();
+
+                if (!text) return;
+                if (!uName || !uClass) {
+                    window.customModal({ title: "Inloggen vereist", message: "Log eerst in met je naam en klas." });
+                    return;
+                }
+
+                btn.disabled = true;
+                try {
+                    const newRef = push(ref(db, `mutatieles/${uClass}/live/${student}/reactions`));
+                    await set(newRef, {
+                        author: uName,
+                        text: text,
+                        timestamp: Date.now()
+                    });
+                    delete draftReplyTexts[student];
+                    if (input) input.value = '';
+                } catch (err) {
+                    console.error('Reactie mislukt:', err);
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+
+            feed.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && e.target.matches('[data-reply-input]')) {
+                    e.preventDefault();
+                    const card = e.target.closest('.feed-card');
+                    const btn = card?.querySelector('[data-reply-btn]');
+                    if (btn) btn.click();
+                }
+            });
+        }
+
+        // ===== AUDIO UPLOAD & MEDIA (M4A BROWSER + GESYNCHRONISEERDE PLAYER) =====
+        let audioInitDone = false;
+        function initAudioFeatures() {
+            if (audioInitDone) return;
+            if (!uClass) return;
+            audioInitDone = true;
+
+            const audioInput = document.getElementById('audio-file-input');
+            const browseBtn = document.getElementById('browse-audio-btn');
+            const removeBtn = document.getElementById('remove-audio-btn');
+            const selectedNameEl = document.getElementById('selected-audio-name');
+            const statusDiv = document.getElementById('audio-upload-status');
+            const activeFilenameEl = document.getElementById('active-audio-filename');
+            const masterToggle = document.getElementById('audio-master-toggle');
+            const audioPlayer = document.getElementById('uploaded-audio-player');
+            const playAllBtn = document.getElementById('play-all-audio-btn');
+            const pauseAllBtn = document.getElementById('pause-all-audio-btn');
+            const stopAllBtn = document.getElementById('stop-all-audio-btn');
+            const unlockBtn = document.getElementById('audio-unlock-btn');
+
+            if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
+
+            try {
+                storage.maxUploadRetryTime = 5000;
+                storage.maxOperationRetryTime = 5000;
+            } catch (e) {}
+
+            const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
+            let serverTimeOffset = 0;
+            let loadedTrackId = null;
+            let currentObjectUrl = null;
+            let currentAudioData = null;
+            let isRemoteSyncing = false;
+            let pendingRemoteState = null;
+            let lastAppliedCommandId = null;
+            let syncPublishTimer = null;
+
+            onValue(ref(db, '.info/serverTimeOffset'), (snap) => {
+                serverTimeOffset = snap.val() || 0;
+            });
+
+            function showStatus(msg, color = '#0c5460') {
+                statusDiv.textContent = msg;
+                statusDiv.classList.remove('hidden');
+                statusDiv.style.color = color;
+            }
+
+            function setControlsEnabled(enabled) {
+                if (playAllBtn) playAllBtn.disabled = !enabled;
+                if (pauseAllBtn) pauseAllBtn.disabled = !enabled;
+                if (stopAllBtn) stopAllBtn.disabled = !enabled;
+                if (removeBtn) removeBtn.disabled = !enabled;
+            }
+
+            function showUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.remove('hidden');
+            }
+
+            function hideUnlockBtn() {
+                if (unlockBtn) unlockBtn.classList.add('hidden');
+            }
+
+            function formatDuration(sec) {
+                if (!Number.isFinite(sec) || sec < 0) return '0:00';
+                const m = Math.floor(sec / 60);
+                const s = Math.floor(sec % 60);
+                return `${m}:${String(s).padStart(2, '0')}`;
+            }
+
+            function revokeCurrentObjectUrl() {
+                if (currentObjectUrl) {
+                    try { URL.revokeObjectURL(currentObjectUrl); } catch (e) {}
+                    currentObjectUrl = null;
+                }
+            }
+
+            function base64ToBlobUrl(base64Input, mimeType) {
+                let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
+                const commaIdx = cleanB64.indexOf(',');
+                if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
+                cleanB64 = cleanB64.replace(/\s+/g, '');
+                const byteChars = atob(cleanB64);
+                const len = byteChars.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = byteChars.charCodeAt(i);
+                }
+                const blob = new Blob([bytes], { type: mimeType || 'audio/mp4' });
+                return URL.createObjectURL(blob);
+            }
+
+            function resolvePlayableUrl(data) {
+                if (Array.isArray(data.chunks) && data.chunks.length > 0) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.chunks, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                if (typeof data.url === 'string' && data.url.startsWith('data:')) {
+                    revokeCurrentObjectUrl();
+                    currentObjectUrl = base64ToBlobUrl(data.url, data.mimeType || 'audio/mp4');
+                    return currentObjectUrl;
+                }
+                revokeCurrentObjectUrl();
+                return data.url;
+            }
+
+            function getEstimatedServerNow() {
+                return Date.now() + serverTimeOffset;
+            }
+
+            function computeTargetTime(data) {
+                const basePos = Number(data?.position) || 0;
+                if (!data?.isPlaying || !data?.updatedAt) return basePos;
+                const elapsed = Math.max(0, (getEstimatedServerNow() - data.updatedAt) / 1000);
+                if (elapsed > 7200) return basePos;
+                return basePos + elapsed;
+            }
+
+            function applyRemotePlayback(shouldPlay, targetTime) {
+                isRemoteSyncing = true;
+                try {
+                    if (Number.isFinite(targetTime) && targetTime >= 0) {
+                        const dur = audioPlayer.duration;
+                        const clamped = (Number.isFinite(dur) && dur > 0)
+                            ? Math.min(targetTime, Math.max(0, dur - 0.1))
+                            : targetTime;
+                        if (Math.abs((audioPlayer.currentTime || 0) - clamped) > 0.6) {
+                            audioPlayer.currentTime = clamped;
+                        }
+                    }
+                    if (shouldPlay) {
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.then(() => {
+                                hideUnlockBtn();
+                            }).catch((err) => {
+                                if (err && err.name === 'NotAllowedError') {
+                                    console.warn('Autoplay geblokkeerd op dit apparaat:', err);
+                                    showUnlockBtn();
+                                } else {
+                                    console.error('Afspelen mislukt:', err);
+                                    showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                                }
+                            });
+                        }
+                    } else {
+                        audioPlayer.pause();
+                        hideUnlockBtn();
+                    }
+                } finally {
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+                }
+            }
+
+            const currentAudioRef = ref(db, `mutatieles/${uClass}/currentAudio`);
+
+            function broadcastPlaybackState(isPlaying, position) {
+                if (!uClass || !currentAudioData) return;
+                const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                lastAppliedCommandId = cmdId;
+                update(currentAudioRef, {
+                    isPlaying: !!isPlaying,
+                    position: Number(position) || 0,
+                    updatedAt: serverTimestamp(),
+                    sender: clientId,
+                    commandId: cmdId
+                }).catch(err => console.error('Audio-sync update mislukt:', err));
+            }
+
+            function scheduleMasterBroadcast() {
+                if (!masterToggle || !masterToggle.checked || isRemoteSyncing || !currentAudioData) return;
+                clearTimeout(syncPublishTimer);
+                syncPublishTimer = setTimeout(() => {
+                    broadcastPlaybackState(!audioPlayer.paused, audioPlayer.currentTime || 0);
+                }, 80);
+            }
+
+            function readFileAsBase64(file) {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onload = () => {
+                        const res = reader.result;
+                        if (typeof res === 'string') {
+                            const commaIdx = res.indexOf(',');
+                            resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
+                        } else {
+                            reject(new Error('Ongeldig bestandsformaat'));
+                        }
+                    };
+                    reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
+                    reader.readAsDataURL(file);
+                });
+            }
+
+            function splitIntoChunks(str, chunkSize = 512000) {
+                const chunks = [];
+                for (let i = 0; i < str.length; i += chunkSize) {
+                    chunks.push(str.slice(i, i + chunkSize));
+                }
+                return chunks;
+            }
+
+            async function tryStorageUpload(path, file, mimeType) {
+                const fileRef = storageRef(storage, path);
+                const uploadPromise = (async () => {
+                    await uploadBytes(fileRef, file, { contentType: mimeType });
+                    return await getDownloadURL(fileRef);
+                })();
+                const timeoutPromise = new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Storage upload timeout')), 15000)
+                );
+                return await Promise.race([uploadPromise, timeoutPromise]);
+            }
+
+            audioPlayer.addEventListener('error', () => {
+                if (!loadedTrackId) return;
+                const err = audioPlayer.error;
+                let msg = 'Kan dit audiobestand niet afspelen in deze browser.';
+                if (err) {
+                    if (err.code === 1) msg = 'Laden van audio afgebroken.';
+                    else if (err.code === 2) msg = 'Netwerkfout bij laden van de audio.';
+                    else if (err.code === 3) msg = 'Fout bij decoderen van het .m4a bestand (mogelijk Apple Lossless of niet-ondersteunde codec).';
+                    else if (err.code === 4) msg = 'Audioformaat of codec wordt niet ondersteund door deze browser.';
+                }
+                showStatus('⚠️ ' + msg, '#721c24');
+            });
+
+            audioPlayer.addEventListener('loadedmetadata', () => {
+                if (currentAudioData && Number.isFinite(audioPlayer.duration)) {
+                    showStatus(`✅ '${currentAudioData.fileName || 'audiobestand'}' gereed (${formatDuration(audioPlayer.duration)}) — druk op "Speel af op alle apparaten" of Play.`, '#155724');
+                }
+                if (pendingRemoteState) {
+                    const targetTime = computeTargetTime(pendingRemoteState);
+                    const shouldPlay = !!pendingRemoteState.isPlaying;
+                    pendingRemoteState = null;
+                    applyRemotePlayback(shouldPlay, targetTime);
+                }
+            });
+
+            audioPlayer.addEventListener('play', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('pause', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('seeked', scheduleMasterBroadcast);
+            audioPlayer.addEventListener('ended', () => {
+                if (masterToggle && masterToggle.checked && !isRemoteSyncing && currentAudioData) {
+                    broadcastPlaybackState(false, 0);
+                }
+            });
+
+            if (playAllBtn) {
+                playAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        if (audioPlayer.ended || (Number.isFinite(audioPlayer.duration) && audioPlayer.currentTime >= audioPlayer.duration - 0.5)) {
+                            audioPlayer.currentTime = 0;
+                        }
+                        const pos = audioPlayer.currentTime || 0;
+                        const playPromise = audioPlayer.play();
+                        if (playPromise && typeof playPromise.then === 'function') {
+                            playPromise.catch((err) => {
+                                console.error('Afspelen mislukt:', err);
+                                showStatus('⚠️ Afspelen mislukt: ' + (err?.message || err), '#721c24');
+                            });
+                        }
+                        broadcastPlaybackState(true, pos);
+                        hideUnlockBtn();
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (pauseAllBtn) {
+                pauseAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        broadcastPlaybackState(false, audioPlayer.currentTime || 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (stopAllBtn) {
+                stopAllBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    if (masterToggle) masterToggle.checked = true;
+                    isRemoteSyncing = true;
+                    try {
+                        audioPlayer.pause();
+                        audioPlayer.currentTime = 0;
+                        broadcastPlaybackState(false, 0);
+                    } finally {
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    }
+                });
+            }
+
+            if (removeBtn) {
+                removeBtn.addEventListener('click', () => {
+                    if (!currentAudioData || !uClass) return;
+                    const fileName = currentAudioData.fileName || 'dit audiobestand';
+                    window.customModal({
+                        title: "Bestand verwijderen",
+                        message: `Weet je zeker dat je "${fileName}" wilt verwijderen voor de klas?`,
+                        isConfirm: true,
+                        onConfirm: async () => {
+                            removeBtn.disabled = true;
+                            const oldStoragePath = currentAudioData?.storagePath;
+                            try {
+                                isRemoteSyncing = true;
+                                audioPlayer.pause();
+                                if (oldStoragePath) {
+                                    try {
+                                        await deleteObject(storageRef(storage, oldStoragePath));
+                                    } catch (storageErr) {
+                                        console.warn('Storage bestand verwijderen overgeslagen:', storageErr);
+                                    }
+                                }
+                                await remove(currentAudioRef);
+                                audioInput.value = '';
+                            } catch (err) {
+                                console.error('Verwijderen mislukt:', err);
+                                showStatus(`Fout bij verwijderen: ${err.message}`, '#721c24');
+                            } finally {
+                                setTimeout(() => { isRemoteSyncing = false; }, 250);
+                            }
+                        }
+                    });
+                });
+            }
+
+            if (unlockBtn) {
+                unlockBtn.addEventListener('click', () => {
+                    if (!currentAudioData) return;
+                    const targetTime = computeTargetTime(currentAudioData);
+                    applyRemotePlayback(true, targetTime);
+                });
+            }
+
+            onValue(currentAudioRef, (snap) => {
+                const raw = snap.val();
+                let data = null;
+
+                if (typeof raw === 'string' && raw.trim()) {
+                    data = {
+                        url: raw,
+                        fileName: 'Geüpload audiobestand',
+                        trackId: raw,
+                        isPlaying: false,
+                        position: 0
+                    };
+                } else if (raw && typeof raw === 'object' && (raw.url || (Array.isArray(raw.chunks) && raw.chunks.length > 0))) {
+                    data = raw;
+                }
+
+                if (!data) {
+                    currentAudioData = null;
+                    loadedTrackId = null;
+                    pendingRemoteState = null;
+                    isRemoteSyncing = true;
+                    audioPlayer.pause();
+                    audioPlayer.removeAttribute('src');
+                    audioPlayer.load();
+                    revokeCurrentObjectUrl();
+                    setTimeout(() => { isRemoteSyncing = false; }, 250);
+                    if (activeFilenameEl) activeFilenameEl.textContent = 'Geen bestand geladen';
+                    if (selectedNameEl) selectedNameEl.textContent = 'Geen .m4a bestand gekozen';
+                    setControlsEnabled(false);
+                    hideUnlockBtn();
+                    showStatus('Nog geen .m4a bestand gekozen voor deze klas.', '#6c757d');
+                    return;
+                }
+
+                currentAudioData = data;
+                setControlsEnabled(true);
+                if (activeFilenameEl) activeFilenameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
+                if (selectedNameEl) selectedNameEl.textContent = data.fileName || 'Klas-audio (.m4a)';
+
+                const incomingTrackId = data.trackId || data.url || '';
+                const isNewTrack = !loadedTrackId || incomingTrackId !== loadedTrackId;
+
+                if (isNewTrack) {
+                    loadedTrackId = incomingTrackId;
+                    lastAppliedCommandId = data.commandId || null;
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                    try {
+                        const playableUrl = resolvePlayableUrl(data);
+                        isRemoteSyncing = true;
+                        audioPlayer.pause();
+                        audioPlayer.src = playableUrl;
+                        audioPlayer.load();
+                        setTimeout(() => { isRemoteSyncing = false; }, 250);
+                        showStatus(`Bezig met laden van '${data.fileName || 'audiobestand'}' voor klas ${uClass}...`, '#0c5460');
+                    } catch (decodeErr) {
+                        console.error('Audio decoderen mislukt:', decodeErr);
+                        showStatus(`⚠️ Fout bij laden van '${data.fileName}': ${decodeErr.message}`, '#721c24');
+                    }
+                    return;
+                }
+
+                if (data.sender === clientId) {
+                    if (data.isPlaying) {
+                        showStatus(`▶ '${data.fileName || 'audio'}' speelt af op alle apparaten.`, '#155724');
+                    } else {
+                        showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                    }
+                    return;
+                }
+
+                if (data.commandId && data.commandId === lastAppliedCommandId) return;
+                lastAppliedCommandId = data.commandId || null;
+
+                if (data.isPlaying) {
+                    showStatus(`▶ '${data.fileName || 'audio'}' wordt afgespeeld door klas-bediening.`, '#155724');
+                } else {
+                    showStatus(`⏸ '${data.fileName || 'audio'}' gepauzeerd.`, '#0c5460');
+                }
+
+                if (audioPlayer.readyState >= 1) {
+                    const targetTime = computeTargetTime(data);
+                    applyRemotePlayback(!!data.isPlaying, targetTime);
+                } else {
+                    pendingRemoteState = {
+                        isPlaying: !!data.isPlaying,
+                        position: Number(data.position) || 0,
+                        updatedAt: data.updatedAt || null
+                    };
+                }
+            });
+
+            browseBtn.addEventListener('click', () => {
+                audioInput.click();
+            });
+
+            audioInput.addEventListener('change', async () => {
+                const file = audioInput.files[0];
+                if (!file) return;
+                if (!uClass) {
+                    window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                const lowerName = file.name.toLowerCase();
+                const isAudio = lowerName.endsWith('.m4a') || lowerName.endsWith('.mp4') || lowerName.endsWith('.mp3') || lowerName.endsWith('.wav') || lowerName.endsWith('.aac') || lowerName.endsWith('.ogg') || (file.type && file.type.startsWith('audio/'));
+                if (!isAudio) {
+                    window.customModal({ title: "Ongeldig bestand", message: "Kies a.u.b. een geldig .m4a audiobestand vanaf je computer of memorystick." });
+                    audioInput.value = '';
+                    return;
+                }
+
+                if (selectedNameEl) selectedNameEl.textContent = file.name;
+                browseBtn.disabled = true;
+                showStatus(`Bezig met laden van '${file.name}' naar alle ingelogde apparaten...`, '#0c5460');
+
+                const oldStoragePath = currentAudioData?.storagePath || null;
+
+                try {
+                    const mimeType = lowerName.endsWith('.m4a')
+                        ? 'audio/mp4'
+                        : (file.type || 'audio/mp4');
+
+                    let url = null;
+                    let chunks = null;
+                    let newStoragePath = null;
+
+                    try {
+                        const path = `classes/${uClass}/audio/${Date.now()}_${file.name}`;
+                        url = await tryStorageUpload(path, file, mimeType);
+                        newStoragePath = path;
+                    } catch (storageErr) {
+                        console.warn('Firebase Storage upload mislukt, probeer RTDB chunks fallback:', storageErr);
+                        if (file.size <= 10 * 1024 * 1024) {
+                            const b64 = await readFileAsBase64(file);
+                            chunks = splitIntoChunks(b64, 512000);
+                        } else {
+                            throw new Error('Storage upload mislukt en bestand is groter dan 10 MB.');
+                        }
+                    }
+
+                    if (masterToggle) masterToggle.checked = true;
+                    const trackId = 'track_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+                    const cmdId = 'cmd_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7);
+
+                    const payload = {
+                        fileName: file.name,
+                        mimeType: mimeType,
+                        uploadedBy: uName || 'onbekend',
+                        trackId: trackId,
+                        isPlaying: false,
+                        position: 0,
+                        updatedAt: serverTimestamp(),
+                        sender: clientId,
+                        commandId: cmdId
+                    };
+
+                    if (url) {
+                        payload.url = url;
+                        payload.storagePath = newStoragePath;
+                    } else {
+                        payload.chunks = chunks;
+                    }
+
+                    await set(currentAudioRef, payload);
+
+                    if (oldStoragePath && oldStoragePath !== newStoragePath) {
+                        deleteObject(storageRef(storage, oldStoragePath)).catch(() => {});
+                    }
+
+                    showStatus(`✅ '${file.name}' geladen! Druk op "Speel af op alle apparaten" (of Play).`, '#155724');
+                } catch (err) {
+                    console.error('M4A laden mislukt:', err);
+                    showStatus(`Fout bij laden van '${file.name}': ${err.message}`, '#721c24');
+                } finally {
+                    browseBtn.disabled = false;
+                    audioInput.value = '';
+                }
+            });
+        }
+    </script>
+</body>
+</html>
