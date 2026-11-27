@@ -400,6 +400,104 @@
             border: 0;
             display: block;
         }
+        /* Digibord Pro (Scherm 2) */
+        #board-container {
+            position: relative;
+            width: 100%;
+            height: 65vh;
+            background: #ffffff;
+            margin: 15px auto 12px auto;
+            border: 2px solid var(--police-blue);
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.2);
+            touch-action: none;
+            overflow: hidden;
+        }
+        #whiteboard {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+            border-radius: 10px;
+            touch-action: none;
+        }
+        #board-container #status {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 11px;
+            font-weight: bold;
+            background: #eee;
+            border: 1px solid #ccc;
+            z-index: 10;
+        }
+        #board-container #status.online {
+            background: #ebffed;
+            color: #2e7d32;
+            border-color: #2e7d32;
+        }
+        #trash-zone {
+            position: absolute;
+            top: 10px;
+            left: 15px;
+            width: 55px;
+            height: 55px;
+            background: #fee2e2;
+            border: 2px dashed #f87171;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            opacity: 0.6;
+            transition: 0.2s;
+            z-index: 10;
+            user-select: none;
+        }
+        #trash-zone.active {
+            transform: scale(1.2);
+            background: #ef4444;
+            opacity: 1;
+            border-style: solid;
+        }
+        .board-toolbar {
+            width: 100%;
+            background: #ffffff;
+            padding: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .board-toolbar input {
+            padding: 12px;
+            width: 200px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 16px;
+            margin-bottom: 0;
+        }
+        .board-toolbar .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            color: white;
+            font-size: 14px;
+            width: auto;
+            margin-bottom: 0;
+        }
+        #addBtn { background: #003082; }
+        #addBtn:hover { background: #002360; }
+        #clearBtn { background: #d32f2f; }
+        #clearBtn:hover { background: #b71c1c; }
         /* Navigation Steps Bar */
         .step-nav {
             display: flex;
@@ -500,19 +598,17 @@
                 <h1 class="text-2xl font-bold">Digibord (Klas: <span id="current-class-label-2" class="text-yellow-600"></span>)</h1>
             </div>
             
-            <div class="board-iframe-wrapper">
-                <iframe
-                    src="https://www.whiteboard.team/app/board/xmpgfKFx"
-                    title="Whiteboard.team bord"
-                    allow="clipboard-read; clipboard-write; fullscreen; microphone; camera"
-                    referrerpolicy="no-referrer-when-downgrade"
-                    loading="lazy"
-                ></iframe>
+            <div id="board-container">
+                <canvas id="whiteboard" width="1200" height="800"></canvas>
+                <div id="status">Status: Laden...</div>
+                <div id="trash-zone">🗑️</div>
             </div>
-            <p class="text-xs text-gray-500 mb-6 flex items-center gap-1">
-                <i class="fa-solid fa-circle-info"></i> Werkt het bord niet direct? Open het in een nieuw tabblad:
-                <a href="https://www.whiteboard.team/app/board/xmpgfKFx" target="_blank" rel="noopener noreferrer" class="text-blue-600 underline font-semibold ml-1">whiteboard.team/app/board/xmpgfKFx</a>
-            </p>
+
+            <div class="board-toolbar">
+                <input type="text" id="wordInput" placeholder="Woord invoeren..." />
+                <button type="button" id="addBtn" class="btn">Toevoegen</button>
+                <button type="button" id="clearBtn" class="btn">Wis Bord</button>
+            </div>
 
             <h1 class="text-2xl font-bold mt-8 border-t pt-6">Lesdoelen &amp; Werkwijze</h1>
             <div class="grid-2">
@@ -913,6 +1009,196 @@
             btnConfirm.onclick = handleConfirm;
             btnCancel.onclick = handleCancel;
         };
+
+        // ===== DIGIBORD PRO - TOUCH & MULTI-USER (SCHERM 2) =====
+        let digibordInitDone = false;
+        let boardDataListener = null;
+        let boardConnListener = null;
+        let boardObjects = {};
+        let boardDraggedId = null;
+
+        function initDigibord() {
+            const canvas = document.getElementById('whiteboard');
+            if (!canvas || !uClass) return;
+            const ctx = canvas.getContext('2d');
+            const statusLabel = document.getElementById('status');
+            const trashZone = document.getElementById('trash-zone');
+            const wordInput = document.getElementById('wordInput');
+            const addBtn = document.getElementById('addBtn');
+            const clearBtn = document.getElementById('clearBtn');
+
+            let isDrawing = false, isDragging = false;
+            let currentPathId = null;
+            let offsetX = 0, offsetY = 0;
+
+            if (!digibordInitDone) {
+                digibordInitDone = true;
+
+                // Status sync
+                if (boardConnListener) boardConnListener();
+                boardConnListener = onValue(ref(db, ".info/connected"), (snap) => {
+                    if (!statusLabel) return;
+                    if (snap.val()) {
+                        statusLabel.innerText = "● LIVE";
+                        statusLabel.classList.add('online');
+                    } else {
+                        statusLabel.innerText = "Status: Verbinden...";
+                        statusLabel.classList.remove('online');
+                    }
+                });
+
+                // Universele positie berekening (Muis & Touch)
+                const getPos = (e) => {
+                    const rect = canvas.getBoundingClientRect();
+                    const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
+                    const clientX = touch ? touch.clientX : e.clientX;
+                    const clientY = touch ? touch.clientY : e.clientY;
+                    return {
+                        x: (clientX - rect.left) * (canvas.width / rect.width),
+                        y: (clientY - rect.top) * (canvas.height / rect.height),
+                        rawX: clientX,
+                        rawY: clientY
+                    };
+                };
+
+                const startAction = (e) => {
+                    if (!uClass) return;
+                    const { x, y } = getPos(e);
+                    boardDraggedId = null;
+                    isDragging = false;
+
+                    const entries = Object.entries(boardObjects).reverse();
+                    for (const [id, obj] of entries) {
+                        if (obj && obj.type === 'text') {
+                            ctx.font = "bold 24px Arial";
+                            const w = ctx.measureText(obj.text).width;
+                            if (x > obj.x - 10 && x < obj.x + w + 10 && y > obj.y - 35 && y < obj.y + 15) {
+                                boardDraggedId = id;
+                                isDragging = true;
+                                offsetX = x - obj.x;
+                                offsetY = y - obj.y;
+                                return;
+                            }
+                        }
+                    }
+                    isDrawing = true;
+                    const newPathRef = push(ref(db, `mutatieles/${uClass}/board`));
+                    currentPathId = newPathRef.key;
+                    set(newPathRef, { type: 'path', points: [{ x, y }] });
+                };
+
+                const moveAction = (e) => {
+                    if (!isDragging && !isDrawing) return;
+                    if (!uClass) return;
+                    const { x, y, rawX, rawY } = getPos(e);
+
+                    if (isDragging && boardDraggedId) {
+                        update(ref(db, `mutatieles/${uClass}/board/${boardDraggedId}`), { x: x - offsetX, y: y - offsetY });
+                        const tRect = trashZone.getBoundingClientRect();
+                        trashZone.classList.toggle('active', rawX > tRect.left && rawX < tRect.right && rawY > tRect.top && rawY < tRect.bottom);
+                    } else if (isDrawing && currentPathId) {
+                        const path = boardObjects[currentPathId];
+                        if (path && path.points) {
+                            const lastP = path.points[path.points.length - 1];
+                            if (Math.hypot(x - lastP.x, y - lastP.y) > 5) {
+                                update(ref(db, `mutatieles/${uClass}/board/${currentPathId}`), {
+                                    points: [...path.points, { x, y }]
+                                });
+                            }
+                        }
+                    }
+                };
+
+                const stopAction = () => {
+                    if (isDragging && boardDraggedId && trashZone.classList.contains('active') && uClass) {
+                        remove(ref(db, `mutatieles/${uClass}/board/${boardDraggedId}`));
+                    }
+                    isDrawing = isDragging = false;
+                    boardDraggedId = currentPathId = null;
+                    trashZone.classList.remove('active');
+                };
+
+                // Event Listeners voor Muis
+                canvas.addEventListener('mousedown', startAction);
+                window.addEventListener('mousemove', moveAction);
+                window.addEventListener('mouseup', stopAction);
+
+                // Event Listeners voor Touch (Mobiel/Tablet)
+                canvas.addEventListener('touchstart', (e) => {
+                    e.preventDefault();
+                    startAction(e);
+                }, { passive: false });
+                window.addEventListener('touchmove', (e) => {
+                    if (!isDragging && !isDrawing) return;
+                    e.preventDefault();
+                    moveAction(e);
+                }, { passive: false });
+                window.addEventListener('touchend', stopAction);
+                window.addEventListener('touchcancel', stopAction);
+
+                // Knoppen
+                if (addBtn && wordInput) {
+                    const addWord = () => {
+                        const val = wordInput.value.trim();
+                        if (val && uClass) {
+                            push(ref(db, `mutatieles/${uClass}/board`), { type: 'text', text: val, x: 150, y: 150 });
+                            wordInput.value = '';
+                        }
+                    };
+                    addBtn.onclick = addWord;
+                    wordInput.addEventListener('keydown', (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            addWord();
+                        }
+                    });
+                }
+
+                if (clearBtn) {
+                    clearBtn.onclick = () => {
+                        if (!uClass) return;
+                        window.customModal({
+                            title: "Bord wissen",
+                            message: "Hele bord wissen?",
+                            isConfirm: true,
+                            onConfirm: () => {
+                                remove(ref(db, `mutatieles/${uClass}/board`));
+                            }
+                        });
+                    };
+                }
+            }
+
+            // Renderen
+            if (boardDataListener) boardDataListener();
+            boardDataListener = onValue(ref(db, `mutatieles/${uClass}/board`), (snap) => {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                boardObjects = snap.val() || {};
+                snap.forEach((child) => {
+                    const obj = child.val();
+                    if (!obj) return;
+                    const isSel = child.key === boardDraggedId;
+                    if (obj.type === 'text') {
+                        ctx.font = "bold 24px Arial";
+                        ctx.fillStyle = isSel ? "#003082" : "#333";
+                        ctx.fillText(obj.text, obj.x, obj.y);
+                        if (isSel) {
+                            ctx.strokeStyle = "#003082";
+                            ctx.lineWidth = 1.5;
+                            ctx.strokeRect(obj.x - 5, obj.y - 30, ctx.measureText(obj.text).width + 10, 40);
+                        }
+                    } else if (obj.type === 'path' && obj.points && obj.points.length > 0) {
+                        ctx.strokeStyle = "#4b5563";
+                        ctx.lineWidth = 3;
+                        ctx.lineCap = "round";
+                        ctx.beginPath();
+                        ctx.moveTo(obj.points[0].x, obj.points[0].y);
+                        obj.points.forEach(p => ctx.lineTo(p.x, p.y));
+                        ctx.stroke();
+                    }
+                });
+            });
+        }
 
         // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) =====
         const allCases = [
@@ -1623,6 +1909,7 @@
             if (label2) label2.textContent = uClass;
 
             showScreen(2);
+            initDigibord();
             listenClassFeed();
             initClassFeedInteractions();
             initSubmitMutation();
