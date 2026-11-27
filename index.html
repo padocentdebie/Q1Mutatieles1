@@ -1346,10 +1346,49 @@
 
         let currentCaseIndex = -1;
 
-        // ===== HULP: PDF WEERGEVEN (Canvas rendering) =====
-        async function openPdfText(url, sync = true) {
+        // ===== HULP: PDF WEERGEVEN (Canvas rendering + RTDB chunks fallback) =====
+        function readPdfFileAsBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => {
+                    const res = reader.result;
+                    if (typeof res === 'string') {
+                        const commaIdx = res.indexOf(',');
+                        resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
+                    } else {
+                        reject(new Error('Ongeldig bestandsformaat'));
+                    }
+                };
+                reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
+                reader.readAsDataURL(file);
+            });
+        }
+
+        function splitPdfIntoChunks(str, chunkSize = 512000) {
+            const chunks = [];
+            for (let i = 0; i < str.length; i += chunkSize) {
+                chunks.push(str.slice(i, i + chunkSize));
+            }
+            return chunks;
+        }
+
+        function base64ChunksToUint8Array(base64Input) {
+            let cleanB64 = Array.isArray(base64Input) ? base64Input.join('') : String(base64Input || '');
+            const commaIdx = cleanB64.indexOf(',');
+            if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
+            cleanB64 = cleanB64.replace(/\s+/g, '');
+            const byteChars = atob(cleanB64);
+            const len = byteChars.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = byteChars.charCodeAt(i);
+            }
+            return bytes;
+        }
+
+        async function openPdfText(urlOrSource, sync = true) {
             if (!pdfViewer || !pdfPlaceholder) return;
-            if (!url) {
+            if (!urlOrSource) {
                 pdfViewer.innerHTML = '';
                 pdfViewer.classList.add('hidden');
                 pdfPlaceholder.classList.remove('hidden');
@@ -1359,8 +1398,28 @@
                 pdfViewer.textContent = 'Bezig met laden en renderen van de PDF...';
                 pdfViewer.classList.remove('hidden');
                 pdfPlaceholder.classList.add('hidden');
+
+                let pdfInput = urlOrSource;
+                let syncValue = urlOrSource;
+
+                if (typeof urlOrSource === 'object' && urlOrSource !== null) {
+                    let chunks = urlOrSource.chunks;
+                    if (!chunks && urlOrSource.fileKey && uClass) {
+                        const snap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
+                        const fileVal = snap.val();
+                        if (fileVal && fileVal.chunks) {
+                            chunks = fileVal.chunks;
+                        } else if (fileVal && fileVal.url) {
+                            pdfInput = fileVal.url;
+                        }
+                    }
+                    if (chunks) {
+                        pdfInput = { data: base64ChunksToUint8Array(chunks) };
+                    }
+                    syncValue = urlOrSource.fileKey ? { type: 'rtdbFile', fileKey: urlOrSource.fileKey } : null;
+                }
                 
-                const pdf = await pdfjsLib.getDocument(url).promise;
+                const pdf = await pdfjsLib.getDocument(pdfInput).promise;
                 pdfViewer.innerHTML = '';
                 
                 const containerWidth = (pdfViewer.clientWidth || 800) - 40;
@@ -1390,9 +1449,9 @@
                     }).promise;
                 }
                 
-                if (sync && uClass) {
+                if (sync && uClass && syncValue) {
                     const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                    set(currentPdfRef, url);
+                    set(currentPdfRef, syncValue);
                 }
             } catch (err) {
                 console.error('PDF laadfout:', err);
@@ -1427,8 +1486,9 @@
                 return;
             }
             
-            const entries = Object.values(files).sort((a,b) => b.timestamp - a.timestamp);
-            entries.forEach((fileData) => {
+            const entries = Object.entries(files).sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+            entries.forEach(([fileKey, fileData]) => {
+                if (!fileData) return;
                 const li = document.createElement('li');
                 li.innerHTML = `
                     <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
@@ -1437,7 +1497,11 @@
                 
                 li.addEventListener('click', (e) => {
                     if (e.target.closest('.file-delete')) return;
-                    openPdfText(fileData.url, true);
+                    if (fileData.url) {
+                        openPdfText(fileData.url, true);
+                    } else if (fileData.chunks) {
+                        openPdfText({ type: 'rtdbFile', fileKey: fileKey, chunks: fileData.chunks }, true);
+                    }
                 });
 
                 const deleteBtn = li.querySelector('.file-delete');
@@ -1450,20 +1514,14 @@
                         onConfirm: async () => {
                             try {
                                 if (fileData.storagePath) {
-                                    const fileRef = storageRef(storage, fileData.storagePath);
-                                    await deleteObject(fileRef);
-                                }
-                                const snapshot = await get(ref(db, `mutatieles/${uClass}/files`));
-                                if (snapshot.exists()) {
-                                    const allFiles = snapshot.val();
-                                    for (let key in allFiles) {
-                                        const f = allFiles[key];
-                                        if (f.name === fileData.name && f.timestamp === fileData.timestamp) {
-                                            await remove(ref(db, `mutatieles/${uClass}/files/${key}`));
-                                            break;
-                                        }
+                                    try {
+                                        const fileRef = storageRef(storage, fileData.storagePath);
+                                        await deleteObject(fileRef);
+                                    } catch (storageErr) {
+                                        console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
                                     }
                                 }
+                                await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
                             } catch (err) {
                                 console.error("Verwijderen mislukt:", err);
                                 window.customModal({ title: "Fout", message: "Fout bij verwijderen: " + err.message });
@@ -1533,17 +1591,44 @@
                     for (const file of selectedFiles) {
                         try {
                             const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                            const fileRef = storageRef(storage, path);
-                            await uploadBytes(fileRef, file);
-                            const url = await getDownloadURL(fileRef);
+                            let url = null;
+                            let chunks = null;
+                            let usedStoragePath = null;
+
+                            try {
+                                const fileRef = storageRef(storage, path);
+                                const uploadTask = (async () => {
+                                    await uploadBytes(fileRef, file, { contentType: file.type || 'application/pdf' });
+                                    return await getDownloadURL(fileRef);
+                                })();
+                                const timeoutTask = new Promise((_, reject) =>
+                                    setTimeout(() => reject(new Error('Storage upload timeout')), 15000)
+                                );
+                                url = await Promise.race([uploadTask, timeoutTask]);
+                                usedStoragePath = path;
+                            } catch (storageErr) {
+                                console.warn("Firebase Storage PDF upload mislukt, probeer RTDB chunks fallback:", storageErr);
+                                if (file.size <= 10 * 1024 * 1024) {
+                                    const b64 = await readPdfFileAsBase64(file);
+                                    chunks = splitPdfIntoChunks(b64, 512000);
+                                } else {
+                                    throw new Error('Storage upload mislukt en bestand is groter dan 10 MB.');
+                                }
+                            }
+
                             const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                            await set(newFileRef, {
+                            const payload = {
                                 name: file.name,
-                                url: url,
-                                storagePath: path,
                                 uploadedBy: uName || 'onbekend',
                                 timestamp: Date.now()
-                            });
+                            };
+                            if (url) {
+                                payload.url = url;
+                                payload.storagePath = usedStoragePath;
+                            } else {
+                                payload.chunks = chunks;
+                            }
+                            await set(newFileRef, payload);
                             successCount++;
                         } catch (err) {
                             console.error("Upload mislukt:", err);
@@ -2156,18 +2241,20 @@
             if (uClass) {
                 if (pdfListener) pdfListener();
                 pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
-                    const url = snap.val();
-                    if (url && typeof url === 'string') {
-                        openPdfText(url, false);
+                    const val = snap.val();
+                    if (val && typeof val === 'string') {
+                        openPdfText(val, false);
                         if (pdfSelect) {
                             const options = pdfSelect.options;
                             for (let i = 0; i < options.length; i++) {
-                                if (options[i].value === url) {
+                                if (options[i].value === val) {
                                     pdfSelect.selectedIndex = i;
                                     break;
                                 }
                             }
                         }
+                    } else if (val && typeof val === 'object' && val.type === 'rtdbFile' && val.fileKey) {
+                        openPdfText(val, false);
                     }
                 });
             }
@@ -2485,8 +2572,8 @@
             if (!audioInput || !browseBtn || !statusDiv || !audioPlayer) return;
 
             try {
-                storage.maxUploadRetryTime = 5000;
-                storage.maxOperationRetryTime = 5000;
+                storage.maxUploadRetryTime = 20000;
+                storage.maxOperationRetryTime = 20000;
             } catch (e) {}
 
             const clientId = 'client_' + Math.random().toString(36).slice(2) + '_' + Date.now();
