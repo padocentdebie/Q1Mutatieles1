@@ -1,13 +1,3 @@
-Dat klopt dat je dan nog niks zag:
-1. Het uploaden opende de PDF nog niet automatisch (hij kwam alleen onderaan in de lijst te staan).
-2. En als Firebase Storage bleef hangen op `100%` (of de losse `fileChunks`-map geblokkeerd werd door de database-regels), stopte hij zonder dat de PDF in beeld kwam.
-
-Ik heb alleen dit stuk op **Scherm 5** aangepast (verder niets aan de rest van de code veranderd):
-- De geüploade PDF wordt **meteen na het uploaden automatisch bovenaan in het scherm geopend** (en gedeeld met de klas), zonder dat je eerst in de lijst hoeft te klikken.
-- De nood-upload slaat nu op binnen de bestaande `files`-map (`mutatieles/${uClass}/files/...`), zodat hij nooit op extra database-rechten kan blijven hangen.
-- Als er toch een fout optreedt, blijft de rode foutmelding zichtbaar staan (en verdwijnt hij niet meer na 5 seconden).
-
-```html
 <!DOCTYPE html>
 <html lang="nl">
 <head>
