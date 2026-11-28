@@ -1,4 +1,4 @@
-F<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="nl">
 <head>
     <meta charset="UTF-8" />
@@ -8,11 +8,6 @@ F<!DOCTYPE html>
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <!-- PDF.js library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
-    <script>
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-    </script>
     <style>
         :root {
             --police-blue: #003082;
@@ -109,16 +104,10 @@ F<!DOCTYPE html>
         .btn-shuffle:hover { background-color: #5a6268; }
         .btn-secondary { background-color: #6c757d; width: auto; }
         .btn-secondary:hover { background-color: #5a6268; }
-        .btn-upload {
-            background-color: #28a745;
+        .btn-browse {
+            background-color: #007bff;
             width: auto;
             padding: 10px 25px;
-        }
-        .btn-upload:hover { background-color: #218838; }
-        .btn-browse { 
-            background-color: #007bff; 
-            width: auto; 
-            padding: 10px 25px; 
         }
         .btn-browse:hover { background-color: #0056b3; }
         .info-block {
@@ -293,81 +282,24 @@ F<!DOCTYPE html>
             border-bottom: 1px solid #f1f5f9;
         }
         .kb-list li strong { color: var(--police-blue); }
-        #pdf-text-viewer {
-            width: 100%;
-            height: 600px;
-            border: 1px solid #cbd5e1;
-            background: #fafafa;
-            padding: 20px;
-            overflow: auto;
-            color: #1a1a1a;
-            border-radius: 8px;
-        }
-        .pdf-placeholder { 
-            color: #64748b; 
-            font-style: italic; 
-            text-align: center; 
-            padding: 50px 20px;
-            background: #f8fafc;
-            border: 2px dashed #cbd5e1;
-            border-radius: 8px;
-        }
-        #drop-zone {
-            border: 3px dashed #cbd5e1;
-            padding: 30px;
-            text-align: center;
-            margin: 15px 0;
-            border-radius: 12px;
-            background: #fafafa;
-            transition: all 0.3s ease;
-            cursor: pointer;
-        }
-        #drop-zone.dragover {
-            background: #e6f0ff;
-            border-color: var(--police-blue);
-        }
-        #file-input { display: none; }
-        #file-list-items {
-            list-style: none;
-            padding: 0;
+        /* PDF Browse & Weergave Engine (Scherm 5) */
+        #pdfViewerContainer {
+            min-height: 550px;
             display: flex;
             flex-direction: column;
-            gap: 8px;
-        }
-        #file-list-items li {
-            background: #f8fafc;
-            padding: 12px 16px;
-            border-radius: 8px;
-            border: 1px solid #e2e8f0;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: center;
+            background-color: #eaeded;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            overflow: hidden;
         }
-        #file-list-items li:hover {
-            background: #f1f5f9;
-            border-color: var(--police-blue);
-        }
-        .file-delete {
-            color: var(--danger);
-            font-weight: bold;
-            cursor: pointer;
-            font-size: 1.1em;
-            padding: 4px 10px;
-            border-radius: 4px;
-            transition: background 0.2s;
-        }
-        .file-delete:hover {
-            background: #fee2e2;
-        }
-        #upload-status {
-            margin-top: 15px;
-            padding: 12px;
-            border-radius: 6px;
-            font-weight: 600;
+        #pdfViewer {
+            width: 100%;
+            height: 650px;
+            border: none;
             display: none;
-            text-align: center;
+            background: #ffffff;
         }
         .feedback-area {
             display: flex;
@@ -396,23 +328,6 @@ F<!DOCTYPE html>
         }
         .feedback-msg:last-child { border-bottom: none; }
         .feedback-msg strong { color: var(--police-blue); }
-        .board-iframe-wrapper {
-            position: relative;
-            width: 100%;
-            height: 65vh;
-            margin: 15px auto;
-            border: 2px solid var(--police-blue);
-            border-radius: 12px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.12);
-            overflow: hidden;
-            background: #ffffff;
-        }
-        .board-iframe-wrapper iframe {
-            width: 100%;
-            height: 100%;
-            border: 0;
-            display: block;
-        }
         /* Digibord Pro (Scherm 2 & Scherm 5) */
         #board-container, #board-container-5 {
             position: relative;
@@ -572,10 +487,10 @@ F<!DOCTYPE html>
                     <h2 class="text-2xl font-bold">Inloggen Mutatieles</h2>
                     <p class="text-gray-600 text-sm mt-1">Selecteer je naam en NATO-klas om te starten</p>
                 </div>
-                
+
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Voornaam / Roepnaam</label>
                 <input type="text" id="user-name" placeholder="Voer je voornaam in..." />
-                
+
                 <label class="block text-sm font-semibold text-gray-700 mb-1">Selecteer NATO-klas</label>
                 <select id="user-class">
                     <option value="">Selecteer klas...</option>
@@ -592,13 +507,13 @@ F<!DOCTYPE html>
                     <option value="Lima">Lima</option>
                     <option value="Mike">Mike</option>
                 </select>
-                
+
                 <button class="btn mt-2" onclick="startSession()">
                     <i class="fa-solid fa-right-to-bracket"></i> Start Les
                 </button>
-                
+
                 <hr class="my-6 border-gray-200" />
-                
+
                 <button class="btn btn-reset" onclick="confirmResetClassData()">
                     <i class="fa-solid fa-triangle-exclamation"></i> Reset klas-data (Docent)
                 </button>
@@ -610,7 +525,7 @@ F<!DOCTYPE html>
             <div class="flex justify-between items-center mb-4">
                 <h1 class="text-2xl font-bold">Digibord (Klas: <span id="current-class-label-2" class="text-yellow-600"></span>)</h1>
             </div>
-            
+
             <div id="board-container">
                 <canvas id="whiteboard" width="1200" height="800"></canvas>
                 <div id="status">Status: Laden...</div>
@@ -662,10 +577,10 @@ F<!DOCTYPE html>
                 Een mutatie dient <strong>niet</strong> rechtstreeks als wettig bewijsmiddel voor strafvervolging, maar vormt de basis voor verslaglegging.
                 Kort en bondig schrijven is de norm: afkortingen en functionele onvolledige zinnen in telegramstijl zijn toegestaan.
             </p>
-            
+
             <div class="info-block space-y-4">
                 <p class="font-semibold text-blue-900">Jij bent de rapporteur (RAPP) die deze mutatie opstelt according to ASTMA:</p>
-                
+
                 <div class="bg-white p-4 rounded border border-yellow-200">
                     <h3 class="font-bold text-blue-900 border-b pb-1 mb-2">1. Aanleiding</h3>
                     <ul class="kb-list text-sm">
@@ -722,11 +637,11 @@ F<!DOCTYPE html>
         <div id="screen-3" class="hidden">
             <h1 class="text-2xl font-bold mb-2">Sleepopdracht: Orden de Mutatie</h1>
             <p class="text-gray-600 mb-4">Sleep de tekstblokjes in de juiste ASTMA-volgorde. Werkt met muis én touchscreen — alle klasgenoten zien live updates van de klas-casus.</p>
-            
+
             <div id="case-title">Casus wordt geladen…</div>
-            
+
             <div id="drag-list" class="drag-container"></div>
-            
+
             <div class="flex gap-3 flex-wrap my-4">
                 <button class="btn btn-shuffle" onclick="shuffleOrder()">
                     <i class="fa-solid fa-shuffle"></i> Schud opnieuw (nieuwe casus)
@@ -735,7 +650,7 @@ F<!DOCTYPE html>
                     <i class="fa-solid fa-check"></i> Controleer Volgorde
                 </button>
             </div>
-            
+
             <div class="mt-4 flex justify-end">
                 <button class="btn hidden w-auto bg-green-600 hover:bg-green-700" id="next-to-4" onclick="showScreen(4)">
                     Correct! Naar Kennischeck <i class="fa-solid fa-arrow-right ml-2"></i>
@@ -777,53 +692,40 @@ F<!DOCTYPE html>
             </div>
         </div>
 
-        <!-- SCREEN 5: PDF + UPLOAD + FEEDBACK + DIGIBORD -->
+        <!-- SCREEN 5: PDF (BROWSE & WEERGAVE ENGINE) + FEEDBACK + DIGIBORD -->
         <div id="screen-5" class="hidden">
-            <h1 class="text-2xl font-bold mb-4">Mutatie PDF, Upload, Feedback &amp; Digibord</h1>
-            
-            <div id="pdf-viewer-container" class="mb-4">
-                <div id="pdf-placeholder" class="pdf-placeholder">
-                    <i class="fa-solid fa-file-pdf text-4xl text-gray-400 mb-2"></i>
-                    <h3 class="text-lg font-bold text-gray-700">📄 Geen PDF geselecteerd</h3>
-                    <p class="text-sm">Upload een bestand of kies een vast document uit het keuzemenu.</p>
-                </div>
-                <div id="pdf-text-viewer" class="hidden"></div>
-            </div>
+            <h1 class="text-2xl font-bold mb-4">Mutatie PDF, Feedback &amp; Digibord</h1>
 
-            <div class="my-4 bg-gray-50 p-4 rounded-lg border border-gray-200 flex items-center gap-4 flex-wrap">
-                <label for="pdf-select" class="font-semibold text-gray-700">Kies een vaste les-PDF:</label>
-                <select id="pdf-select" class="w-auto flex-1 max-w-xs mb-0">
-                    <option value="">-- Kies een bestand --</option>
-                    <option value="./Mutatieles1.pdf">Mutatieles1.pdf</option>
-                    <option value="./mutatie2.pdf">mutatie2.pdf</option>
-                    <option value="./mutatie3.pdf">mutatie3.pdf</option>
-                </select>
-            </div>
-
-            <div id="file-upload-area" class="my-6">
-                <div id="drop-zone">
-                    <i class="fa-solid fa-cloud-arrow-up text-4xl text-blue-800 mb-2"></i>
-                    <p class="text-lg font-semibold text-gray-800">📁 Sleep hier PDF-bestanden heen</p>
-                    <p class="text-sm text-gray-500">of gebruik de knop hieronder om te bladeren</p>
-                    <input type="file" id="file-input" multiple accept=".pdf" />
-                </div>
-                
-                <div class="flex gap-3 flex-wrap mt-3">
-                    <button id="browse-btn" class="btn btn-browse">
-                        <i class="fa-solid fa-folder-open"></i> Blader naar bestand
-                    </button>
-                    <button id="upload-btn" class="btn btn-upload" disabled>
-                        <i class="fa-solid fa-upload"></i> Upload Geselecteerde
+            <!-- Docent Paneel (Browse & Reset PDF Database) -->
+            <div class="bg-slate-50 p-4 rounded-lg border border-slate-200 mb-4">
+                <div class="flex justify-between items-center flex-wrap gap-3 mb-2">
+                    <h3 class="text-base font-bold text-blue-900 m-0">
+                        <i class="fa-solid fa-folder-open mr-2"></i>Docent Paneel: PDF Uploaden (Harde schijf / USB)
+                    </h3>
+                    <button type="button" id="pdfResetBtn" class="btn btn-reset" style="width: auto; margin-bottom: 0; padding: 8px 14px;">
+                        <i class="fa-solid fa-trash-can"></i> Reset PDF (Leeg database)
                     </button>
                 </div>
-                <div id="upload-status"></div>
+                <label for="pdfUpload" class="block text-sm font-semibold text-gray-700 mb-2">Upload Mutatie (PDF vanaf harde schijf / USB):</label>
+                <input type="file" id="pdfUpload" accept="application/pdf,.pdf" class="bg-white mb-2" />
+                <div id="pdf-upload-status" class="text-sm font-semibold hidden mt-2 p-2 rounded"></div>
             </div>
 
-            <div id="file-list" class="mt-6">
-                <h3 class="text-lg font-bold mb-3 border-b pb-2"><i class="fa-solid fa-list-ul mr-2"></i>Geüploade bestanden in deze klas</h3>
-                <ul id="file-list-items">
-                    <li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden.</li>
-                </ul>
+            <!-- Document Weergave (Engine uit BTV 3F) -->
+            <div class="mb-6">
+                <div id="pdfViewerContainer">
+                    <div id="pdfPlaceholder" class="text-center p-8 text-gray-500">
+                        <i class="fa-solid fa-file-pdf text-4xl text-gray-400 mb-2"></i>
+                        <p class="font-semibold text-gray-700">Nog geen PDF geladen voor deze klas.</p>
+                        <p class="text-xs mt-1">Kies hierboven een PDF-bestand vanaf je harde schijf of USB-stick.</p>
+                    </div>
+                    <iframe id="pdfViewer"></iframe>
+                </div>
+                <div id="pdfViewerActions" class="hidden mt-2 flex justify-end">
+                    <a id="pdfOpenTabLink" href="#" target="_blank" rel="noopener" class="text-xs font-semibold text-blue-800 hover:underline">
+                        <i class="fa-solid fa-up-right-from-square mr-1"></i> Open PDF in nieuw tabblad
+                    </a>
+                </div>
             </div>
 
             <h3 class="text-lg font-bold mt-8 mb-2 border-b pb-2"><i class="fa-solid fa-comments mr-2"></i>Live Feedback over deze mutatie</h3>
@@ -858,7 +760,7 @@ F<!DOCTYPE html>
         <!-- SCREEN 6: EINDOPDRACHT -->
         <div id="screen-6" class="hidden">
             <h1 class="text-2xl font-bold mb-3">Eindopdracht: Incident Laan 1914</h1>
-            
+
             <div class="info-block">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
                     <div><strong>Locatie:</strong> Laan 1914, Amersfoort</div>
@@ -927,17 +829,17 @@ F<!DOCTYPE html>
                     <h3 class="text-lg font-bold mb-2"><i class="fa-solid fa-pen-clip mr-2"></i>Jouw Mutatie (OVT)</h3>
                     <p class="text-xs text-gray-500 mb-2">Typ hieronder jouw hoofdmutatie. Klik op 'Verstuur mutatie naar klas' om live te delen met collega's.</p>
                     <textarea id="final-mutation" placeholder="Begin hier met typen van je hoofdmutatie in OVT..." class="h-36 mb-4"></textarea>
-                    
+
                     <h3 class="text-md font-bold text-blue-900 mb-2 border-t pt-3">Extra mutatie-notities</h3>
                     <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 1:</label>
                     <textarea id="mutation1" placeholder="Notitie mutatie 1..." class="h-20 mb-2"></textarea>
-                    
+
                     <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 2:</label>
                     <textarea id="mutation2" placeholder="Notitie mutatie 2..." class="h-20 mb-2"></textarea>
-                    
+
                     <label class="text-xs font-bold text-gray-600 uppercase">Notitie Mutatie 3:</label>
                     <textarea id="mutation3" placeholder="Notitie mutatie 3..." class="h-20 mb-3"></textarea>
-                    
+
                     <button id="submit-mutation-btn" class="btn bg-green-600 hover:bg-green-700 py-3 text-base">
                         <i class="fa-solid fa-paper-plane"></i> Verstuur mutatie naar klas
                     </button>
@@ -975,9 +877,9 @@ F<!DOCTYPE html>
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getDatabase, ref, set, onValue, remove, push, update, get, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
-        import { getStorage, ref as storageRef, uploadBytes, uploadBytesResumable, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+        import { getStorage, ref as storageRef, uploadBytes, getDownloadURL, deleteObject } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
 
-        // Firebase Configuration
+        // Hoofd Firebase Configuratie (Mutatieles 1: Digibord, Sleepopdracht, Kennischeck, Feedback, Live Feed, Audio)
         const firebaseConfig = {
             apiKey: "AIzaSyCJ5of6K5MRFXMOiEqEyZxZbs1xoJtXuN8",
             authDomain: "mutatieles-q1.firebaseapp.com",
@@ -988,28 +890,31 @@ F<!DOCTYPE html>
             appId: "1:102871328901:web:531b26daebef374a2b978c"
         };
 
+        // PDF Browse & Weergave Engine Firebase Configuratie (uit BTV 3F)
+        const pdfFirebaseConfig = {
+            apiKey: "AIzaSyBOo2LzR1IBnsiBR2SCwPJABtaRv0tpKQ4",
+            authDomain: "speeltuin-recherche.firebaseapp.com",
+            databaseURL: "https://speeltuin-recherche-default-rtdb.europe-west1.firebasedatabase.app",
+            projectId: "speeltuin-recherche",
+            storageBucket: "speeltuin-recherche.firebasestorage.app",
+            messagingSenderId: "499912834123",
+            appId: "1:499912834123:web:3c84cbf4d5eb13131961ce"
+        };
+
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
         const storage = getStorage(app);
 
+        const pdfApp = initializeApp(pdfFirebaseConfig, "pdfEngineApp");
+        const pdfDb = getDatabase(pdfApp);
+
         // State Variables
         let uName = "";
         let uClass = "";
-        let selectedFiles = [];
-        let fileListenerSet = false;
         let dragListener = null;
-        let pdfListener = null;
-        let uploadStatusTimer = null;
 
         // Draft storage to prevent keystroke loss during live updates
         const draftReplyTexts = {};
-
-        // DOM Element Cache
-        const pdfViewer = document.getElementById('pdf-text-viewer');
-        const pdfPlaceholder = document.getElementById('pdf-placeholder');
-        const uploadStatus = document.getElementById('upload-status');
-        const fileListItems = document.getElementById('file-list-items');
-        const pdfSelect = document.getElementById('pdf-select');
 
         // Custom Modal replacement for alert & confirm
         window.customModal = function({ title = "Melding", message = "", isConfirm = false, onConfirm = null }) {
@@ -1118,7 +1023,6 @@ F<!DOCTYPE html>
                 }
             };
 
-            // Universele positie berekening (Muis & Touch)
             const getPos = (e) => {
                 const rect = canvas.getBoundingClientRect();
                 const touch = (e.touches && e.touches[0]) || (e.changedTouches && e.changedTouches[0]);
@@ -1192,12 +1096,10 @@ F<!DOCTYPE html>
                 if (wasDragging) renderSingleBoard(canvas, null);
             };
 
-            // Event Listeners voor Muis
             canvas.addEventListener('mousedown', startAction);
             window.addEventListener('mousemove', moveAction);
             window.addEventListener('mouseup', stopAction);
 
-            // Event Listeners voor Touch (Mobiel/Tablet)
             canvas.addEventListener('touchstart', (e) => {
                 e.preventDefault();
                 startAction(e);
@@ -1210,7 +1112,6 @@ F<!DOCTYPE html>
             window.addEventListener('touchend', stopAction);
             window.addEventListener('touchcancel', stopAction);
 
-            // Knoppen
             if (addBtn && wordInput) {
                 const addWord = () => {
                     const val = wordInput.value.trim();
@@ -1271,7 +1172,6 @@ F<!DOCTYPE html>
                 });
                 if (update5) boardStatusUpdaters.push(update5);
 
-                // Status sync
                 if (boardConnListener) boardConnListener();
                 boardConnListener = onValue(ref(db, ".info/connected"), (snap) => {
                     const isOnline = !!snap.val();
@@ -1279,7 +1179,6 @@ F<!DOCTYPE html>
                 });
             }
 
-            // Renderen
             if (boardDataListener) boardDataListener();
             boardDataListener = onValue(ref(db, `mutatieles/${uClass}/board`), (snap) => {
                 boardObjects = snap.val() || {};
@@ -1291,469 +1190,272 @@ F<!DOCTYPE html>
             });
         }
 
-        // ===== SLEEPOPDRACHT – 5 CASUSSEN (elk met 5 ASTMA-blokken) =====
+        // ===== SLEEPOPDRACHT – 5 CASUSSEN (zonder alineanamen Aanleiding/Situatie/Toedracht/Maatregelen/Afhandeling) =====
         const allCases = [
             {
                 title: 'Casus 1: Verwarde vrouw op de Laan 1914',
                 blocks: [
                     '<strong>*:</strong> Op woensdag 12 augustus 2026, rond 9.45 uur, was ik, RAPP J. Voordewind, aspirant agent bij de eenheid Leusden, op de sintelbaan Loes van Overeemlaan 35 te Leusden bezig met mijn voetsurveillance. Ik kreeg een melding van een medewerker van het OC betreffende een verwarde vrouw op de Laan 1914 te Amersfoort. Signalement: ±25jr, zwarte jas.',
                     '<strong>*:</strong> Rond 10.00 uur kwam ik ter plaatse. De sintelbaan is een geasfalteerde weg die een ovale vorm rondloopt met twee wit-blauwe gebouwtjes. Vanaf de oprijlijn trof ik voor het achterste gebouwtje mw. De Jong aan. Zij maakte een verwarde indruk en liep doelloos heen en terug.',
-                    '<strong>* Toedracht:</strong> Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
-                    '<strong>* Maatregelen:</strong> Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
-                    '<strong>* Afhandeling:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
+                    '<strong>*:</strong> Ik sprak mw. aan en vroeg haar naam. Zij verklaarde dat zij Hendrika de Jong heet. Ik hoorde haar zeggen dat zij zocht naar een sportzaak waarvan zij de naam niet kende en dat haar vriend daar werkzaam was. Mw. was gedesoriënteerd, onrustig, maakte moeilijk oogcontact en keek weg bij vragen.',
+                    '<strong>*:</strong> Ik heb mw. voorgesteld om haar naar haar woning te begeleiden voor nader onderzoek naar haar welzijn. Mw. stemde hier na korte aarzeling mee in.',
+                    '<strong>*:</strong> Mw. onder begeleiding naar haar wooncomplex overgebracht. Mutatie gedeeld met wijkagent t.b.v. verdere zorgopvolging.'
                 ]
             },
             {
                 title: 'Casus 2: Winkeldiefstal supermarkt',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort.',
-                    '<strong>* Situatie:</strong> Rond 15.35 uur kwam ik ter plaatse. Het was bewolkt met lichte regen. Voor de ingang stond een medewerker van de winkel met 1 verdachte: man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen.',
-                    '<strong>* Toedracht:</strong> Ik zag dat de verdachte door de medewerker werd tegengehouden nabij de kassa. Ik hoorde de medewerker verklaren dat hij de verdachte goederen in zijn jaszak zag stoppen zonder te betalen. Op camerabeelden zag ik dat verdachte blikjes energiedrank en koffie verstopte.',
-                    '<strong>* Maatregelen:</strong> Verdachte aangehouden ter zake diefstal en overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier en goederen in beslag genomen.',
-                    '<strong>* Afhandeling:</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
+                    '<strong>*:</strong> Op donderdag 4 september 2026, rond 15.20 uur, was ik, RAPP M. Bakker, agent bij basiseenheid Amersfoort-Centrum, belast met de afhandeling van een melding van winkeldiefstal bij supermarkt Jumbo aan de Utrechtseweg 112 te Amersfoort.',
+                    '<strong>*:</strong> Rond 15.35 uur kwam ik ter plaatse. Het was bewolkt met lichte regen. Voor de ingang stond een medewerker van de winkel met 1 verdachte: man, ±30jr, 1.80m, donkerblauwe jas, grijze capuchon, zwarte sportschoenen.',
+                    '<strong>*:</strong> Ik zag dat de verdachte door de medewerker werd tegengehouden nabij de kassa. Ik hoorde de medewerker verklaren dat hij de verdachte goederen in zijn jaszak zag stoppen zonder te betalen. Op camerabeelden zag ik dat verdachte blikjes energiedrank en koffie verstopte.',
+                    '<strong>*:</strong> Verdachte aangehouden ter zake diefstal en overgebracht naar het politiebureau. Aangifte opgenomen van de winkelier en goederen in beslag genomen.',
+                    '<strong>*:</strong> Verdachte in verzekering gesteld. Mutatie gedeeld met het team t.b.v. veelplegersregistratie. Zaak afgedaan via ZSM.'
                 ]
             },
             {
                 title: 'Casus 3: Verkeersongeval met letsel',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein bezig met verkeerscontrole. Spoedmelding ontvangen van OC betreft ongeval N226.',
-                    '<strong>* Situatie:</strong> Rond 17.55 uur kwam ik ter plaatse op de voorrangsweg. Zicht was goed, druk verkeer. Aangetroffen: personenauto (VW Golf, zwart, 1-ABC-23) en omgevallen fiets. Slachtoffer: vrouw, ±55jr, liggend op fietspad.',
-                    '<strong>* Toedracht:</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde getuige verklaren dat automobilist rechtsaf sloeg en fietser over het hoofd zag. Ik zag dat bestuurder geschrokken was en zag bij slachtoffer hoofdwond en armletsel.',
-                    '<strong>* Maatregelen:</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet en EHBO verleend. Ademanalyse bij bestuurder afgenomen (0,0 ugl). Verkeer omgeleid.',
-                    '<strong>* Afhandeling:</strong> Slachtoffer overgebracht naar ziekenhuis. Auto geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie naar verkeerspolitie.'
+                    '<strong>*:</strong> Op vrijdag 19 september 2026, rond 17.45 uur, was ik, RAPP S. Hendriks, agent bij basiseenheid Leusden, op de Leusderweg ter hoogte van de rotonde Baliplein bezig met verkeerscontrole. Spoedmelding ontvangen van OC betreft ongeval N226.',
+                    '<strong>*:</strong> Rond 17.55 uur kwam ik ter plaatse op de voorrangsweg. Zicht was goed, druk verkeer. Aangetroffen: personenauto (VW Golf, zwart, 1-ABC-23) en omgevallen fiets. Slachtoffer: vrouw, ±55jr, liggend op fietspad.',
+                    '<strong>*:</strong> Ik zag dat de auto op de weghelft van de fietser stond. Ik hoorde getuige verklaren dat automobilist rechtsaf sloeg en fietser over het hoofd zag. Ik zag dat bestuurder geschrokken was en zag bij slachtoffer hoofdwond en armletsel.',
+                    '<strong>*:</strong> Direct 112 gebeld t.b.v. ambulance. Omgeving afgezet en EHBO verleend. Ademanalyse bij bestuurder afgenomen (0,0 ugl). Verkeer omgeleid.',
+                    '<strong>*:</strong> Slachtoffer overgebracht naar ziekenhuis. Auto geborgen door takelbedrijf. Verkeersongevallenanalyse ingeschakeld. Mutatie naar verkeerspolitie.'
                 ]
             },
             {
                 title: 'Casus 4: Overlast jeugd / vernieling bushokje',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, bezig met surveillance op de Birkstraat. Melding OC ontvangen betreft overlast jeugd bij bushalte Groningerstraat.',
-                    '<strong>* Situatie:</strong> Ter plaatse rond 22.40 uur. Donker en droog. Aangetroffen: groep van 6 jongeren (mannelijk, ±14-17jr) in donkere kleding bij vernield bushokje met gebroken glas op de grond. Één jongen met honkbalknuppel.',
-                    '<strong>* Toedracht:</strong> Ik zag de groep opsplitsen en wegrennen bij mijn nadering. Ik zag dat de jongen met de knuppel deze in de bosjes gooide. Ik zag dat een tweede jongen bleef staan. Er hing een sterke henneplucht.',
-                    '<strong>* Maatregelen:</strong> Bleven staan jongen staande gehouden. Honkbalknuppel veiliggesteld. Identiteit vastgesteld en ouders gebeld. Melding gemaakt bij gemeente voor herstel abri.',
-                    '<strong>* Afhandeling:</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent t.b.v. dossieropbouw.'
+                    '<strong>*:</strong> Op zaterdag 27 september 2026, rond 22.30 uur, was ik, RAPP T. Visser, agent bij basiseenheid Amersfoort-Noord, bezig met surveillance op de Birkstraat. Melding OC ontvangen betreft overlast jeugd bij bushalte Groningerstraat.',
+                    '<strong>*:</strong> Ter plaatse rond 22.40 uur. Donker en droog. Aangetroffen: groep van 6 jongeren (mannelijk, ±14-17jr) in donkere kleding bij vernield bushokje met gebroken glas op de grond. Één jongen met honkbalknuppel.',
+                    '<strong>*:</strong> Ik zag de groep opsplitsen en wegrennen bij mijn nadering. Ik zag dat de jongen met de knuppel deze in de bosjes gooide. Ik zag dat een tweede jongen bleef staan. Er hing een sterke henneplucht.',
+                    '<strong>*:</strong> Bleven staan jongen staande gehouden. Honkbalknuppel veiliggesteld. Identiteit vastgesteld en ouders gebeld. Melding gemaakt bij gemeente voor herstel abri.',
+                    '<strong>*:</strong> Jongen overgedragen aan ouders. Mutatie gedeeld met jeugdagent en wijkagent t.b.v. dossieropbouw.'
                 ]
             },
             {
                 title: 'Casus 5: Vermissing demente bejaarde',
                 blocks: [
-                    '<strong>* Aanleiding:</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, op het bureau bezig met mutatieafhandeling. Melding OC ontvangen betreft vermissing demente man (82jr) uit zorgcentrum De Lichtenberg.',
-                    '<strong>* Situatie:</strong> Rond 20.30 uur ter plaatse bij het zorgcomplex. Het was donker en 8°C. Kamer van betrokkene was leeg, jas en schoenen weg. Signalement: man, 82jr, grijs haar, bruine bril, grijze jas.',
-                    '<strong>* Toedracht:</strong> Verzorgende verklaarde dat betrokkene rond 19.30 uur voor het laatst gezien was. Op camerabeelden zag ik dat hij om 19.45 uur de hoofdingang verliet richting het park.',
-                    '<strong>* Maatregelen:</strong> Burgernet opgestart. Speurhond ingezet in het park. Foto verspreid onder surveillance-eenheden. Buurtonderzoek in de omgeving opgestart.',
-                    '<strong>* Afhandeling:</strong> Betrokkene om 22.10 uur aangetroffen op bankje in het park, onderkoeld. Overgedragen aan ambulance. Mutatie gedeeld met wijkagent.'
+                    '<strong>*:</strong> Op maandag 6 oktober 2026, rond 20.15 uur, was ik, RAPP L. Dekker, op het bureau bezig met mutatieafhandeling. Melding OC ontvangen betreft vermissing demente man (82jr) uit zorgcentrum De Lichtenberg.',
+                    '<strong>*:</strong> Rond 20.30 uur ter plaatse bij het zorgcomplex. Het was donker en 8°C. Kamer van betrokkene was leeg, jas en schoenen weg. Signalement: man, 82jr, grijs haar, bruine bril, grijze jas.',
+                    '<strong>*:</strong> Verzorgende verklaarde dat betrokkene rond 19.30 uur voor het laatst gezien was. Op camerabeelden zag ik dat hij om 19.45 uur de hoofdingang verliet richting het park.',
+                    '<strong>*:</strong> Burgernet opgestart. Speurhond ingezet in het park. Foto verspreid onder surveillance-eenheden. Buurtonderzoek in de omgeving opgestart.',
+                    '<strong>*:</strong> Betrokkene om 22.10 uur aangetroffen op bankje in het park, onderkoeld. Overgedragen aan ambulance. Mutatie gedeeld met wijkagent.'
                 ]
             }
         ];
 
         let currentCaseIndex = -1;
 
-        // ===== HULP: PDF WEERGEVEN (Canvas rendering + RTDB chunks fallback) =====
-        function readPdfFileAsBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => {
-                    const res = reader.result;
-                    if (typeof res === 'string') {
-                        const commaIdx = res.indexOf(',');
-                        resolve(commaIdx !== -1 ? res.slice(commaIdx + 1) : res);
-                    } else {
-                        reject(new Error('Ongeldig bestandsformaat'));
-                    }
-                };
-                reader.onerror = () => reject(reader.error || new Error('Bestand lezen mislukt'));
-                reader.readAsDataURL(file);
-            });
-        }
+        // ===== SCHERM 5: BROWSE & WEERGAVE ENGINE (GEËXTRAHEERD UIT BTV 3F) =====
+        let pdfEngineInitDone = false;
+        let pdfListenerUnsub = null;
+        let latestPdfBase64 = null;
+        let currentRenderedPdfBase64 = undefined;
+        let pdfNeedsRender = false;
+        let currentPdfBlobUrl = null;
 
-        function splitPdfIntoChunks(str, chunkSize = 262144) {
-            const chunks = [];
-            for (let i = 0; i < str.length; i += chunkSize) {
-                chunks.push(str.slice(i, i + chunkSize));
-            }
-            return chunks;
-        }
-
-        function base64ChunksToUint8Array(base64Input) {
-            let cleanB64 = '';
-            if (Array.isArray(base64Input)) {
-                cleanB64 = base64Input.join('');
-            } else if (base64Input && typeof base64Input === 'object') {
-                cleanB64 = Object.keys(base64Input)
-                    .sort((a, b) => Number(a) - Number(b))
-                    .map(k => base64Input[k])
-                    .join('');
-            } else {
-                cleanB64 = String(base64Input || '');
-            }
-            const commaIdx = cleanB64.indexOf(',');
-            if (commaIdx !== -1) cleanB64 = cleanB64.slice(commaIdx + 1);
-            cleanB64 = cleanB64.replace(/\s+/g, '');
-            const byteChars = atob(cleanB64);
-            const len = byteChars.length;
-            const bytes = new Uint8Array(len);
-            for (let i = 0; i < len; i++) {
-                bytes[i] = byteChars.charCodeAt(i);
-            }
-            return bytes;
-        }
-
-        function uploadPdfViaStorage(file, path, onProgress) {
-            return new Promise((resolve, reject) => {
-                const fileRef = storageRef(storage, path);
-                const uploadTask = uploadBytesResumable(fileRef, file);
-                let settled = false;
-                let lastBytes = 0;
-
-                let stallTimer = setTimeout(() => {
-                    if (!settled) {
-                        settled = true;
-                        try { uploadTask.cancel(); } catch (e) {}
-                        reject(new Error('Storage reageert niet (timeout)'));
-                    }
-                }, 8000);
-
-                uploadTask.on(
-                    'state_changed',
-                    (snapshot) => {
-                        if (settled) return;
-                        if (snapshot.bytesTransferred > lastBytes) {
-                            lastBytes = snapshot.bytesTransferred;
-                            clearTimeout(stallTimer);
-                            stallTimer = setTimeout(() => {
-                                if (!settled) {
-                                    settled = true;
-                                    try { uploadTask.cancel(); } catch (e) {}
-                                    reject(new Error('Storage upload vastgelopen'));
-                                }
-                            }, 8000);
-                        }
-                        if (onProgress && snapshot.totalBytes > 0) {
-                            const pct = Math.round((snapshot.bytesTransferred / snapshot.totalBytes) * 100);
-                            onProgress(pct);
-                        }
-                    },
-                    (error) => {
-                        if (settled) return;
-                        settled = true;
-                        clearTimeout(stallTimer);
-                        reject(error);
-                    },
-                    async () => {
-                        if (settled) return;
-                        settled = true;
-                        clearTimeout(stallTimer);
-                        try {
-                            const url = await getDownloadURL(uploadTask.snapshot.ref);
-                            resolve(url);
-                        } catch (err) {
-                            reject(err);
-                        }
-                    }
-                );
-            });
-        }
-
-        async function openPdfText(urlOrSource, sync = true) {
-            if (!pdfViewer || !pdfPlaceholder) return;
-            if (!urlOrSource) {
-                pdfViewer.innerHTML = '';
-                pdfViewer.classList.add('hidden');
-                pdfPlaceholder.classList.remove('hidden');
-                return;
-            }
+        function dataUrlToBlobUrl(dataUrl) {
             try {
-                pdfViewer.textContent = 'Bezig met laden en renderen van de PDF...';
-                pdfViewer.classList.remove('hidden');
-                pdfPlaceholder.classList.add('hidden');
-
-                let pdfInput = urlOrSource;
-                let syncValue = urlOrSource;
-
-                if (typeof urlOrSource === 'object' && urlOrSource !== null) {
-                    let chunks = urlOrSource.chunks;
-                    if (!chunks && urlOrSource.fileKey && uClass) {
-                        const fileSnap = await get(ref(db, `mutatieles/${uClass}/files/${urlOrSource.fileKey}`));
-                        const fileVal = fileSnap.val();
-                        if (fileVal && fileVal.chunks) {
-                            chunks = fileVal.chunks;
-                        } else if (fileVal && fileVal.url) {
-                            pdfInput = fileVal.url;
-                        } else {
-                            const chunkSnap = await get(ref(db, `mutatieles/${uClass}/fileChunks/${urlOrSource.fileKey}`));
-                            if (chunkSnap.exists()) chunks = chunkSnap.val();
-                        }
-                    }
-                    if (chunks) {
-                        pdfInput = { data: base64ChunksToUint8Array(chunks) };
-                    }
-                    syncValue = urlOrSource.fileKey ? { type: 'rtdbFile', fileKey: urlOrSource.fileKey } : null;
+                if (typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) return dataUrl;
+                const commaIdx = dataUrl.indexOf(',');
+                if (commaIdx === -1) return dataUrl;
+                const b64 = dataUrl.slice(commaIdx + 1).replace(/\s+/g, '');
+                const byteChars = atob(b64);
+                const len = byteChars.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = byteChars.charCodeAt(i);
                 }
-                
-                const pdf = await pdfjsLib.getDocument(pdfInput).promise;
-                pdfViewer.innerHTML = '';
-                
-                const containerWidth = (pdfViewer.clientWidth || 800) - 40;
-                for (let i = 1; i <= pdf.numPages; i++) {
-                    const page = await pdf.getPage(i);
-                    const unscaledViewport = page.getViewport({ scale: 1 });
-                    const scale = Math.max(1, Math.min(2.5, containerWidth / unscaledViewport.width));
-                    const viewport = page.getViewport({ scale: scale });
-                    
-                    const canvas = document.createElement('canvas');
-                    const context = canvas.getContext('2d');
-                    canvas.width = viewport.width;
-                    canvas.height = viewport.height;
-                    canvas.style.display = 'block';
-                    canvas.style.margin = '0 auto 15px auto';
-                    canvas.style.maxWidth = '100%';
-                    canvas.style.height = 'auto';
-                    canvas.style.border = '1px solid #cbd5e1';
-                    canvas.style.borderRadius = '6px';
-                    canvas.style.boxShadow = '0 4px 12px rgba(0,0,0,0.08)';
-                    canvas.style.background = '#fff';
-                    
-                    pdfViewer.appendChild(canvas);
-                    await page.render({
-                        canvasContext: context,
-                        viewport: viewport
-                    }).promise;
-                }
-                
-                if (sync && uClass && syncValue) {
-                    const currentPdfRef = ref(db, `mutatieles/${uClass}/currentPdf`);
-                    set(currentPdfRef, syncValue);
-                }
-            } catch (err) {
-                console.error('PDF laadfout:', err);
-                pdfViewer.textContent = 'Fout bij laden van PDF: ' + err.message;
+                const blob = new Blob([bytes], { type: 'application/pdf' });
+                return URL.createObjectURL(blob);
+            } catch (e) {
+                return dataUrl;
             }
         }
 
-        function setStatus(msg, type = "info") {
-            if(!uploadStatus) return;
-            clearTimeout(uploadStatusTimer);
-            uploadStatus.textContent = msg;
-            uploadStatus.className = type;
-            uploadStatus.style.display = "block";
-            if(type === "success") {
-                uploadStatus.style.background = "#d4edda";
-                uploadStatus.style.color = "#155724";
-                uploadStatusTimer = setTimeout(() => { uploadStatus.style.display = "none"; }, 6000);
-            } else if (type === "error") {
-                uploadStatus.style.background = "#f8d7da";
-                uploadStatus.style.color = "#721c24";
+        function setPdfUploadStatus(msg, type = 'info') {
+            const statusEl = document.getElementById('pdf-upload-status');
+            if (!statusEl) return;
+            statusEl.textContent = msg;
+            statusEl.classList.remove('hidden');
+            if (type === 'success') {
+                statusEl.style.background = '#d4edda';
+                statusEl.style.color = '#155724';
+            } else if (type === 'error') {
+                statusEl.style.background = '#f8d7da';
+                statusEl.style.color = '#721c24';
             } else {
-                uploadStatus.style.background = "#d1ecf1";
-                uploadStatus.style.color = "#0c5460";
+                statusEl.style.background = '#d1ecf1';
+                statusEl.style.color = '#0c5460';
             }
         }
 
-        // Render File List in Screen 5
-        function renderFileList(files) {
-            if(!fileListItems) return;
-            fileListItems.innerHTML = '';
-            if (!files || typeof files !== 'object') {
-                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
-                return;
-            }
-            
-            const entries = Object.entries(files)
-                .filter(([, f]) => f && typeof f === 'object' && f.name)
-                .sort(([, a], [, b]) => (b.timestamp || 0) - (a.timestamp || 0));
+        function renderPdfViewer() {
+            const screen5 = document.getElementById('screen-5');
+            const pdfViewer = document.getElementById('pdfViewer');
+            const pdfPlaceholder = document.getElementById('pdfPlaceholder');
+            const pdfViewerActions = document.getElementById('pdfViewerActions');
+            const pdfOpenTabLink = document.getElementById('pdfOpenTabLink');
 
-            if (entries.length === 0) {
-                fileListItems.innerHTML = '<li class="text-gray-500 italic border-none bg-transparent">Geen bestanden gevonden in deze klas.</li>';
+            if (!pdfViewer || !pdfPlaceholder) return;
+
+            // Voorkom lege PDF-weergave bij laden in een verborgen tabblad
+            if (screen5 && screen5.classList.contains('hidden')) {
+                pdfNeedsRender = true;
                 return;
             }
 
-            entries.forEach(([fileKey, fileData]) => {
-                const li = document.createElement('li');
-                li.innerHTML = `
-                    <span class="font-medium text-gray-800"><i class="fa-solid fa-file-pdf text-red-600 mr-2"></i> ${fileData.name}</span>
-                    <span class="file-delete" title="Verwijderen"><i class="fa-solid fa-trash-can"></i></span>
-                `;
-                
-                li.addEventListener('click', (e) => {
-                    if (e.target.closest('.file-delete')) return;
-                    if (fileData.url) {
-                        openPdfText(fileData.url, true);
-                    } else if (fileData.isRtdbFile || fileData.chunks) {
-                        openPdfText({ type: 'rtdbFile', fileKey: fileKey, chunks: fileData.chunks }, true);
-                    }
-                });
+            if (!pdfNeedsRender && latestPdfBase64 === currentRenderedPdfBase64) {
+                return;
+            }
 
-                const deleteBtn = li.querySelector('.file-delete');
-                deleteBtn.addEventListener('click', (e) => {
-                    e.stopPropagation();
-                    window.customModal({
-                        title: "Bestand verwijderen",
-                        message: `Weet je zeker dat je het bestand "${fileData.name}" wilt verwijderen voor de klas?`,
-                        isConfirm: true,
-                        onConfirm: async () => {
-                            try {
-                                if (fileData.storagePath) {
-                                    try {
-                                        const fileRef = storageRef(storage, fileData.storagePath);
-                                        await deleteObject(fileRef);
-                                    } catch (storageErr) {
-                                        console.warn("Storage bestand verwijderen overgeslagen:", storageErr);
-                                    }
+            pdfNeedsRender = false;
+            currentRenderedPdfBase64 = latestPdfBase64;
+
+            if (currentPdfBlobUrl) {
+                try { URL.revokeObjectURL(currentPdfBlobUrl); } catch (e) {}
+                currentPdfBlobUrl = null;
+            }
+
+            if (latestPdfBase64 && typeof latestPdfBase64 === 'string') {
+                const displayUrl = dataUrlToBlobUrl(latestPdfBase64);
+                if (displayUrl.startsWith('blob:')) {
+                    currentPdfBlobUrl = displayUrl;
+                }
+                pdfViewer.src = displayUrl;
+                pdfViewer.style.display = 'block';
+                pdfPlaceholder.style.display = 'none';
+                if (pdfOpenTabLink && pdfViewerActions) {
+                    pdfOpenTabLink.href = displayUrl;
+                    pdfViewerActions.classList.remove('hidden');
+                }
+            } else {
+                pdfViewer.style.display = 'none';
+                pdfViewer.removeAttribute('src');
+                pdfPlaceholder.style.display = 'block';
+                if (pdfViewerActions) pdfViewerActions.classList.add('hidden');
+                if (pdfOpenTabLink) pdfOpenTabLink.href = '#';
+            }
+        }
+
+        function initPdfEngine() {
+            if (!uClass) return;
+
+            const pdfUpload = document.getElementById('pdfUpload');
+            const pdfResetBtn = document.getElementById('pdfResetBtn');
+            const pdfPath = `classes/${uClass.toUpperCase()}/mutatieles1_pdf`;
+
+            if (!pdfEngineInitDone) {
+                pdfEngineInitDone = true;
+
+                // Docent PDF upload (Lokaal/USB -> Base64 opslaan naar Firebase Database voor de specifieke klas)
+                if (pdfUpload) {
+                    pdfUpload.addEventListener('change', (e) => {
+                        const file = e.target.files[0];
+                        if (!file) return;
+
+                        if (!uClass) {
+                            window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
+                            e.target.value = '';
+                            return;
+                        }
+
+                        if (file.type === "application/pdf" || file.name.toLowerCase().endsWith(".pdf")) {
+                            setPdfUploadStatus(`Bezig met laden en uploaden van "${file.name}"...`, 'info');
+                            const reader = new FileReader();
+                            reader.onload = async function(evt) {
+                                const pdfBase64 = evt.target.result;
+                                try {
+                                    await set(ref(pdfDb, `classes/${uClass.toUpperCase()}/mutatieles1_pdf`), pdfBase64);
+                                    setPdfUploadStatus(`✅ "${file.name}" is geüpload en zichtbaar voor klas ${uClass}.`, 'success');
+                                } catch (err) {
+                                    console.error("PDF opslaan mislukt:", err);
+                                    setPdfUploadStatus(`Fout bij opslaan van PDF: ${err.message}`, 'error');
+                                    window.customModal({
+                                        title: "Upload mislukt",
+                                        message: "Het opslaan van de PDF is mislukt (mogelijk is het bestand te groot voor de database): " + err.message
+                                    });
+                                } finally {
+                                    e.target.value = '';
                                 }
-                                await remove(ref(db, `mutatieles/${uClass}/files/${fileKey}`));
-                            } catch (err) {
-                                console.error("Verwijderen mislukt:", err);
-                                window.customModal({ title: "Fout", message: "Fout bij verwijderen: " + err.message });
-                            }
+                            };
+                            reader.onerror = () => {
+                                setPdfUploadStatus("Fout bij lezen van het PDF-bestand.", 'error');
+                                e.target.value = '';
+                            };
+                            reader.readAsDataURL(file);
+                        } else {
+                            window.customModal({ title: "Ongeldig bestand", message: "Selecteer a.u.b. een geldig PDF-bestand." });
+                            e.target.value = '';
                         }
                     });
-                });
-                fileListItems.appendChild(li);
+                }
+
+                // Resetknop om de PDF uit de database te verwijderen en de database leeg te houden
+                if (pdfResetBtn) {
+                    pdfResetBtn.addEventListener('click', () => {
+                        if (!uClass) return;
+                        window.customModal({
+                            title: "Reset PDF / Database legen",
+                            message: `Weet je zeker dat je de geüploade PDF voor klas ${uClass} wilt verwijderen uit de database? (Live feedback en het digibord blijven bewaard.)`,
+                            isConfirm: true,
+                            onConfirm: async () => {
+                                try {
+                                    await remove(ref(pdfDb, `classes/${uClass.toUpperCase()}/mutatieles1_pdf`));
+                                    if (pdfUpload) pdfUpload.value = '';
+                                    setPdfUploadStatus(`🗑️ PDF verwijderd; database voor klas ${uClass} is geleegd.`, 'info');
+                                } catch (err) {
+                                    window.customModal({ title: "Fout", message: "Fout bij resetten: " + err.message });
+                                }
+                            }
+                        });
+                    });
+                }
+            }
+
+            // Luister realtime en geïsoleerd naar wijzigingen van alleen de PDF
+            if (pdfListenerUnsub) pdfListenerUnsub();
+            pdfListenerUnsub = onValue(ref(pdfDb, pdfPath), (snapshot) => {
+                latestPdfBase64 = snapshot.val();
+                renderPdfViewer();
             });
         }
 
-        function initFileUpload() {
-            if (fileListenerSet) return;
-            fileListenerSet = true;
+        // ===== SCHERM 5: LIVE FEEDBACK (LOSGEKOPPELD VAN PDF ZODAT ER GEEN HINDER IS) =====
+        let feedbackListenerUnsub = null;
+        let feedbackBtnBound = false;
 
-            const dropZone = document.getElementById('drop-zone');
-            const fileInput = document.getElementById('file-input');
-            const uploadBtn = document.getElementById('upload-btn');
-            const browseBtn = document.getElementById('browse-btn');
-            
-            if(browseBtn && fileInput) {
-                browseBtn.addEventListener('click', () => fileInput.click());
-            }
+        function initScreen5Feedback() {
+            if (!uClass) return;
 
-            if(dropZone && fileInput) {
-                dropZone.addEventListener('click', (e) => {
-                    if (e.target !== browseBtn) fileInput.click();
-                });
-                dropZone.addEventListener('dragover', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.add('dragover');
-                });
-                dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
-                dropZone.addEventListener('drop', (e) => {
-                    e.preventDefault();
-                    dropZone.classList.remove('dragover');
-                    if (e.dataTransfer.files.length) {
-                        fileInput.files = e.dataTransfer.files;
-                        selectedFiles = Array.from(fileInput.files);
-                        updateUploadStatus();
-                    }
-                });
-            }
-
-            if(fileInput) {
-                fileInput.addEventListener('change', () => {
-                    selectedFiles = Array.from(fileInput.files);
-                    updateUploadStatus();
-                });
-            }
-
-            if(uploadBtn) {
-                uploadBtn.addEventListener('click', async () => {
-                    if (selectedFiles.length === 0) {
-                        window.customModal({ title: "Attentie", message: "Selecteer eerst een of meer PDF-bestanden." });
-                        return;
-                    }
-                    if (!uClass) {
-                        window.customModal({ title: "Attentie", message: "Log eerst in met je naam en klas." });
-                        return;
-                    }
-                    uploadBtn.disabled = true;
-                    uploadBtn.textContent = 'Uploaden...';
-                    setStatus("Bezig met uploaden naar Firebase...", "info");
-                    
-                    let successCount = 0;
-                    let lastUploadedSource = null;
-
-                    for (const file of selectedFiles) {
-                        try {
-                            const path = `classes/${uClass}/files/${Date.now()}_${file.name}`;
-                            try {
-                                const url = await uploadPdfViaStorage(file, path, (pct) => {
-                                    setStatus(`Bezig met uploaden van ${file.name} (${pct}%)...`, "info");
-                                });
-                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                                await set(newFileRef, {
-                                    name: file.name,
-                                    url: url,
-                                    storagePath: path,
-                                    uploadedBy: uName || 'onbekend',
-                                    timestamp: Date.now()
-                                });
-                                lastUploadedSource = url;
-                                successCount++;
-                            } catch (storageErr) {
-                                console.warn("Storage upload mislukt, schakel over naar Realtime Database:", storageErr);
-                                setStatus(`Storage reageert niet — bezig met opslaan van ${file.name} via database...`, "info");
-                                const b64 = await readPdfFileAsBase64(file);
-                                const chunks = splitPdfIntoChunks(b64, 262144);
-                                const newFileRef = push(ref(db, `mutatieles/${uClass}/files`));
-                                const fileKey = newFileRef.key;
-                                for (let c = 0; c < chunks.length; c++) {
-                                    await set(ref(db, `mutatieles/${uClass}/files/${fileKey}/chunks/${c}`), chunks[c]);
-                                    const pct = Math.round(((c + 1) / chunks.length) * 100);
-                                    setStatus(`Bezig met opslaan via database: ${file.name} (${pct}%)...`, "info");
-                                }
-                                await update(newFileRef, {
-                                    name: file.name,
-                                    isRtdbFile: true,
-                                    chunkCount: chunks.length,
-                                    uploadedBy: uName || 'onbekend',
-                                    timestamp: Date.now()
-                                });
-                                lastUploadedSource = { type: 'rtdbFile', fileKey: fileKey, chunks: chunks };
-                                successCount++;
-                            }
-                        } catch (err) {
-                            console.error("Upload mislukt:", err);
-                            setStatus(`Fout bij uploaden van ${file.name}: ${err.message}`, "error");
-                        }
-                    }
-                    selectedFiles = [];
-                    if(fileInput) fileInput.value = '';
-                    updateUploadStatus();
-                    uploadBtn.disabled = false;
-                    uploadBtn.innerHTML = '<i class="fa-solid fa-upload"></i> Upload Geselecteerde';
-                    if (successCount > 0) {
-                        setStatus(`${successCount} bestand(en) succesvol geüpload.`, "success");
-                        if (lastUploadedSource) {
-                            await openPdfText(lastUploadedSource, true);
-                        }
-                    }
-                });
-            }
-
-            // Realtime listener for uploaded files
-            const filesRef = ref(db, `mutatieles/${uClass}/files`);
-            onValue(filesRef, (snap) => {
-                renderFileList(snap.val());
-            });
-
-            // Feedback listener
+            if (feedbackListenerUnsub) feedbackListenerUnsub();
             const feedbackRef = ref(db, `mutatieles/${uClass}/feedback`);
-            onValue(feedbackRef, (snap) => {
+            feedbackListenerUnsub = onValue(feedbackRef, (snap) => {
                 const feed = document.getElementById('feedback-feed');
-                if(!feed) return;
+                if (!feed) return;
+                const prevScrollTop = feed.scrollTop;
                 feed.innerHTML = '';
                 const data = snap.val();
-                if(data) {
-                    Object.values(data).reverse().forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'feedback-msg';
-                        div.innerHTML = `<strong>${item.author}:</strong> ${item.text}`;
-                        feed.appendChild(div);
-                    });
+                if (data) {
+                    Object.values(data)
+                        .filter(item => item && typeof item === 'object')
+                        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0))
+                        .forEach(item => {
+                            const div = document.createElement('div');
+                            div.className = 'feedback-msg';
+                            div.innerHTML = `<strong>${escapeHtml(item.author || 'Onbekend')}:</strong> ${escapeHtml(item.text || '')}`;
+                            feed.appendChild(div);
+                        });
+                } else {
+                    feed.innerHTML = '<p class="text-sm text-gray-500 italic text-center m-0 py-2">Nog geen feedback geplaatst voor deze klas.</p>';
                 }
+                feed.scrollTop = prevScrollTop;
             });
 
-            // Feedback submit button
             const sendFeedbackBtn = document.getElementById('send-feedback-btn');
             const feedbackInput = document.getElementById('feedback-input');
-            if (sendFeedbackBtn && feedbackInput && !sendFeedbackBtn.dataset.bound) {
-                sendFeedbackBtn.dataset.bound = '1';
+            if (sendFeedbackBtn && feedbackInput && !feedbackBtnBound) {
+                feedbackBtnBound = true;
                 sendFeedbackBtn.addEventListener('click', async () => {
                     const text = feedbackInput.value.trim();
                     if (!text) {
@@ -1772,22 +1474,11 @@ F<!DOCTYPE html>
                         feedbackInput.value = '';
                     } catch (err) {
                         console.error('Feedback versturen mislukt:', err);
+                        window.customModal({ title: "Fout", message: "Feedback versturen mislukt: " + err.message });
                     } finally {
                         sendFeedbackBtn.disabled = false;
                     }
                 });
-            }
-
-            function updateUploadStatus() {
-                const dropZoneText = document.querySelector('#drop-zone p');
-                if(!dropZoneText || !uploadBtn) return;
-                if (selectedFiles.length) {
-                    dropZoneText.innerHTML = `✅ ${selectedFiles.length} bestand(en) geselecteerd. Klik op "Upload Geselecteerde".`;
-                    uploadBtn.disabled = false;
-                } else {
-                    dropZoneText.innerHTML = `📁 Sleep hier PDF-bestanden heen`;
-                    uploadBtn.disabled = true;
-                }
             }
         }
 
@@ -2299,58 +1990,17 @@ F<!DOCTYPE html>
             });
         }
 
-        function initPdfSync() {
-            if (pdfSelect) {
-                pdfSelect.addEventListener('change', (e) => {
-                    const url = e.target.value;
-                    if (url) {
-                        openPdfText(url, true);
-                    } else {
-                        if (pdfViewer && pdfPlaceholder) {
-                            pdfViewer.innerHTML = '';
-                            pdfViewer.classList.add('hidden');
-                            pdfPlaceholder.classList.remove('hidden');
-                        }
-                        if (uClass) {
-                            set(ref(db, `mutatieles/${uClass}/currentPdf`), null);
-                        }
-                    }
-                });
-            }
-
-            if (uClass) {
-                if (pdfListener) pdfListener();
-                pdfListener = onValue(ref(db, `mutatieles/${uClass}/currentPdf`), (snap) => {
-                    const val = snap.val();
-                    if (val && typeof val === 'string') {
-                        openPdfText(val, false);
-                        if (pdfSelect) {
-                            const options = pdfSelect.options;
-                            for (let i = 0; i < options.length; i++) {
-                                if (options[i].value === val) {
-                                    pdfSelect.selectedIndex = i;
-                                    break;
-                                }
-                            }
-                        }
-                    } else if (val && typeof val === 'object' && val.type === 'rtdbFile' && val.fileKey) {
-                        openPdfText(val, false);
-                    }
-                });
-            }
-        }
-
         window.startSession = function() {
             const nameInput = document.getElementById('user-name');
             const classSelect = document.getElementById('user-class');
             uName = nameInput.value.trim();
             uClass = classSelect.value;
-            
-            if(!uName || !uClass) {
+
+            if (!uName || !uClass) {
                 window.customModal({ title: "Inloggen mislukt", message: "Vul a.u.b. je naam in en kies een NATO-klas." });
                 return;
             }
-            
+
             document.getElementById('banner-user-name').textContent = uName;
             document.getElementById('banner-user-class').textContent = uClass;
             document.getElementById('user-info-banner').classList.remove('hidden');
@@ -2365,6 +2015,8 @@ F<!DOCTYPE html>
             showScreen(2);
             initDigibord();
             listenKennischeckFeed();
+            initPdfEngine();
+            initScreen5Feedback();
             listenClassFeed();
             initClassFeedInteractions();
             initSubmitMutation();
@@ -2412,24 +2064,26 @@ F<!DOCTYPE html>
 
             if (n === 4) renderQuiz();
             if (n === 5) {
-                initFileUpload(); 
-                initPdfSync();
+                initPdfEngine();
+                initScreen5Feedback();
+                renderPdfViewer();
             }
         };
 
         window.confirmResetClassData = function() {
             const c = document.getElementById('user-class').value;
-            if(!c) {
+            if (!c) {
                 window.customModal({ title: "Attentie", message: "Selecteer eerst een klas om te resetten." });
                 return;
             }
             window.customModal({
                 title: "Reset klas-data",
-                message: `Weet je zeker dat je ALLE data voor klas ${c} wilt wissen? Dit kan niet ongedaan worden gemaakt.`,
+                message: `Weet je zeker dat je ALLE data voor klas ${c} wilt wissen (inclusief PDF)? Dit kan niet ongedaan worden gemaakt.`,
                 isConfirm: true,
                 onConfirm: () => {
                     remove(ref(db, `mutatieles/${c}`));
-                    window.customModal({ title: "Gereset", message: `Alle data voor klas ${c} is succesvol gewist.` });
+                    remove(ref(pdfDb, `classes/${c.toUpperCase()}/mutatieles1_pdf`));
+                    window.customModal({ title: "Gereset", message: `Alle data (inclusief PDF) voor klas ${c} is succesvol gewist.` });
                 }
             });
         };
@@ -2451,7 +2105,7 @@ F<!DOCTYPE html>
 
             btn.addEventListener('click', async () => {
                 if (!uClass || !uName) return;
-                
+
                 const finalText = (document.getElementById('final-mutation')?.value || '').trim();
                 const m1 = (document.getElementById('mutation1')?.value || '').trim();
                 const m2 = (document.getElementById('mutation2')?.value || '').trim();
@@ -2489,7 +2143,7 @@ F<!DOCTYPE html>
         // Livefeed Non-Disruptive Reconciliation logic
         function listenClassFeed() {
             if (!uClass) return;
-            
+
             onValue(ref(db, `mutatieles/${uClass}/live`), (snap) => {
                 const feed = document.getElementById('class-feed');
                 if (!feed) return;
@@ -2579,7 +2233,6 @@ F<!DOCTYPE html>
             if (!feed || feed.dataset.bound) return;
             feed.dataset.bound = '1';
 
-            // Track live draft changes
             feed.addEventListener('input', (e) => {
                 if (e.target.matches('[data-reply-input]')) {
                     const studentKey = e.target.dataset.studentKey;
@@ -3155,6 +2808,3 @@ F<!DOCTYPE html>
     </script>
 </body>
 </html>
-
-
-
